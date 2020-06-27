@@ -23,12 +23,24 @@ int main(void) {
 	InitUART();
 
 	while (1) {
-		USART3->ICR |= USART_ICR_TCCF;
-		//USART3->ICR |= USART_ICR_FECF;
-
-		if (dummy == 1) {
-			uartSendChar('a');
+		// Check if a UART command has been received
+		if (uartCmdRdy) {
+			std::stringstream ss;
+			for (uint8_t c = 0; c < 22; ++c) {
+				if (uartCmd[c] == 10) {
+					pendingCmd = ss.str();
+					break;
+				}
+				else
+					ss << uartCmd[c];
+			}
+			uartCmdRdy = false;
 		}
-		for (int x; x < 1000000; ++x);
+
+		if (!pendingCmd.empty()) {
+			uartSendString("Received: " + pendingCmd + '\n');
+			pendingCmd.clear();
+		}
+
 	}
 }

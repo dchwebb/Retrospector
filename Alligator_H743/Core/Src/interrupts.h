@@ -2,7 +2,8 @@
 
 // USART Decoder
 void USART3_IRQHandler(void) {
-	if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
+	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
+	if (!uartCmdRdy) {
 		uartCmd[uartCmdPos] = USART3->RDR; 				// accessing DR automatically resets the receive flag
 		if (uartCmd[uartCmdPos] == 10) {
 			uartCmdRdy = true;

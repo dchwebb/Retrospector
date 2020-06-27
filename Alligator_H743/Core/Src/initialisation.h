@@ -2,6 +2,7 @@
 
 #include "stm32h7xx.h"
 #include <string>
+#include <sstream>
 
 extern volatile uint32_t SysTickVal;
 
