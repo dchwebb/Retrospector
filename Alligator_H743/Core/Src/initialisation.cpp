@@ -107,3 +107,63 @@ void uartSendString(const std::string& s) {
 	}
 
 }
+
+// 743 - see p695
+void InitADC() {
+	//	Setup Timer 2 to trigger ADC
+	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;			// Enable Timer 2 clock
+	TIM2->CR2 |= TIM_CR2_MMS_2;						// 100: Compare - OC1REF signal is used as trigger output (TRGO)
+	TIM2->PSC = 20 - 1;								// Prescaler
+	TIM2->ARR = 50 - 1;								// Auto-reload register (ie reset counter) divided by 100
+	TIM2->CCR1 = 50 - 1;							// Capture and compare - ie when counter hits this number PWM high
+	TIM2->CCER |= TIM_CCER_CC1E;					// Capture/Compare 1 output enable
+	TIM2->CCMR1 |= TIM_CCMR1_OC1M_1 |TIM_CCMR1_OC1M_2;		// 110 PWM Mode 1
+	TIM2->CR1 |= TIM_CR1_CEN;
+
+	// Enable ADC1 and GPIO clock sources
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+
+	// Enable ADC - PC0 ADC123_INP10
+	GPIOC->MODER |= GPIO_MODER_MODER10;				// Set to Analog mode (0b11)
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_10;				// ADC channel preselection register
+	//GPIOA->MODER |= GPIO_MODER_MODER5;			// Set PA5 to Analog mode (0b11)
+	//GPIOA->MODER |= GPIO_MODER_MODER0;			// Set PA0 to Analog mode (0b11)
+
+	//ADC1->CR1 |= ADC_CR1_SCAN;					// Activate scan mode
+	ADC1->SQR1 = (1 - 1) << 20;						// Number of conversions in sequence (set to 3, getting multiple samples for each channel to average)
+	ADC1->SQR1 |= 10 << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
+	//ADC1->SQR3 |= 5 << 5;							// Set 2nd conversion in sequence
+	//ADC1->SQR3 |= 0 << 10;							// Set 3rd conversion in sequence
+
+	// Set to 56 cycles (0b11) sampling speed (SMPR2 Left shift speed 3 x ADC_INx up to input 9; use SMPR1 from 0 for ADC_IN10+)
+	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
+	ADC1->SMPR2 |= 0b110 << ADC_SMPR2_SMP10_Pos;		// Set conversion speed
+
+	ADC1->CFGR |= ADC_CFGR_EOCS;					// The EOC bit is set at the end of each regular conversion. Overrun detection is enabled.
+	ADC1->CFGR |= ADC_CFGR_EXTEN_0;					// ADC hardware trigger 00: Trigger detection disabled; 01: Trigger detection on the rising edge; 10: Trigger detection on the falling edge; 11: Trigger detection on both the rising and falling edges
+	ADC1->CFGR |= ADC_CFGR_EXTSEL_0 | ADC_CFGR_EXTSEL_1 | ADC_CFGR_EXTSEL_3;	// ADC External trigger: 1011: Timer 2 TRGO
+
+	// Enable DMA - DMA2, Channel 0, Stream 0  = ADC1 (Manual p207)
+	ADC1->CR2 |= ADC_CR2_DMA;						// Enable DMA Mode on ADC1
+	ADC1->CR2 |= ADC_CR2_DDS;						// DMA requests are issued as long as data are converted and DMA=1
+	RCC->AHB1ENR|= RCC_AHB1ENR_DMA2EN;
+
+	DMA2_Stream4->CR &= ~DMA_SxCR_DIR;				// 00 = Peripheral-to-memory
+	DMA2_Stream4->CR |= DMA_SxCR_PL_1;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA2_Stream4->CR &= ~DMA_SxCR_PINC;				// Peripheral not in increment mode
+	DMA2_Stream4->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA2_Stream4->CR |= DMA_SxCR_CIRC;				// circular mode to keep refilling buffer
+	DMA2_Stream4->CR &= ~DMA_SxCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
+
+	DMA2_Stream4->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
+	DMA2_Stream4->PAR = (uint32_t)(&(ADC1->DR));	// Configure the peripheral data register address
+	DMA2_Stream4->M0AR = (uint32_t)(ADC_array);		// Configure the memory address (note that M1AR is used for double-buffer mode)
+	DMA2_Stream4->CR &= ~DMA_SxCR_CHSEL;			// channel select to 0 for ADC1
+
+	DMA2_Stream4->CR |= DMA_SxCR_EN;				// Enable DMA2
+	ADC1->CR |= ADC_CR_ADEN;						// Activate ADC
+
+}

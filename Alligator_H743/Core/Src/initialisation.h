@@ -14,9 +14,10 @@ void InitSysTick();
 void InitUART();
 void uartSendChar(char c);
 void uartSendString(const std::string& s);
+void InitADC();
+
 /*
 void InitMCO2();
-void InitADC();
 void InitIO();
 void InitCoverageTimer();
 void InitFPGAProg();
