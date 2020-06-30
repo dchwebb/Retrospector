@@ -6,7 +6,7 @@
 
 extern volatile uint32_t SysTickVal;
 
-#define ADC_BUFFER_LENGTH 32
+#define ADC_BUFFER_LENGTH 2
 extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 void SystemClock_Config();

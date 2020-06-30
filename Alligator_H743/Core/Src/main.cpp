@@ -8,12 +8,6 @@ volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
 std::string pendingCmd;
 
-/*
-#define ALIGN_32BYTES(buf)  buf __attribute__ ((aligned (32)))
-ALIGN_32BYTES (static uint16_t   aADCxConvertedData[ADC_CONVERTED_DATA_BUFFER_SIZE]);
-*/
-//volatile uint16_t   aADCxConvertedData[ADC_CONVERTED_DATA_BUFFER_SIZE] __attribute__ ((aligned (32)));
-
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
 volatile int dummy = 0;
