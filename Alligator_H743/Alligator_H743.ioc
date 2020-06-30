@@ -1,12 +1,17 @@
 #MicroXplorer Configuration settings - do not modify
 ADC1.Channel-0\#ChannelRegularConversion=ADC_CHANNEL_10
+ADC1.Channel-1\#ChannelRegularConversion=ADC_CHANNEL_18
 ADC1.ContinuousConvMode=ENABLE
 ADC1.ConversionDataManagement=ADC_CONVERSIONDATA_DMA_CIRCULAR
-ADC1.IPParameters=Rank-0\#ChannelRegularConversion,Channel-0\#ChannelRegularConversion,SamplingTime-0\#ChannelRegularConversion,OffsetNumber-0\#ChannelRegularConversion,NbrOfConversionFlag,master,ConversionDataManagement,ContinuousConvMode
+ADC1.IPParameters=Rank-0\#ChannelRegularConversion,Channel-0\#ChannelRegularConversion,SamplingTime-0\#ChannelRegularConversion,OffsetNumber-0\#ChannelRegularConversion,NbrOfConversionFlag,master,ConversionDataManagement,ContinuousConvMode,Rank-1\#ChannelRegularConversion,Channel-1\#ChannelRegularConversion,SamplingTime-1\#ChannelRegularConversion,OffsetNumber-1\#ChannelRegularConversion,NbrOfConversion
+ADC1.NbrOfConversion=2
 ADC1.NbrOfConversionFlag=1
 ADC1.OffsetNumber-0\#ChannelRegularConversion=ADC_OFFSET_NONE
+ADC1.OffsetNumber-1\#ChannelRegularConversion=ADC_OFFSET_NONE
 ADC1.Rank-0\#ChannelRegularConversion=1
+ADC1.Rank-1\#ChannelRegularConversion=2
 ADC1.SamplingTime-0\#ChannelRegularConversion=ADC_SAMPLETIME_1CYCLE_5
+ADC1.SamplingTime-1\#ChannelRegularConversion=ADC_SAMPLETIME_1CYCLE_5
 ADC1.master=1
 Dma.ADC1.0.Direction=DMA_PERIPH_TO_MEMORY
 Dma.ADC1.0.EventEnable=ENABLE
@@ -304,4 +309,4 @@ VP_SYS_VS_Systick.Mode=SysTick
 VP_SYS_VS_Systick.Signal=SYS_VS_Systick
 board=NUCLEO-H743ZI2
 boardIOC=true
-isbadioc=true
+isbadioc=false
