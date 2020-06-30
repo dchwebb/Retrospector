@@ -165,32 +165,16 @@ void InitADC() {
 
 	DMA2_Stream4->CR |= DMA_SxCR_EN;				// Enable DMA2
 	ADC1->CR |= ADC_CR_ADEN;						// Activate ADC
-
 }
 */
 
 void InitADC() {
-	//#define ADCx_CHANNEL_PIN                GPIO_PIN_6
-	//#define ADCx_CHANNEL_GPIO_PORT          GPIOA
+	// ADC PA6 ADC12_INP3
 
 	// Enable instruction and data cache - core_cm7.h
-	SCB_EnableICache();
+	//SCB_EnableICache();
+	//SCB_EnableDCache();
 
-	/* Enable D-Cache */
-	SCB_EnableDCache();
-
-	//SET_BIT(hadc->Instance->CFGR, ADC_CFGR_JQM);
-	/*Clears flags in ISR register
-	__HAL_ADC_CLEAR_FLAG(hadc, (ADC_FLAG_AWD3  | ADC_FLAG_AWD2 | ADC_FLAG_AWD1 |
-								ADC_FLAG_JQOVF | ADC_FLAG_OVR  |
-								ADC_FLAG_JEOS  | ADC_FLAG_JEOC |
-								ADC_FLAG_EOS   | ADC_FLAG_EOC  |
-								ADC_FLAG_EOSMP | ADC_FLAG_RDY));
-
-	SET_BIT(hadc->Instance->CR, ADC_CR_DEEPPWD);
-	SET_BIT(hadc->Instance->CFGR, ADC_CFGR_JQDIS);
-
-	*/
 	// Reset peripherals
 	RCC->AHB1RSTR |= RCC_AHB1RSTR_ADC12RST;
 	RCC->AHB1RSTR &= ~ (RCC_AHB1RSTR_ADC12RST);
@@ -198,174 +182,93 @@ void InitADC() {
 
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
-	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;		// SAR ADC kernel clock source selection
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
-	/* ### - 1 - Initialize ADC peripheral #################################### */
-	/*
-	  DmaHandle.Instance                 = DMA1_Stream1;
-	  DmaHandle.Init.Request             = DMA_REQUEST_ADC1;
-	  DmaHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-	  DmaHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
-	  DmaHandle.Init.MemInc              = DMA_MINC_ENABLE;
-	  DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-	  DmaHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
-	  DmaHandle.Init.Mode                = DMA_CIRCULAR;
-	  DmaHandle.Init.Priority            = DMA_PRIORITY_MEDIUM;
-	*/
-	//DMA1_Stream1->CR ??
+	// Initialize ADC peripheral
 	DMA1_Stream1->CR &= ~DMA_SxCR_EN;
+	DMA1_Stream1->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
+	DMA1_Stream1->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream1->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 
-	// Deinit code
-	// DMA Mux Channel: DMAMUX1->C1CR (0x40020804)
-	// channel status: DMAMUX1_ChannelStatus
-	// DMAmuxChannelStatusMask: 1 << 1
+	DMA1_Stream1->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
+	DMA1->LIFCR = 0x3FUL << 6;						// clear interrupts for this stream
 
-	/* Clear the DMAMUX synchro overrun flag */
-	// hdma->DMAmuxChannelStatus->CFR = hdma->DMAmuxChannelStatusMask;
-
-	// 0001 0010 1101 0000 0000
-	// DMA1->S1CR should be 0x12d00 afterwards
-
-	DMA1_Stream1->CR |= DMA_SxCR_CIRC;
-	DMA1_Stream1->CR |= DMA_SxCR_MINC;
-	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;
-	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;
-	DMA1_Stream1->CR |= DMA_SxCR_PL_0;
-
-	// Disable FIFO Threshold selection
-	DMA1_Stream1->FCR &= ~DMA_SxFCR_FTH;
-
-	//hdma->StreamIndex = 6		This is index of DMA1->LIFCR CFEIF1 - CTCIF1 - ie clear interrupts for this stream
-	//hdma->StreamBaseAddress = 0x40020000 (DMA1)
-	DMA1->LIFCR = 0x3FUL << 6;		// clear interrupts for this stream
-	//DMAMUX1->C1CR |= 0x9; 			// DMA request MUX input 9 = adc1_dma (See p.695)
-	DMAMUX1_Channel1->CCR |= 0x9; 			// DMA request MUX input 9 = adc1_dma (See p.695)
-
-	/* Clear the DMAMUX synchro overrun flag */
-	//DMAMUX1->CFR = 1 << 1;
+	DMAMUX1_Channel1->CCR |= 0x9; 					// DMA request MUX input 9 = adc1_dma (See p.695)
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
-
-	/* Associate the DMA handle */
-	//__HAL_LINKDMA(hadc, DMA_Handle, DmaHandle);
 
 	NVIC_SetPriority(DMA1_Stream1_IRQn, 1);
 	NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
-	ADC1->CR &= ~ADC_CR_DEEPPWD;
+	ADC1->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC1->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
 
-	/* Enable ADC internal voltage regulator */
-	ADC1->CR |= ADC_CR_ADVREGEN;
-
-	/* Note: Variable divided by 2 to compensate partially              */
-	/*       CPU processing cycles, scaling in us split to not          */
-	/*       exceed 32 bits register capacity and handle low frequency. */
-
+	// Wait until voltage regulator settled
 	volatile uint32_t wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
-	while (wait_loop_index != 0UL)
-	{
+	while (wait_loop_index != 0UL) {
 	  wait_loop_index--;
 	}
-
 	while ((ADC1->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
 
-	//LL_ADC_SetCommonClock(__LL_ADC_COMMON_INSTANCE(hadc->Instance), hadc->Init.ClockPrescaler);
 	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
-	ADC1->CFGR |= ADC_CFGR_CONT;
-	ADC1->CFGR |= ADC_CFGR_OVRMOD;
-
-	// ADC1->CFGR should be 0x80003000
-	ADC1->CFGR |= ADC_CFGR_DMNGT;				// Data Management configuration 11: DMA Circular Mode selected
-	//0x80003003
+	ADC1->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
+	ADC1->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
+	ADC1->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
 
 	// oversampling set here?: ADC1->CFGR2 |= ADC_CFGR2_ROVSE
 
-	// ADC_CCR_PRESC_Pos  =18
-	//freq = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_ADC);	// Gives 64,000,000 (HSI Clock)
-	//freq /= (1 << 1UL);		// Gives 32,000,000
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
-	ADC1->CR |= ADC_CR_BOOST_1;		// Note this is not legal according to SFR - HAL has notes about silicon revision
+	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
 
 	// For scan mode:
 	// MODIFY_REG(hadc->Instance->SQR1, ADC_SQR1_L, (hadc->Init.NbrOfConversion - (uint8_t)1));
 
-	/* ### - 2 - Start calibration ############################################ */
+	// Start calibration
 	ADC1->CR |= ADC_CR_ADCAL;
-
-	// Wait until calibration has finished
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
-	/*
-	sConfig.Channel      = ADCx_CHANNEL;                /* Sampled channel number = 3 (ADC12_INP3)
-	sConfig.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADCx_CHANNEL
-	sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;   /* Sampling time (number of clock cycles unit)
-	sConfig.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel
-	sConfig.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction
-	sConfig.Offset = 0;                                 /* Parameter discarded because offset correction is disabled
-	*/
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;
+
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
 	ADC1->SQR1 |= 3 << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
 
-/*
-	ALIGN_32BYTES (static uint16_t   aADCxConvertedData[ADC_CONVERTED_DATA_BUFFER_SIZE]);
-	#define ALIGN_32BYTES(buf)  buf __attribute__ ((aligned (32)))
-	#define ADC_CONVERTED_DATA_BUFFER_SIZE   ((uint32_t)  32)    Size of array aADCxConvertedData[]
-*/
-
-	/* ### - 4 - Start conversion in DMA mode ################################# */
-	// HAL_ADC_Start_DMA(&AdcHandle, (uint32_t *)aADCxConvertedData, ADC_CONVERTED_DATA_BUFFER_SIZE)
+	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
-
-	// Wait til ready
 	while (ADC1->ISR & ADC_ISR_ADRDY == 0) {}
 
 	/*
-	 *         /* Set the DMA transfer complete callback
-			hadc->DMA_Handle->XferCpltCallback = ADC_DMAConvCplt;
+	hadc->DMA_Handle->XferCpltCallback = ADC_DMAConvCplt;			// Set the DMA transfer complete callback
+	hadc->DMA_Handle->XferHalfCpltCallback = ADC_DMAHalfConvCplt;// Set the DMA half transfer complete callback
+	hadc->DMA_Handle->XferErrorCallback = ADC_DMAError;			// Set the DMA error callback
+	*/
 
-			/* Set the DMA half transfer complete callback
-			hadc->DMA_Handle->XferHalfCpltCallback = ADC_DMAHalfConvCplt;
-
-			/* Set the DMA error callback
-			hadc->DMA_Handle->XferErrorCallback = ADC_DMAError;
-	 */
-
-	/* With DMA, overrun event is always considered as an error even if
-	   hadc->Init.Overrun is set to ADC_OVR_DATA_OVERWRITTEN. Therefore,
-	   ADC_IT_OVR is enabled. */
+	// With DMA, overrun event is always considered as an error even if hadc->Init.Overrun is set to ADC_OVR_DATA_OVERWRITTEN. Therefore, ADC_IT_OVR is enabled.
 	ADC1->IER |= ADC_IER_OVRIE;
 
-	//  MODIFY_REG(ADCx->CFGR, ADC_CFGR_DMNGT, DataTransferMode);		// Already set to 3??
-
-	/* Start the DMA channel */
-	// tmp_hal_status = HAL_DMA_Start_IT(hadc->DMA_Handle, (uint32_t)&hadc->Instance->DR, (uint32_t)pData, Length);
-
-	/* Clear the DMAMUX synchro overrun flag */
-//	DMAMUX1->CFR = 1 << 1;
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
-
 	DMA1->LIFCR = 0x3FUL << 6;		// clear interrupts for this stream
-
-	/* Clear DBM bit */
-	//((DMA_Stream_TypeDef *)hdma->Instance)->CR &= (uint32_t)(~DMA_SxCR_DBM);
 
 	DMA1_Stream1->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
 	DMA1_Stream1->PAR = (uint32_t)(&(ADC1->DR));	// Configure the peripheral data register address 0x40022040
 	DMA1_Stream1->M0AR = (uint32_t)(ADC_array);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
 
+/*
 	DMA1_Stream1->CR |= DMA_SxCR_DMEIE;		// Direct mode error interrupt enable
 	DMA1_Stream1->CR |= DMA_SxCR_TEIE;		// Transfer error interrupt enable
 	DMA1_Stream1->CR |= DMA_SxCR_TCIE;		// Transfer complete interrupt enable
-
-	// S1CR should be 0x12d16
 	DMA1_Stream1->CR |= DMA_SxCR_HTIE;		// Half transfer interrupt enable
 	//0x12d1e
-
+*/
 	DMA1_Stream1->CR |= DMA_SxCR_EN;
-	//0x12d1f
+
+	wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+	  wait_loop_index--;
+	}
 
 	ADC1->CR |= ADC_CR_ADSTART;
 }
