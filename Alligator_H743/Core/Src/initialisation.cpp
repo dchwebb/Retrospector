@@ -105,7 +105,6 @@ void uartSendString(const std::string& s) {
 		while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
 		USART3->TDR = c;
 	}
-
 }
 
 
@@ -209,22 +208,7 @@ void InitADC() {
 
 
 void InitI2S() {
-	/* All AF5
-	743:
-	AF5
-	PC9  I2S_CKIN
-
-	PA4  I2S1_WS
-	PA5  I2S1_CK
-	PA6  I2S1_SDI
-	PA7  I2S1_SDO
-	PA15 I2S1_WS
-	PB3  I2S1_CK
-	PB4  I2S1_SDI
-	PB5  I2S1_SDO
-	PC4  I2S1_MCK
-	PD7  I2S1_SDO
-
+	/* Available I2S2 pins on AF5
 	PA9  I2S2_CK
 	PA11 I2S2_WS
 	PA12 I2S2_CK
@@ -232,45 +216,12 @@ void InitI2S() {
 *	PB10 I2S2_CK
 	PB12 I2S2_WS
 x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
-	PB14 I2S2_SDI
 *	PB15 I2S2_SDO
 	PC1  I2S2_SDO
-	PC2  I2S2_SDI
 	PC3  I2S2_SDO
-	PC6  I2S2_MCK
 	PD3  I2S2_CK
-
-	PD6  I2S3_SDO
-
-	AF6
-	PA4  I2S3_WS
-	PA15 I2S3_WS
-	??PB2 I2S3_SDO
-	PB3  I2S3_CK
-	PB4  I2S3_SDI
-	PC7  I2S3_MCK
-	PC10 I2S3_CK
-	PC11 I2S3_SDI
-	PC12 I2S3_SDO
-
-	AF7
-	PB2  I2S3_SDO
-	PB4  I2S2_WS
-	PB5  I2S3_SDO
-
-	446:
-	PC3 I2S2_SD
-	PC6 I2S2_MCK
-	[PC9 I2S_CKIN]
-
-	62 PB9 I2S2_WS
-	PB10 I2S2_CK
-	33 PB12 I2S2_WS
-	34 PB13 I2S2_CK
-	[PB14 I2S2ext_SD]
-	36 PB15 I2S2_SD
-
 	*/
+
 	//	Enable GPIO and SPI clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
 	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;
@@ -290,11 +241,12 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	// Configure SPI (Shown as SPI2->CGFR in SFR)
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit; 11=Master receive
-//	SPI2->I2SCFGR |= SPI2_I2SCFGR_I2SSTD;			// I2S standard selection:	00=Philips; 01=MSB justified; 10=LSB justified; 11=PCM
-	SPI2->I2SCFGR |= SPI_I2SCFGR_DATLEN_1;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit FIXME - more efficient to use 16bit packed into 32 bits?
+
+	// Use a 16bit data length but pack into the upper 16 bits of a 32 bit word
+	SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
 	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
 
-	/* currently 240MHz
+	/* I2S Clock currently 240MHz
 	000: pll1_q_ck clock selected as SPI/I2S1,2 and 3 kernel clock (default after reset)
 	001: pll2_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
 	010: pll3_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
@@ -303,12 +255,10 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	//RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL;
 
 	I2S Prescaler Clock calculations:
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32  * ((2 * (78/2)) + 0))
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
 	*/
-	//
-	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);		// Set I2SDIV to 78/2 = 39 with no Odd factor prescaler
 
-	//SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;				// Enable I2S
+	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 39 with no Odd factor prescaler
 	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
