@@ -15,6 +15,7 @@ void InitUART();
 void uartSendChar(char c);
 void uartSendString(const std::string& s);
 void InitADC();
+void InitI2S();
 
 /*
 void InitMCO2();
@@ -25,6 +26,6 @@ void InitSPI();
 void InitSPITimer();
 void sendSPIData(uint16_t data);
 void clearSPI();
-void InitI2S();
+
 void sendI2SData(uint32_t data);
 */

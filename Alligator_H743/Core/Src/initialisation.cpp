@@ -107,66 +107,7 @@ void uartSendString(const std::string& s) {
 	}
 
 }
-/*
-// 743 - see p695
-void InitADC() {
-	//	Setup Timer 2 to trigger ADC
-	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;			// Enable Timer 2 clock
-	TIM2->CR2 |= TIM_CR2_MMS_2;						// 100: Compare - OC1REF signal is used as trigger output (TRGO)
-	TIM2->PSC = 20 - 1;								// Prescaler
-	TIM2->ARR = 50 - 1;								// Auto-reload register (ie reset counter) divided by 100
-	TIM2->CCR1 = 50 - 1;							// Capture and compare - ie when counter hits this number PWM high
-	TIM2->CCER |= TIM_CCER_CC1E;					// Capture/Compare 1 output enable
-	TIM2->CCMR1 |= TIM_CCMR1_OC1M_1 |TIM_CCMR1_OC1M_2;		// 110 PWM Mode 1
-	TIM2->CR1 |= TIM_CR1_CEN;
 
-	// Enable ADC1 and GPIO clock sources
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
-
-	// Enable ADC - PC0 ADC123_INP10
-	GPIOC->MODER |= GPIO_MODER_MODER10;				// Set to Analog mode (0b11)
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_10;				// ADC channel preselection register
-	//GPIOA->MODER |= GPIO_MODER_MODER5;			// Set PA5 to Analog mode (0b11)
-	//GPIOA->MODER |= GPIO_MODER_MODER0;			// Set PA0 to Analog mode (0b11)
-
-	//ADC1->CR1 |= ADC_CR1_SCAN;					// Activate scan mode
-	ADC1->SQR1 = (1 - 1) << 20;						// Number of conversions in sequence (set to 3, getting multiple samples for each channel to average)
-	ADC1->SQR1 |= 10 << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
-	//ADC1->SQR3 |= 5 << 5;							// Set 2nd conversion in sequence
-	//ADC1->SQR3 |= 0 << 10;							// Set 3rd conversion in sequence
-
-	// Set to 56 cycles (0b11) sampling speed (SMPR2 Left shift speed 3 x ADC_INx up to input 9; use SMPR1 from 0 for ADC_IN10+)
-	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
-	ADC1->SMPR2 |= 0b110 << ADC_SMPR2_SMP10_Pos;		// Set conversion speed
-
-	ADC1->CFGR |= ADC_CFGR_EOCS;					// The EOC bit is set at the end of each regular conversion. Overrun detection is enabled.
-	ADC1->CFGR |= ADC_CFGR_EXTEN_0;					// ADC hardware trigger 00: Trigger detection disabled; 01: Trigger detection on the rising edge; 10: Trigger detection on the falling edge; 11: Trigger detection on both the rising and falling edges
-	ADC1->CFGR |= ADC_CFGR_EXTSEL_0 | ADC_CFGR_EXTSEL_1 | ADC_CFGR_EXTSEL_3;	// ADC External trigger: 1011: Timer 2 TRGO
-
-	// Enable DMA - DMA2, Channel 0, Stream 0  = ADC1 (Manual p207)
-	ADC1->CR2 |= ADC_CR2_DMA;						// Enable DMA Mode on ADC1
-	ADC1->CR2 |= ADC_CR2_DDS;						// DMA requests are issued as long as data are converted and DMA=1
-	RCC->AHB1ENR|= RCC_AHB1ENR_DMA2EN;
-
-	DMA2_Stream4->CR &= ~DMA_SxCR_DIR;				// 00 = Peripheral-to-memory
-	DMA2_Stream4->CR |= DMA_SxCR_PL_1;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
-	DMA2_Stream4->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	DMA2_Stream4->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	DMA2_Stream4->CR &= ~DMA_SxCR_PINC;				// Peripheral not in increment mode
-	DMA2_Stream4->CR |= DMA_SxCR_MINC;				// Memory in increment mode
-	DMA2_Stream4->CR |= DMA_SxCR_CIRC;				// circular mode to keep refilling buffer
-	DMA2_Stream4->CR &= ~DMA_SxCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
-
-	DMA2_Stream4->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
-	DMA2_Stream4->PAR = (uint32_t)(&(ADC1->DR));	// Configure the peripheral data register address
-	DMA2_Stream4->M0AR = (uint32_t)(ADC_array);		// Configure the memory address (note that M1AR is used for double-buffer mode)
-	DMA2_Stream4->CR &= ~DMA_SxCR_CHSEL;			// channel select to 0 for ADC1
-
-	DMA2_Stream4->CR |= DMA_SxCR_EN;				// Enable DMA2
-	ADC1->CR |= ADC_CR_ADEN;						// Activate ADC
-}
-*/
 
 void InitADC() {
 	// ADC PA6 ADC12_INP3
@@ -177,11 +118,12 @@ void InitADC() {
 	//SCB_EnableDCache();
 
 	// Configure clocks
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
 
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
-	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection
+	// FIXME - currently ADC clock is set to HSI - might be more accurate to use HSE
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
 	// Initialize ADC peripheral
@@ -246,7 +188,7 @@ void InitADC() {
 	while ((ADC1->ISR & ADC_ISR_ADRDY) == 0) {}
 
 	// With DMA, overrun event is always considered as an error even if hadc->Init.Overrun is set to ADC_OVR_DATA_OVERWRITTEN. Therefore, ADC_IT_OVR is enabled.
-	ADC1->IER |= ADC_IER_OVRIE;
+	//ADC1->IER |= ADC_IER_OVRIE;
 
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
 	DMA1->LIFCR = 0x3FUL << 6;		// clear interrupts for this stream
@@ -262,4 +204,111 @@ void InitADC() {
 	}
 
 	ADC1->CR |= ADC_CR_ADSTART;						// Start ADC
+}
+
+
+
+void InitI2S() {
+	/* All AF5
+	743:
+	AF5
+	PC9  I2S_CKIN
+
+	PA4  I2S1_WS
+	PA5  I2S1_CK
+	PA6  I2S1_SDI
+	PA7  I2S1_SDO
+	PA15 I2S1_WS
+	PB3  I2S1_CK
+	PB4  I2S1_SDI
+	PB5  I2S1_SDO
+	PC4  I2S1_MCK
+	PD7  I2S1_SDO
+
+	PA9  I2S2_CK
+	PA11 I2S2_WS
+	PA12 I2S2_CK
+*	PB9  I2S2_WS
+*	PB10 I2S2_CK
+	PB12 I2S2_WS
+x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
+	PB14 I2S2_SDI
+*	PB15 I2S2_SDO
+	PC1  I2S2_SDO
+	PC2  I2S2_SDI
+	PC3  I2S2_SDO
+	PC6  I2S2_MCK
+	PD3  I2S2_CK
+
+	PD6  I2S3_SDO
+
+	AF6
+	PA4  I2S3_WS
+	PA15 I2S3_WS
+	??PB2 I2S3_SDO
+	PB3  I2S3_CK
+	PB4  I2S3_SDI
+	PC7  I2S3_MCK
+	PC10 I2S3_CK
+	PC11 I2S3_SDI
+	PC12 I2S3_SDO
+
+	AF7
+	PB2  I2S3_SDO
+	PB4  I2S2_WS
+	PB5  I2S3_SDO
+
+	446:
+	PC3 I2S2_SD
+	PC6 I2S2_MCK
+	[PC9 I2S_CKIN]
+
+	62 PB9 I2S2_WS
+	PB10 I2S2_CK
+	33 PB12 I2S2_WS
+	34 PB13 I2S2_CK
+	[PB14 I2S2ext_SD]
+	36 PB15 I2S2_SD
+
+	*/
+	//	Enable GPIO and SPI clocks
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;
+
+	// PB9: I2S2_WS [alternate function AF5]
+	GPIOB->MODER &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
+	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (I2S2)
+
+	// PB10 I2S2_CK [alternate function AF5]
+	GPIOB->MODER &= ~GPIO_MODER_MODE10_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL10_Pos;	// Alternate Function 5 (I2S2)
+
+	// PB15 I2S2_SDO [alternate function AF5]
+	GPIOB->MODER &= ~GPIO_MODER_MODE15_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL15_Pos;	// Alternate Function 5 (I2S2)
+
+	// Configure SPI (Shown as SPI2->CGFR in SFR)
+	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
+	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit; 11=Master receive
+//	SPI2->I2SCFGR |= SPI2_I2SCFGR_I2SSTD;			// I2S standard selection:	00=Philips; 01=MSB justified; 10=LSB justified; 11=PCM
+	SPI2->I2SCFGR |= SPI_I2SCFGR_DATLEN_1;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit FIXME - more efficient to use 16bit packed into 32 bits?
+	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
+
+	/* currently 240MHz
+	000: pll1_q_ck clock selected as SPI/I2S1,2 and 3 kernel clock (default after reset)
+	001: pll2_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
+	010: pll3_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
+	011: I2S_CKIN clock selected as SPI/I2S1,2 and 3 kernel clock
+	100: per_ck clock selected as SPI/I2S1,2 and 3 kernel clock
+	//RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL;
+
+	I2S Prescaler Clock calculations:
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32  * ((2 * (78/2)) + 0))
+	*/
+	//
+	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);		// Set I2SDIV to 78/2 = 39 with no Odd factor prescaler
+
+	//SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;				// Enable I2S
+	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
+	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
