@@ -100,10 +100,13 @@ void uartSendChar(char c) {
 	USART3->TDR = c;
 }
 
-void uartSendString(const std::string& s) {
-	for (char c : s) {
+void uartSendString(const char* s) {
+	char c = s[0];
+	uint8_t i = 0;
+	while (c) {
 		while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
 		USART3->TDR = c;
+		c = s[++i];
 	}
 }
 

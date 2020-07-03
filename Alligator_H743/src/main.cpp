@@ -6,7 +6,7 @@ extern uint32_t SystemCoreClock;
 volatile uint8_t uartCmdPos = 0;
 volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
-std::string pendingCmd;
+char pendingCmd[50];
 
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
@@ -42,23 +42,24 @@ int main(void) {
 			SPI2->TXDR = i2sOut;
 		}
 
-		// Check if a UART command has been received
+		// Check if a UART command has been received and copy to pending command
 		if (uartCmdRdy) {
-			std::stringstream ss;
-			for (uint8_t c = 0; c < 22; ++c) {
+			for (uint8_t c = 0; c < 50; ++c) {
 				if (uartCmd[c] == 10) {
-					pendingCmd = ss.str();
+					pendingCmd[c] = 0;
 					break;
 				}
 				else
-					ss << uartCmd[c];
+					pendingCmd[c] = uartCmd[c];
 			}
 			uartCmdRdy = false;
 		}
 
-		if (!pendingCmd.empty()) {
-			uartSendString("Received: " + pendingCmd + '\n');
-			pendingCmd.clear();
+		if (pendingCmd[0]) {
+			uartSendString("Received: ");
+			uartSendString(pendingCmd);
+			uartSendString("\n");
+			pendingCmd[0] = 0;
 		}
 
 	}
