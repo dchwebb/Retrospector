@@ -1,7 +1,7 @@
 #include "initialisation.h"
 
 // USART Decoder
-void USART3_IRQHandler(void) {
+void USART3_IRQHandler() {
 	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
 	if (!uartCmdRdy) {
 		uartCmd[uartCmdPos] = USART3->RDR; 				// accessing RDR automatically resets the receive flag
@@ -12,6 +12,21 @@ void USART3_IRQHandler(void) {
 			uartCmdPos++;
 		}
 	}
+}
+
+// I2S Interrupt
+void SPI2_IRQHandler() {
+
+	sampleClock = !sampleClock;
+	if (sampleClock)
+		SPI2->TXDR = (int32_t)(1.45f * (float)(ADC_array[1] - 32768));		// Left Channel
+	else
+		SPI2->TXDR = 32768;													// Right Channel
+
+	if ((GPIOB->ODR & GPIO_ODR_OD7) == 0)
+		GPIOB->ODR |= GPIO_ODR_OD7;
+	else
+		GPIOB->ODR &= ~GPIO_ODR_OD7;
 }
 
 // System interrupts

@@ -6,6 +6,7 @@ extern uint32_t SystemCoreClock;
 volatile uint8_t uartCmdPos = 0;
 volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
+volatile bool sampleClock = false;
 char pendingCmd[50];
 
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
@@ -39,7 +40,8 @@ int main(void) {
 			if (i2sOut < -32000) {
 				i2sOut = 32000;
 			}
-			SPI2->TXDR = i2sOut;
+			//SPI2->TXDR = i2sOut;
+			//SPI2->TXDR = (int32_t)(1.45f * (float)(ADC_array[1] - 32000));
 		}
 
 		// Check if a UART command has been received and copy to pending command

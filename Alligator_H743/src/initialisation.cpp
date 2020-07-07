@@ -112,7 +112,7 @@ void uartSendString(const char* s) {
 
 
 void InitADC() {
-	// ADC PA6 ADC12_INP3
+	// PA6 ADC12_INP3 | PC0 ADC123_INP10
 
 	// Enable instruction and data cache - core_cm7.h
 	// See https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
@@ -260,8 +260,15 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	I2S Prescaler Clock calculations:
 	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
 	*/
-
 	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 39 with no Odd factor prescaler
+
+	// Enable interrupt when TxFIFO threshold reached
+	SPI2->IER |= SPI_IER_TXPIE;
+	NVIC_SetPriority(SPI2_IRQn, 2);					// Lower is higher priority
+	NVIC_EnableIRQ(SPI2_IRQn);
+	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// FIXME Use LED on PB7 for testing interrupt
+
+
 	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
