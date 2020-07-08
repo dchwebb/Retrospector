@@ -1,4 +1,5 @@
 #include "initialisation.h"
+#include "samples.h"
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -6,13 +7,28 @@ extern uint32_t SystemCoreClock;
 volatile uint8_t uartCmdPos = 0;
 volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
-volatile bool sampleClock = false;
+
+int16_t samples[SAMPLE_BUFFER_LENGTH];
+int32_t readPos;
+int32_t writePos = 5;
+
+int32_t newReadPos;
+int32_t dampedDelay;
+
+int32_t currentDelay;
+int32_t nrp;
+int32_t rp;
+
+
+int16_t samplePlayback;
+bool sampleClock = false;
+
 char pendingCmd[50];
 
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
-int16_t i2sInc = -10;
-int32_t i2sOut = 0;
+
+//samples Samples;
 
 extern "C" {
 #include "interrupts.h"
@@ -30,19 +46,6 @@ int main(void) {
 
 	while (1) {
 
-		if ((SPI2->SR & SPI_SR_TXP) == SPI_SR_TXP) {		// TXP: Tx-packet space available
-			i2sOut += i2sInc;
-/*
-			if (i2sOut > 32000 || i2sOut < -32000) {
-				inc *= -1;
-			}
-*/
-			if (i2sOut < -32000) {
-				i2sOut = 32000;
-			}
-			//SPI2->TXDR = i2sOut;
-			//SPI2->TXDR = (int32_t)(1.45f * (float)(ADC_array[1] - 32000));
-		}
 
 		// Check if a UART command has been received and copy to pending command
 		if (uartCmdRdy) {
@@ -66,3 +69,4 @@ int main(void) {
 
 	}
 }
+

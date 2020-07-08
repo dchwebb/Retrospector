@@ -112,7 +112,7 @@ void uartSendString(const char* s) {
 
 
 void InitADC() {
-	// PA6 ADC12_INP3 | PC0 ADC123_INP10
+	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
 
 	// Enable instruction and data cache - core_cm7.h
 	// See https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
@@ -169,21 +169,25 @@ void InitADC() {
 	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
 
 	// For scan mode: set number of channels to be converted
-	ADC1->SQR1 |= (2 - 1);
+	ADC1->SQR1 |= (ADC_BUFFER_LENGTH - 1);
 
 	// Start calibration
 	ADC1->CR |= ADC_CR_ADCAL;
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
-	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC0 ADC123_INP10
+	/*--------------------------------------------------------------------------------------------*/
+	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
 	ADC1->SQR1 |= 3  << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_10;				// ADC channel preselection register
 	ADC1->SQR1 |= 10 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
+	ADC1->SQR1 |= 15 << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP10_Pos;	// Set conversion speed
+	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
