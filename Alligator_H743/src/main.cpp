@@ -8,19 +8,20 @@ volatile uint8_t uartCmdPos = 0;
 volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
 
-int16_t samples[SAMPLE_BUFFER_LENGTH];
+//int16_t samples[SAMPLE_BUFFER_LENGTH];
 int32_t readPos;
 int32_t writePos = 5;
 
 int32_t newReadPos;
 int32_t dampedDelay;
-
+uint8_t delayCrossfade;
 int32_t currentDelay;
-int32_t nrp;
-int32_t rp;
+int32_t lastSample;
 
+int32_t debugVal;
+int32_t debugC;
+int32_t debugD;
 
-int16_t samplePlayback;
 bool sampleClock = false;
 
 char pendingCmd[50];
@@ -28,7 +29,7 @@ char pendingCmd[50];
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
 
-//samples Samples;
+samples Samples;
 
 extern "C" {
 #include "interrupts.h"
@@ -42,6 +43,9 @@ int main(void) {
 	InitSysTick();
 	InitUART();
 	InitADC();
+
+	dampedDelay = ADC_array[2];
+
 	InitI2S();
 
 	while (1) {

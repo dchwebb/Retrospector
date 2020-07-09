@@ -1,5 +1,4 @@
-#include "initialisation.h"
-#include <algorithm>
+
 
 // USART Decoder
 void USART3_IRQHandler() {
@@ -20,31 +19,34 @@ void SPI2_IRQHandler() {
 
 	sampleClock = !sampleClock;
 	if (sampleClock) {
-		SPI2->TXDR = (int32_t)(samples[readPos]);		// Left Channel
-		samples[writePos] = (int16_t)ADC_array[1] - 32767;
-		samplePlayback = samples[readPos];
-		if (++writePos == SAMPLE_BUFFER_LENGTH) 	writePos = 0;
-		if (++readPos == SAMPLE_BUFFER_LENGTH)	readPos = 0;
+		Samples.samples[writePos] = (int16_t)ADC_array[1] - 32767;
 
-		dampedDelay = std::max((31 * dampedDelay + ((int32_t)ADC_array[2] - 100)) >> 5, 0);
-		newReadPos = writePos - dampedDelay;
-
-		if (newReadPos < 0) {
-			newReadPos = 65536 + newReadPos;
+		// Cross fade if moving playback position
+		int32_t playSample = Samples.samples[readPos];
+		int32_t diff = playSample - lastSample;
+		if (delayCrossfade > 0) {		// && SysTickVal > 2000
+			if (std::abs(diff) > 500) {
+				playSample = lastSample + (diff) / 32;
+				--delayCrossfade;
+			} else {
+				delayCrossfade = 0;
+			}
 		}
+		SPI2->TXDR = playSample;		// Left Channel
+		lastSample = playSample;
 
-		// Work out if new position has changed enough (hysteresis) to move read head (factoring in circular buffer size)
-#define delayHysteresis 100
-		if ((newReadPos > readPos && SAMPLE_BUFFER_LENGTH - newReadPos + readPos > delayHysteresis && newReadPos - readPos > delayHysteresis) ||
-			(newReadPos < readPos && SAMPLE_BUFFER_LENGTH - readPos + newReadPos > delayHysteresis && readPos - newReadPos > delayHysteresis)) {
+		if (++writePos == SAMPLE_BUFFER_LENGTH) 	writePos = 0;
+		if (++readPos == SAMPLE_BUFFER_LENGTH)		readPos = 0;
 
-			// Debug data
+		dampedDelay = std::max((31 * dampedDelay + ((int32_t)ADC_array[2] - 150)) >> 5, 0L);
+
+		if (std::abs(dampedDelay - currentDelay) > Samples.delayHysteresis) {
+			delayCrossfade = 32;
+			readPos = writePos - dampedDelay;
+			if (readPos < 0) {
+				readPos = 65536 + readPos;
+			}
 			currentDelay = dampedDelay;
-			nrp = newReadPos;
-			rp = readPos;
-
-			readPos = newReadPos;
-
 		}
 
 
