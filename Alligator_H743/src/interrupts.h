@@ -18,53 +18,23 @@ void USART3_IRQHandler() {
 void SPI2_IRQHandler() {
 
 	sampleClock = !sampleClock;
+
 	if (sampleClock) {
-		DigitalDelay.samples[writePos] = (int16_t)ADC_array[1] - adcZeroOffset;
-
-		// Cross fade if moving playback position
-		int32_t playSample = DigitalDelay.samples[readPos];
-		if (delayCrossfade > 0) {		// && SysTickVal > 2000
-			int32_t diff = playSample - lastSample;
-			if (std::abs(diff) > 500) {
-				playSample = lastSample + (diff) / DigitalDelay.crossFade;
-				--delayCrossfade;
-			} else {
-				delayCrossfade = 0;
-			}
-		}
-		SPI2->TXDR = playSample;		// Left Channel
-		lastSample = playSample;
-
-		if (++writePos == SAMPLE_BUFFER_LENGTH) 	writePos = 0;
-		if (++readPos == SAMPLE_BUFFER_LENGTH)		readPos = 0;
-
-		dampedDelay = std::max((31 * dampedDelay + ((int32_t)ADC_array[2] - 150)) >> 5, 0L);
-
-		if (std::abs(dampedDelay - currentDelay) > DigitalDelay.delayHysteresis) {
-			delayChanged = 1000;
-			currentDelay = dampedDelay;
-		}
-
-		if (delayChanged > 0) {
-			if (delayChanged == 1) {
-				delayCrossfade = DigitalDelay.crossFade;
-				readPos = writePos - dampedDelay;
-				if (readPos < 0) {
-					readPos = 65536 + readPos;
-				}
-			}
-			--delayChanged;
-		}
-
-
+		DigitalDelay.samples[DigitalDelay.writePos] = (int16_t)ADC_array[1] - adcZeroOffset;
+		SPI2->TXDR = DigitalDelay.calcSample();		// Left Channel
 	} else {
-		SPI2->TXDR = 32768;													// Right Channel
+		SPI2->TXDR = 32768;				// Right Channel
 	}
 
-	if ((GPIOB->ODR & GPIO_ODR_OD7) == 0)
-		GPIOB->ODR |= GPIO_ODR_OD7;
+	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
+
+	if ((GPIOB->ODR & GPIO_ODR_OD8) == 0)
+		GPIOB->ODR |= GPIO_ODR_OD8;
 	else
-		GPIOB->ODR &= ~GPIO_ODR_OD7;
+		GPIOB->ODR &= ~GPIO_ODR_OD8;
+
+
+	nextSample = true;		// request next sample be prepared
 }
 
 // System interrupts

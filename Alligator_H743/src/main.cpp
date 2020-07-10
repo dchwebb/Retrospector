@@ -11,21 +11,23 @@ volatile bool uartCmdRdy = false;
 //int16_t samples[SAMPLE_BUFFER_LENGTH];
 uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 
-int32_t readPos;
-int32_t writePos = 5;
+//int32_t readPos;
+//int32_t writePos = 5;
 
 int32_t newReadPos;
-int32_t dampedDelay;
-int16_t delayChanged;
-uint8_t delayCrossfade;
-int32_t currentDelay;
-int32_t lastSample;
+
+
+
+
+int32_t playSample;
+
 
 int32_t debugVal;
 int32_t debugC;
 int32_t debugD;
 
-bool sampleClock = false;
+volatile bool sampleClock = false;
+bool nextSample = false;
 
 char pendingCmd[50];
 
@@ -47,12 +49,19 @@ int main(void) {
 	InitUART();
 	InitADC();
 
-	dampedDelay = ADC_array[2];
+	//dampedDelay = ADC_array[2];
 
 	InitI2S();
 
 	while (1) {
+		// DAC signals that it is ready for the next sample
+/*		if (nextSample) {
+			nextSample = false;
+			if (!sampleClock) {
+				playSample = DigitalDelay.calcSample();
+			}
 
+		}*/
 
 		// Check if a UART command has been received and copy to pending command
 		if (uartCmdRdy) {
