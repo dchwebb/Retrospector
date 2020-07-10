@@ -1,5 +1,5 @@
 #include "initialisation.h"
-#include "samples.h"
+#include "digitalDelay.h"
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -9,6 +9,8 @@ volatile char uartCmd[50];
 volatile bool uartCmdRdy = false;
 
 //int16_t samples[SAMPLE_BUFFER_LENGTH];
+uint16_t adcZeroOffset = 34067;		// 0V ADC reading
+
 int32_t readPos;
 int32_t writePos = 5;
 
@@ -30,7 +32,7 @@ char pendingCmd[50];
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
 
-samples Samples;
+digitalDelay DigitalDelay;
 
 extern "C" {
 #include "interrupts.h"

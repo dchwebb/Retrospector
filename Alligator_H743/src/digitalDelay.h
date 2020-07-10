@@ -1,6 +1,6 @@
 #include "initialisation.h"
 
-class samples {
+class digitalDelay {
 public:
 	int16_t samples[SAMPLE_BUFFER_LENGTH];
 	uint32_t readPosition = 10;
