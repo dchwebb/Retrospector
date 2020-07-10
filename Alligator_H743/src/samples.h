@@ -7,4 +7,5 @@ public:
 	uint32_t writePosition = 0;
 	bool sampleClock = false;
 	const int16_t delayHysteresis = 100;
+	const int16_t crossFade = 32;
 };

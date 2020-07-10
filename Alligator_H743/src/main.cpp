@@ -14,6 +14,7 @@ int32_t writePos = 5;
 
 int32_t newReadPos;
 int32_t dampedDelay;
+int16_t delayChanged;
 uint8_t delayCrossfade;
 int32_t currentDelay;
 int32_t lastSample;

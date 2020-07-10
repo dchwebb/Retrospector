@@ -23,10 +23,10 @@ void SPI2_IRQHandler() {
 
 		// Cross fade if moving playback position
 		int32_t playSample = Samples.samples[readPos];
-		int32_t diff = playSample - lastSample;
 		if (delayCrossfade > 0) {		// && SysTickVal > 2000
+			int32_t diff = playSample - lastSample;
 			if (std::abs(diff) > 500) {
-				playSample = lastSample + (diff) / 32;
+				playSample = lastSample + (diff) / Samples.crossFade;
 				--delayCrossfade;
 			} else {
 				delayCrossfade = 0;
@@ -41,12 +41,19 @@ void SPI2_IRQHandler() {
 		dampedDelay = std::max((31 * dampedDelay + ((int32_t)ADC_array[2] - 150)) >> 5, 0L);
 
 		if (std::abs(dampedDelay - currentDelay) > Samples.delayHysteresis) {
-			delayCrossfade = 32;
-			readPos = writePos - dampedDelay;
-			if (readPos < 0) {
-				readPos = 65536 + readPos;
-			}
+			delayChanged = 1000;
 			currentDelay = dampedDelay;
+		}
+
+		if (delayChanged > 0) {
+			if (delayChanged == 1) {
+				delayCrossfade = Samples.crossFade;
+				readPos = writePos - dampedDelay;
+				if (readPos < 0) {
+					readPos = 65536 + readPos;
+				}
+			}
+			--delayChanged;
 		}
 
 
