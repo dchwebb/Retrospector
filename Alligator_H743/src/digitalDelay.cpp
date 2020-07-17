@@ -29,7 +29,8 @@ int32_t digitalDelay::calcSample() {
 
 	// Change delay times after a pause to avoid pitched artifacts
 	if (std::abs(dampedDelay - currentDelay) > delayHysteresis) {
-		delayChanged = 1000;
+		if (delayChanged == 0)
+			delayChanged = 1000;
 		currentDelay = dampedDelay;
 	}
 
@@ -38,7 +39,7 @@ int32_t digitalDelay::calcSample() {
 			delayCrossfade = crossFade;
 			readPos = writePos - dampedDelay;
 			if (readPos < 0) {
-				readPos = 65536 + readPos;
+				readPos = SAMPLE_BUFFER_LENGTH + readPos;
 			}
 		}
 		--delayChanged;
