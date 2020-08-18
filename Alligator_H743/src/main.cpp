@@ -1,12 +1,20 @@
 #include "initialisation.h"
 #include "digitalDelay.h"
+#include "USB.h"
+#include "CDCHandler.h"
+#include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
 
-volatile uint8_t uartCmdPos = 0;
-volatile char uartCmd[50];
-volatile bool uartCmdRdy = false;
+// As this is called from an interrupt assign the command to a variable so it can be handled in the main loop
+bool CmdPending = false;
+std::string ComCmd;
+
+void CDCHandler(uint8_t* data, uint32_t length) {
+	ComCmd = std::string((char*)data, length);
+	CmdPending = true;
+}
 
 //int16_t samples[SAMPLE_BUFFER_LENGTH];
 uint16_t adcZeroOffset = 34067;		// 0V ADC reading
@@ -15,16 +23,14 @@ uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 //int32_t writePos = 5;
 
 int32_t newReadPos;
-
-
-
-
 int32_t playSample;
 
 
 int32_t debugVal;
 int32_t debugC;
 int32_t debugD;
+
+bool USBDebug;
 
 volatile bool sampleClock = false;
 bool nextSample = false;
@@ -33,7 +39,7 @@ char pendingCmd[50];
 
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
-
+USB usb;
 digitalDelay DigitalDelay;
 
 extern "C" {
@@ -48,8 +54,8 @@ int main(void) {
 	InitSysTick();
 	InitUART();
 	InitADC();
-
-	//dampedDelay = ADC_array[2];
+	usb.InitUSB();
+	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitI2S();
 
@@ -76,6 +82,7 @@ int main(void) {
 			uartCmdRdy = false;
 		}
 
+		// Handle UART Commands from STLink
 		if (pendingCmd[0]) {
 			uartSendString("Received: ");
 			uartSendString(pendingCmd);
@@ -83,6 +90,22 @@ int main(void) {
 			pendingCmd[0] = 0;
 		}
 
+		// Check for incoming CDC commands
+		if (CmdPending) {
+			if (!CDCCommand(ComCmd)) {
+				usb.SendString("Unrecognised command. Type 'help' for supported commands\n");
+			}
+			CmdPending = false;
+		}
+
+#if (USB_DEBUG)
+		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
+			USBDebug = true;
+			usb.OutputDebug();
+		} else {
+			USBDebug = false;
+		}
+#endif
 	}
 }
 

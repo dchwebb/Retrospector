@@ -12,7 +12,7 @@ extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 void SystemClock_Config();
 void InitSysTick();
-void InitUART();
+//void InitUART();
 void uartSendChar(char c);
 void uartSendString(const char* s);
 void InitADC();

@@ -1,6 +1,8 @@
+void OTG_FS_IRQHandler(void) {
+	usb.USBInterruptHandler();
+}
 
-
-// USART Decoder
+/*// USART Decoder
 void USART3_IRQHandler() {
 	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
 	if (!uartCmdRdy) {
@@ -12,7 +14,7 @@ void USART3_IRQHandler() {
 			uartCmdPos++;
 		}
 	}
-}
+}*/
 
 // I2S Interrupt
 void SPI2_IRQHandler() {
