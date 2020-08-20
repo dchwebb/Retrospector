@@ -16,6 +16,14 @@ void CDCHandler(uint8_t* data, uint32_t length) {
 	CmdPending = true;
 }
 
+void BootDFU() {
+	//SCB_DisableDCache();
+	__disable_irq();
+	*((unsigned long *)0x2407FFF0) = 0xDEADBEEF; // 512KB STM32H7xx
+	__DSB();
+	NVIC_SystemReset();
+}
+
 //int16_t samples[SAMPLE_BUFFER_LENGTH];
 uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 
@@ -47,8 +55,6 @@ extern "C" {
 }
 
 int main(void) {
-	//NVIC_SetPriorityGrouping(3);
-
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
@@ -84,6 +90,9 @@ int main(void) {
 
 		// Handle UART Commands from STLink
 		if (pendingCmd[0]) {
+			if (strcmp(pendingCmd, "dfu") == 0) {
+				BootDFU();
+			}
 			uartSendString("Received: ");
 			uartSendString(pendingCmd);
 			uartSendString("\n");
@@ -106,6 +115,7 @@ int main(void) {
 			USBDebug = false;
 		}
 #endif
+
 	}
 }
 
