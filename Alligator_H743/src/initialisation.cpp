@@ -69,25 +69,6 @@ void InitSysTick() {
 }
 
 
-
-
-
-void uartSendChar(char c) {
-	while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
-	USART3->TDR = c;
-}
-
-void uartSendString(const char* s) {
-	char c = s[0];
-	uint8_t i = 0;
-	while (c) {
-		while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
-		USART3->TDR = c;
-		c = s[++i];
-	}
-}
-
-
 void InitADC() {
 	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
 

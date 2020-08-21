@@ -16,6 +16,7 @@ void CDCHandler(uint8_t* data, uint32_t length) {
 	CmdPending = true;
 }
 
+// Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 void BootDFU() {
 	//SCB_DisableDCache();
 	__disable_irq();

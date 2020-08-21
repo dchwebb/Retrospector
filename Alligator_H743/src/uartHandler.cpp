@@ -5,7 +5,6 @@ volatile char uartCmd[100];
 volatile bool uartCmdRdy = false;
 
 // Manages communication to ST Link debugger UART
-
 void InitUART() {
 	// H743 Nucelo STLink connects virtual COM port to PD8 (USART3 TX) and PD9 (USART3 RX)
 
@@ -14,7 +13,7 @@ void InitUART() {
 
 	GPIOD->MODER &= ~GPIO_MODER_MODE8_0;			// Set alternate function on PD8
 	GPIOD->AFR[1] |= 7 << GPIO_AFRH_AFSEL8_Pos;		// Alternate function on PD8 for USART3_TX is AF7
-	GPIOD->MODER &= ~GPIO_MODER_MODE9_0;			// Set alternate function on PA10
+	GPIOD->MODER &= ~GPIO_MODER_MODE9_0;			// Set alternate function on PD9
 	GPIOD->AFR[1] |= 7 << GPIO_AFRH_AFSEL9_Pos;		// Alternate function on PD9 for USART3_RX is AF7
 
 	// By default clock source is muxed to peripheral clock 1 which is system clock / 4 (change clock source in RCC->D2CCIP2R)
@@ -32,17 +31,9 @@ void InitUART() {
 
 	USART3->CR1 |= USART_CR1_UE;					// USART Enable
 
-/*
-	// configure PA0 user button on nucleo board
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
-	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPD0_0;				// Set pin to pull up:  01 Pull-up; 10 Pull-down; 11 Reserved
-*/
-
-	// configure PA0 user button on nucleo board
+	// configure PC13 user button on nucleo board
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
 	GPIOC->MODER &= ~GPIO_MODER_MODE13_Msk;
-	//GPIOC->PUPDR |= GPIO_PUPDR_PUPD13_0;				// Set pin to pull up:  01 Pull-up; 10 Pull-down; 11 Reserved
 
 }
 
@@ -68,7 +59,22 @@ std::string HexByte(const uint16_t& v) {
 	return ss.str();
 }
 
-void uartSendStr(const std::string& s) {
+void uartSendChar(char c) {
+	while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
+	USART3->TDR = c;
+}
+
+void uartSendString(const char* s) {
+	char c = s[0];
+	uint8_t i = 0;
+	while (c) {
+		while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
+		USART3->TDR = c;
+		c = s[++i];
+	}
+}
+
+void uartSendString(const std::string& s) {
 	for (char c : s) {
 		while ((USART3->ISR & USART_ISR_TXE_TXFNF) == 0);
 		USART3->TDR = c;
@@ -76,21 +82,9 @@ void uartSendStr(const std::string& s) {
 }
 
 extern "C" {
-/*// Dev board ST Link UART Handler
-void USART3_IRQHandler(void) {
-	if ((USART3->ISR & USART_ISR_TXE_TXFNF) && !uartCmdRdy) {
-		uartCmd[uartCmdPos] = USART3->TDR; 				// accessing DR automatically resets the receive flag
-		if (uartCmd[uartCmdPos] == 10) {
-			uartCmdRdy = true;
-			uartCmdPos = 0;
-		} else {
-			uartCmdPos++;
-		}
-	}
-}*/
+
 // USART Decoder
 void USART3_IRQHandler() {
-	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
 	if (!uartCmdRdy) {
 		uartCmd[uartCmdPos] = USART3->RDR; 				// accessing RDR automatically resets the receive flag
 		if (uartCmd[uartCmdPos] == 10) {
