@@ -31,9 +31,13 @@ uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 //int32_t readPos;
 //int32_t writePos = 5;
 
-int32_t newReadPos;
-int32_t playSample;
-
+//int32_t newReadPos;
+//int32_t playSample;
+int32_t readPos;
+int32_t targetReadPos;
+int32_t writePos;
+int16_t delayChanged;
+uint8_t delayCrossfade;
 
 int32_t debugVal;
 int32_t debugC;
