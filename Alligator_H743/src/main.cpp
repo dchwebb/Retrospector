@@ -38,6 +38,10 @@ int32_t targetReadPos;
 int32_t writePos;
 int16_t delayChanged;
 uint8_t delayCrossfade;
+int32_t currentDelay;
+int32_t dampedDelay;
+
+int32_t ns, s_n, ls, rp, nrp;
 
 int32_t debugVal;
 int32_t debugC;

@@ -5,6 +5,11 @@ extern int32_t targetReadPos;
 extern int32_t writePos;
 extern int16_t delayChanged;
 extern uint8_t delayCrossfade;
+extern int32_t currentDelay;
+extern int32_t dampedDelay;
+extern int32_t ns, s_n, ls, rp, nrp;
+
+extern uint16_t adcZeroOffset;
 
 class digitalDelay {
 public:
@@ -15,8 +20,8 @@ public:
 //	int16_t delayChanged;
 //	uint8_t delayCrossfade;
 
-	int32_t currentDelay;
-	int32_t dampedDelay;
+//	int32_t currentDelay;
+//	int32_t dampedDelay;
 
 	int32_t lastSample;
 	bool sampleUp;
