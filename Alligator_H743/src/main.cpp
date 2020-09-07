@@ -69,10 +69,13 @@ int main(void) {
 	InitSysTick();
 	InitUART();
 	InitADC();
+	InitDAC();
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitI2S();
+
+	DAC1->DHR12R2 = 2048;
 
 	while (1) {
 		// DAC signals that it is ready for the next sample

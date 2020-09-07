@@ -16,6 +16,7 @@ void InitSysTick();
 void uartSendChar(char c);
 void uartSendString(const char* s);
 void InitADC();
+void InitDAC();
 void InitI2S();
 
 

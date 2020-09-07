@@ -69,6 +69,18 @@ void InitSysTick() {
 }
 
 
+void InitDAC() {
+	// DAC1_OUT2 on PA5
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;			// Enable DAC Clock
+
+	DAC1->CR |= DAC_CR_EN2;							// Enable DAC using PA5 (DAC_OUT2)
+	DAC1->MCR &= DAC_MCR_MODE2_Msk;					// Mode = 0 means Buffer activated, Connected to external pin
+	//DAC1->CR |= DAC_CR_TEN2;						// DAC 2 enable trigger
+	//DAC1->CR &= DAC_CR_TSEL2;						// Set trigger to software (0 = Software trigger)
+
+}
+
 void InitADC() {
 	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
 
