@@ -74,15 +74,15 @@ void InitDAC() {
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
 	RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;			// Enable DAC Clock
 
+	DAC1->CR |= DAC_CR_EN1;							// Enable DAC using PA4 (DAC_OUT1)
+	DAC1->MCR &= DAC_MCR_MODE1_Msk;					// Mode = 0 means Buffer activated, Connected to external pin
+
 	DAC1->CR |= DAC_CR_EN2;							// Enable DAC using PA5 (DAC_OUT2)
 	DAC1->MCR &= DAC_MCR_MODE2_Msk;					// Mode = 0 means Buffer activated, Connected to external pin
-	//DAC1->CR |= DAC_CR_TEN2;						// DAC 2 enable trigger
-	//DAC1->CR &= DAC_CR_TSEL2;						// Set trigger to software (0 = Software trigger)
-
 }
 
 void InitADC() {
-	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
+	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15 | PB1 ADC12_INP5
 
 	// Enable instruction and data cache - core_cm7.h
 	// See https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
@@ -91,6 +91,7 @@ void InitADC() {
 
 	// Configure clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
 
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
@@ -146,18 +147,22 @@ void InitADC() {
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
 	/*--------------------------------------------------------------------------------------------*/
-	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15
+	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15 | PB1 ADC12_INP5
+	// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
 	ADC1->SQR1 |= 3  << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_10;				// ADC channel preselection register
 	ADC1->SQR1 |= 10 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
 	ADC1->SQR1 |= 15 << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_5;				// ADC channel preselection register
+	ADC1->SQR1 |= 5  << ADC_SQR1_SQ4_Pos;			// Set 4th conversion in sequence
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP10_Pos;	// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
+	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP5_Pos;		// Set conversion speed
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;

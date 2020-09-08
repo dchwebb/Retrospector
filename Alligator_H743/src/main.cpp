@@ -3,6 +3,7 @@
 #include "USB.h"
 #include "CDCHandler.h"
 #include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
+#include <cmath>
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -46,6 +47,7 @@ int32_t ns, s_n, ls, rp, nrp;
 int32_t debugVal;
 int32_t debugC;
 int32_t debugD;
+float DACLevel;
 
 bool USBDebug;
 
@@ -87,6 +89,10 @@ int main(void) {
 
 		}*/
 
+		// Output mix level
+		DACLevel = (static_cast<float>(ADC_array[3]) / 65536.0f);		// Convert 16 bits to 12 bits
+		DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
+		DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
 
 		// Check if a UART command has been received and copy to pending command
 		if (uartCmdRdy) {

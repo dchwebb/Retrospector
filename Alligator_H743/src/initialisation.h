@@ -6,7 +6,7 @@
 
 extern volatile uint32_t SysTickVal;
 
-#define ADC_BUFFER_LENGTH 3
+#define ADC_BUFFER_LENGTH 4
 #define SAMPLE_BUFFER_LENGTH 65536
 extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
