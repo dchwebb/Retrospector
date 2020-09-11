@@ -22,7 +22,7 @@ void SPI2_IRQHandler() {
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		DigitalDelay.samples[writePos] = (int16_t)ADC_array[1] - adcZeroOffset;
+		DigitalDelay.samples[writePos] = (int16_t)ADC_array[ADC_AudioL] - adcZeroOffset;
 		SPI2->TXDR = DigitalDelay.calcSample();		// Left Channel
 	} else {
 		SPI2->TXDR = 32768;				// Right Channel

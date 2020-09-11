@@ -147,11 +147,11 @@ void InitADC() {
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
 	/*--------------------------------------------------------------------------------------------*/
-	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15 | PB1 ADC12_INP5
+	// Configure ADC Channels to be converted: PA6 ADC12_INP3 | PC1 ADC123_INP11 | PA3 ADC12_INP15 | PB1 ADC12_INP5
 	// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
 	ADC1->SQR1 |= 3  << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_10;				// ADC channel preselection register
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_11;				// ADC channel preselection register
 	ADC1->SQR1 |= 10 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
 	ADC1->SQR1 |= 15 << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
@@ -160,7 +160,7 @@ void InitADC() {
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP10_Pos;	// Set conversion speed
+	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP11_Pos;	// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP5_Pos;		// Set conversion speed
 

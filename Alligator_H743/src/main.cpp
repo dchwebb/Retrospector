@@ -90,7 +90,7 @@ int main(void) {
 		}*/
 
 		// Output mix level
-		DACLevel = (static_cast<float>(ADC_array[3]) / 65536.0f);		// Convert 16 bits to 12 bits
+		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bits to 12 bits
 		DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
 		DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
 
