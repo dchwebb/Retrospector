@@ -195,23 +195,30 @@ void InitI2S() {
 	PA11 I2S2_WS
 	PA12 I2S2_CK
 *	PB9  I2S2_WS
-*	PB10 I2S2_CK
+	PB10 I2S2_CK
 	PB12 I2S2_WS
 x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
-*	PB15 I2S2_SDO
+	PB15 I2S2_SDO
 	PC1  I2S2_SDO
-	PC3  I2S2_SDO
-	PD3  I2S2_CK
+*	PC3  I2S2_SDO
+*	PD3  I2S2_CK
 	*/
 
 	//	Enable GPIO and SPI clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIODEN;			// GPIO port clock
 	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;
 
 	// PB9: I2S2_WS [alternate function AF5]
 	GPIOB->MODER &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
 	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (I2S2)
 
+	// PD3 I2S2_CK [alternate function AF5]
+	GPIOD->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOD->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
+
+/*
 	// PB10 I2S2_CK [alternate function AF5]
 	GPIOB->MODER &= ~GPIO_MODER_MODE10_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL10_Pos;	// Alternate Function 5 (I2S2)
@@ -219,6 +226,12 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	// PB15 I2S2_SDO [alternate function AF5]
 	GPIOB->MODER &= ~GPIO_MODER_MODE15_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL15_Pos;	// Alternate Function 5 (I2S2)
+*/
+
+	// PC3 I2S2_SDO [alternate function AF5]
+	GPIOC->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOC->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
+
 
 	// Configure SPI (Shown as SPI2->CGFR in SFR)
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
