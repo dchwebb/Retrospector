@@ -1197,8 +1197,6 @@ $EndComp
 Wire Wire Line
 	1500 3450 1750 3450
 Wire Wire Line
-	1750 3350 1750 3150
-Wire Wire Line
 	1750 3150 1500 3150
 $Comp
 L Device:C_Small C3
@@ -1362,8 +1360,6 @@ Text Label 4350 7950 0    50   ~ 0
 FMC_D14
 Text Label 4350 8050 0    50   ~ 0
 FMC_D15
-Wire Wire Line
-	2450 1650 2550 1650
 Wire Wire Line
 	2550 8850 2650 8850
 Connection ~ 2550 1650
@@ -1867,9 +1863,6 @@ Wire Wire Line
 	4350 3650 4250 3650
 Wire Wire Line
 	4350 3750 4250 3750
-Wire Wire Line
-	2350 1650 2450 1650
-Connection ~ 2450 1650
 NoConn ~ 1750 3850
 NoConn ~ 1750 3950
 NoConn ~ 1750 4250
@@ -1912,7 +1905,6 @@ NoConn ~ 4250 6750
 NoConn ~ 4250 6850
 NoConn ~ 4250 7250
 NoConn ~ 4250 7450
-NoConn ~ 4250 7550
 NoConn ~ 4250 7650
 NoConn ~ 4250 7750
 NoConn ~ 4250 8150
@@ -2189,17 +2181,17 @@ Text Label 5900 5800 0    50   ~ 0
 EXT_AUDIO_IN_R
 Text Label 5900 5700 0    50   ~ 0
 EXT_AUDIO_IN_L
-Text Label 7450 5700 0    50   ~ 0
+Text Label 7450 5900 0    50   ~ 0
 EXT_AUDIO_OUT_R
-Text Label 7450 5600 0    50   ~ 0
+Text Label 7450 6000 0    50   ~ 0
 EXT_AUDIO_OUT_L
 Text Label 16450 6800 0    50   ~ 0
 EXT_AUDIO_OUT_R
 Text Label 16450 5200 0    50   ~ 0
 EXT_AUDIO_OUT_L
-Text Label 15900 8850 0    50   ~ 0
-WET_OUT_L
 Text Label 15900 9150 0    50   ~ 0
+WET_OUT_L
+Text Label 15900 8850 0    50   ~ 0
 WET_OUT_R
 Text Label 15900 9450 0    50   ~ 0
 DRY_OUT_L
@@ -3243,7 +3235,7 @@ F 3 "~" H 14650 9950 50  0001 C CNN
 	1    14650 9950
 	-1   0    0    1   
 $EndComp
-Text Label 14050 8850 2    50   ~ 0
+Text Label 14050 9150 2    50   ~ 0
 DAC_OUT_AMP_L
 Wire Wire Line
 	14650 10050 14650 10100
@@ -3277,7 +3269,7 @@ Wire Wire Line
 	14450 9850 14450 8850
 Wire Wire Line
 	14750 9550 14750 9600
-Text Label 14050 9150 2    50   ~ 0
+Text Label 14050 8850 2    50   ~ 0
 DAC_OUT_AMP_R
 Wire Wire Line
 	14350 9150 14650 9150
@@ -3517,7 +3509,7 @@ Text Label 5900 7350 0    50   ~ 0
 CLOCK
 Text Label 5900 7250 0    50   ~ 0
 DELAY_POT_L
-Text Label 7450 5800 0    50   ~ 0
+Text Label 7450 6100 0    50   ~ 0
 DELAY_POT_R
 Text Label 5900 7050 0    50   ~ 0
 FEEDBACK_POT
@@ -3595,13 +3587,13 @@ Wire Wire Line
 Connection ~ 10200 3600
 Wire Wire Line
 	14900 1750 14950 1750
-Text Label 5900 5600 0    50   ~ 0
+Text Label 7450 7350 0    50   ~ 0
 DELAY_CHORUS
 Text Notes -1800 4300 0    50   ~ 0
 Delay: Dual Mono, Ping Ping\nChorus: Chorus/Flange (w feedback?)
-Text Label 7450 6100 0    50   ~ 0
-MODE1
 Text Label 7450 6200 0    50   ~ 0
+MODE1
+Text Label 7450 6300 0    50   ~ 0
 MODE2
 $Comp
 L Connector:Conn_01x08_Female J3
@@ -3738,10 +3730,6 @@ F 3 "" H 5900 6300 50  0001 C CNN
 	1    5900 6300
 	0    1    1    0   
 $EndComp
-Text Label 7450 6000 0    50   ~ 0
-ADC12_INP14_PA2
-Text Label 7450 5900 0    50   ~ 0
-ADC12_INP7_PA7
 $Comp
 L power:GNDA #PWR016
 U 1 1 61AFBE71
@@ -3850,7 +3838,6 @@ Wire Wire Line
 	4550 1550 4550 1000
 Wire Wire Line
 	4550 1000 4200 1000
-Connection ~ 3550 1650
 Connection ~ 3900 1000
 Wire Wire Line
 	4750 1000 4750 1650
@@ -4098,4 +4085,35 @@ Text Label 7450 6850 0    50   ~ 0
 LED1
 Text Label 7450 6950 0    50   ~ 0
 LED2
+$Comp
+L power:GND #PWR0113
+U 1 1 60A8280D
+P 7450 5600
+F 0 "#PWR0113" H 7450 5350 50  0001 C CNN
+F 1 "GND" V 7450 5400 50  0000 C CNN
+F 2 "" H 7450 5600 50  0001 C CNN
+F 3 "" H 7450 5600 50  0001 C CNN
+	1    7450 5600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3VA #PWR0124
+U 1 1 60A82817
+P 7450 5700
+F 0 "#PWR0124" H 7450 5550 50  0001 C CNN
+F 1 "+3.3VA" V 7450 5800 50  0000 L CNN
+F 2 "" H 7450 5700 50  0001 C CNN
+F 3 "" H 7450 5700 50  0001 C CNN
+	1    7450 5700
+	0    1    1    0   
+$EndComp
+Text Label 4350 7550 0    50   ~ 0
+DELAY_CHORUS
+Wire Wire Line
+	1750 3250 1750 3150
+Wire Wire Line
+	2450 1650 2550 1650
+Connection ~ 3550 1650
+Wire Wire Line
+	4250 7550 4350 7550
 $EndSCHEMATC
