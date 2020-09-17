@@ -1,4 +1,4 @@
-373600198987201
+375236529050735
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19771,6 +19771,13 @@ Custom_Footprints
 Crystal_SMD
 SMD Crystal HC-49-SD http://cdn-reichelt.de/documents/datenblatt/B400/xxx-HC49-SMD.pdf, 11.4x4.7mm^2 package
 SMD SMT crystal
+0
+2
+2
+Custom_Footprints
+Crystal_SMD_2pin_6.0x3.5mm
+SMD Crystal SERIES SMD0603/2 http://www.petermann-technik.de/fileadmin/petermann/pdf/SMD0603-2.pdf, hand-soldering, 6.0x3.5mm^2 package
+SMD SMT crystal hand-soldering
 0
 2
 2

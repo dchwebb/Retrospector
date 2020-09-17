@@ -16,34 +16,34 @@ $EndDescr
 $Comp
 L Connector:Conn_01x04_Male J1
 U 1 1 5C1668B3
-P 5700 8250
-F 0 "J1" H 5900 7800 50  0000 C CNN
-F 1 "SWD_Header" H 5950 7900 50  0000 C CNN
-F 2 "Custom_Footprints:SWD_header" H 5700 8250 50  0001 C CNN
-F 3 "~" H 5700 8250 50  0001 C CNN
-	1    5700 8250
+P 5650 8250
+F 0 "J1" H 5700 8550 50  0000 C CNN
+F 1 "SWD_Header" H 5900 7900 50  0000 C CNN
+F 2 "Custom_Footprints:SWD_header" H 5650 8250 50  0001 C CNN
+F 3 "~" H 5650 8250 50  0001 C CNN
+	1    5650 8250
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:+3.3V #PWR014
 U 1 1 5C16690B
-P 6000 8100
-F 0 "#PWR014" H 6000 7950 50  0001 C CNN
-F 1 "+3.3V" H 5900 8250 50  0000 L CNN
-F 2 "" H 6000 8100 50  0001 C CNN
-F 3 "" H 6000 8100 50  0001 C CNN
-	1    6000 8100
+P 5950 8100
+F 0 "#PWR014" H 5950 7950 50  0001 C CNN
+F 1 "+3.3V" H 5850 8250 50  0000 L CNN
+F 2 "" H 5950 8100 50  0001 C CNN
+F 3 "" H 5950 8100 50  0001 C CNN
+	1    5950 8100
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR015
 U 1 1 5C166929
-P 6100 8250
-F 0 "#PWR015" H 6100 8000 50  0001 C CNN
-F 1 "GND" V 6105 8122 50  0000 R CNN
-F 2 "" H 6100 8250 50  0001 C CNN
-F 3 "" H 6100 8250 50  0001 C CNN
-	1    6100 8250
+P 6050 8250
+F 0 "#PWR015" H 6050 8000 50  0001 C CNN
+F 1 "GND" V 6055 8122 50  0000 R CNN
+F 2 "" H 6050 8250 50  0001 C CNN
+F 3 "" H 6050 8250 50  0001 C CNN
+	1    6050 8250
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -1033,17 +1033,6 @@ F 3 "http://www.issi.com/WW/pdf/42-45S16400J.pdf" H 6350 4400 50  0001 C CNN
 	1    6950 3150
 	1    0    0    -1  
 $EndComp
-$Comp
-L MCU_ST_STM32H7:STM32H743ZITx U1
-U 1 1 602FD32C
-P 3050 5250
-F 0 "U1" H 4050 1650 50  0000 C CNN
-F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
-F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
-F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
-	1    3050 5250
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	1750 2450 1600 2450
 Wire Wire Line
@@ -1840,17 +1829,17 @@ $EndComp
 Wire Wire Line
 	3450 1650 3550 1650
 Wire Wire Line
-	4350 5450 4250 5450
+	4350 2450 4250 2450
 Wire Wire Line
 	4350 2050 4250 2050
 Wire Wire Line
 	4350 2250 4250 2250
 Wire Wire Line
-	4350 1950 4250 1950
-Text Label -500 2400 2    50   ~ 0
+	4350 2350 4250 2350
+Text Label -500 2000 2    50   ~ 0
 ADC12_INP18_PA4
 Wire Wire Line
-	4350 2450 4250 2450
+	4350 1950 4250 1950
 Text Label -500 1200 2    50   ~ 0
 ADC12_INP19_PA5
 Wire Wire Line
@@ -1878,8 +1867,6 @@ NoConn ~ 1750 6050
 NoConn ~ 1750 6150
 NoConn ~ 1750 6250
 NoConn ~ 1750 6350
-NoConn ~ 1750 7250
-NoConn ~ 1750 7350
 NoConn ~ 1750 7450
 NoConn ~ 1750 7550
 NoConn ~ 1750 7650
@@ -1899,7 +1886,7 @@ NoConn ~ 4250 5550
 NoConn ~ 4250 5150
 NoConn ~ 4250 5950
 NoConn ~ 4250 6250
-NoConn ~ 4250 6550
+NoConn ~ 4250 7550
 NoConn ~ 4250 6650
 NoConn ~ 4250 6750
 NoConn ~ 4250 6850
@@ -1912,25 +1899,25 @@ NoConn ~ 4250 8250
 NoConn ~ 4250 8350
 Text Label -500 1100 2    50   ~ 0
 ADC1_INP16_PA0
-Text Label -500 1800 2    50   ~ 0
-ADC1_INP17_PA1
 Text Label -500 1700 2    50   ~ 0
+ADC1_INP17_PA1
+Text Label -500 1600 2    50   ~ 0
 ADC12_INP14_PA2
 Text Label -500 900  2    50   ~ 0
 ADC12_INP15_PA3
 Text Label -500 1300 2    50   ~ 0
 ADC12_INP3_PA6
-Text Label -500 2000 2    50   ~ 0
-ADC12_INP7_PA7
 Text Label -500 1900 2    50   ~ 0
+ADC12_INP7_PA7
+Text Label -500 1800 2    50   ~ 0
 ADC12_INP9_PB0
 Text Label -500 1000 2    50   ~ 0
 ADC12_INP5_PB1
-Text Label -500 1400 2    50   ~ 0
+Text Label -500 2550 2    50   ~ 0
 ADC123_INP11_PC1
-Text Label -500 1500 2    50   ~ 0
+Text Label -500 1400 2    50   ~ 0
 ADC12_INP4_PC4
-Text Label -500 1600 2    50   ~ 0
+Text Label -500 1500 2    50   ~ 0
 ADC12_INP8_PC5
 Wire Wire Line
 	1800 10500 2300 10500
@@ -2151,9 +2138,9 @@ Text Notes 12500 1350 0    50   ~ 0
 POT Full scale: 3.3V \nCV Full scale: 6.4V
 NoConn ~ -500 1100
 NoConn ~ -500 1200
-Text Label 4350 5450 0    50   ~ 0
+Text Label 4350 2450 0    50   ~ 0
 MIX_WET_CTL
-Text Label 4350 1950 0    50   ~ 0
+Text Label 4350 2350 0    50   ~ 0
 MIX_DRY_CTL
 Text Label 4350 5850 0    50   ~ 0
 WET_DRY_MIX
@@ -2177,13 +2164,13 @@ Text Label 10350 3600 0    50   ~ 0
 AUDIO_IN_R
 Text Label 10300 1950 0    50   ~ 0
 AUDIO_IN_L
-Text Label 5900 5800 0    50   ~ 0
+Text Label 5850 5700 0    50   ~ 0
 EXT_AUDIO_IN_R
-Text Label 5900 5700 0    50   ~ 0
+Text Label 5850 5600 0    50   ~ 0
 EXT_AUDIO_IN_L
-Text Label 7450 5900 0    50   ~ 0
+Text Label 7400 5800 0    50   ~ 0
 EXT_AUDIO_OUT_R
-Text Label 7450 6000 0    50   ~ 0
+Text Label 7400 5900 0    50   ~ 0
 EXT_AUDIO_OUT_L
 Text Label 16450 6800 0    50   ~ 0
 EXT_AUDIO_OUT_R
@@ -2670,20 +2657,20 @@ F 3 "~" H 16200 3250 50  0001 C CNN
 	1    16200 3250
 	0    1    1    0   
 $EndComp
-Text Label 5950 8450 0    50   ~ 0
+Text Label 5900 8450 0    50   ~ 0
 SWCLK
-Text Label 5950 8350 0    50   ~ 0
+Text Label 5900 8350 0    50   ~ 0
 SWIO
 Wire Wire Line
-	5900 8350 5950 8350
+	5850 8350 5900 8350
 Wire Wire Line
-	5950 8450 5900 8450
+	5900 8450 5850 8450
 Wire Wire Line
-	5900 8150 6000 8150
+	5850 8150 5950 8150
 Wire Wire Line
-	6000 8150 6000 8100
+	5950 8150 5950 8100
 Wire Wire Line
-	5900 8250 6100 8250
+	5850 8250 6050 8250
 Text Label 4350 3350 0    50   ~ 0
 SWCLK
 Text Label 4350 3250 0    50   ~ 0
@@ -3467,17 +3454,17 @@ Text Label 1650 1950 2    50   ~ 0
 RESET
 Wire Wire Line
 	1650 1950 1750 1950
-Text Label 5900 5900 0    50   ~ 0
+Text Label 5850 5800 0    50   ~ 0
 RESET
-Text Label 5900 6000 0    50   ~ 0
+Text Label 5850 5900 0    50   ~ 0
 DELAY_CV_L
-Text Label 5900 6100 0    50   ~ 0
+Text Label 5850 6000 0    50   ~ 0
 DELAY_CV_R
-Text Label 5900 7150 0    50   ~ 0
+Text Label 5850 7050 0    50   ~ 0
 FEEDBACK_CV
-Text Label 5900 6850 0    50   ~ 0
+Text Label 5850 6750 0    50   ~ 0
 MIX_CV
-Text Label 5900 6950 0    50   ~ 0
+Text Label 5850 6850 0    50   ~ 0
 MIX_POT
 $Comp
 L Amplifier_Operational:MCP6004 U6
@@ -3505,13 +3492,13 @@ Wire Wire Line
 	12000 5750 12600 5750
 Wire Wire Line
 	11850 5200 12000 5200
-Text Label 5900 7350 0    50   ~ 0
+Text Label 5850 7250 0    50   ~ 0
 CLOCK
-Text Label 5900 7250 0    50   ~ 0
+Text Label 5850 7150 0    50   ~ 0
 DELAY_POT_L
-Text Label 7450 6100 0    50   ~ 0
+Text Label 7400 6000 0    50   ~ 0
 DELAY_POT_R
-Text Label 5900 7050 0    50   ~ 0
+Text Label 5850 6950 0    50   ~ 0
 FEEDBACK_POT
 $Comp
 L Switch:SW_SPST SW1
@@ -3553,11 +3540,11 @@ Text Label 4350 3150 0    50   ~ 0
 USB_DP
 Wire Wire Line
 	4350 3150 4250 3150
-Text Label 7450 7050 0    50   ~ 0
+Text Label 7400 7250 0    50   ~ 0
 USB_VBUS
-Text Label 7450 7150 0    50   ~ 0
+Text Label 7400 7150 0    50   ~ 0
 USB_DM
-Text Label 7450 7250 0    50   ~ 0
+Text Label 7400 7050 0    50   ~ 0
 USB_DP
 Text Label 4350 4550 0    50   ~ 0
 DAC_LRCLK
@@ -3587,147 +3574,147 @@ Wire Wire Line
 Connection ~ 10200 3600
 Wire Wire Line
 	14900 1750 14950 1750
-Text Label 7450 7350 0    50   ~ 0
+Text Label 7400 6750 0    50   ~ 0
 DELAY_CHORUS
 Text Notes -1800 4300 0    50   ~ 0
 Delay: Dual Mono, Ping Ping\nChorus: Chorus/Flange (w feedback?)
-Text Label 7450 6200 0    50   ~ 0
+Text Label 7400 6100 0    50   ~ 0
 MODE1
-Text Label 7450 6300 0    50   ~ 0
+Text Label 7400 6200 0    50   ~ 0
 MODE2
 $Comp
 L Connector:Conn_01x08_Female J3
 U 1 1 608307FF
-P 5700 5900
-F 0 "J3" H 5592 6385 50  0000 C CNN
-F 1 "Conn_01x08_Female" H 5592 6294 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 5700 5900 50  0001 C CNN
-F 3 "~" H 5700 5900 50  0001 C CNN
-	1    5700 5900
+P 5650 5800
+F 0 "J3" H 5600 6250 50  0000 C CNN
+F 1 "Conn_01x08_Female" H 5300 5250 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 5650 5800 50  0001 C CNN
+F 3 "~" H 5650 5800 50  0001 C CNN
+	1    5650 5800
 	-1   0    0    -1  
 $EndComp
 $Comp
 L Connector:Conn_01x08_Female J4
 U 1 1 608324C3
-P 5700 7150
-F 0 "J4" H 5592 7635 50  0000 C CNN
-F 1 "Conn_01x08_Female" H 5592 7544 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 5700 7150 50  0001 C CNN
-F 3 "~" H 5700 7150 50  0001 C CNN
-	1    5700 7150
+P 5650 7050
+F 0 "J4" H 5600 7500 50  0000 C CNN
+F 1 "Conn_01x08_Female" H 5300 6500 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 5650 7050 50  0001 C CNN
+F 3 "~" H 5650 7050 50  0001 C CNN
+	1    5650 7050
 	-1   0    0    -1  
 $EndComp
 $Comp
 L Connector:Conn_01x08_Female J6
 U 1 1 60832E97
-P 7250 7150
-F 0 "J6" H 7142 7635 50  0000 C CNN
-F 1 "Conn_01x08_Female" H 7142 7544 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7250 7150 50  0001 C CNN
-F 3 "~" H 7250 7150 50  0001 C CNN
-	1    7250 7150
+P 7200 7050
+F 0 "J6" H 7150 7500 50  0000 C CNN
+F 1 "Conn_01x08_Female" H 6850 6500 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7200 7050 50  0001 C CNN
+F 3 "~" H 7200 7050 50  0001 C CNN
+	1    7200 7050
 	-1   0    0    -1  
 $EndComp
 $Comp
 L Connector:Conn_01x08_Female J5
 U 1 1 608A2D7D
-P 7250 5900
-F 0 "J5" H 7142 6385 50  0000 C CNN
-F 1 "Conn_01x08_Female" H 7142 6294 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7250 5900 50  0001 C CNN
-F 3 "~" H 7250 5900 50  0001 C CNN
-	1    7250 5900
+P 7200 5800
+F 0 "J5" H 7150 6250 50  0000 C CNN
+F 1 "Conn_01x08_Female" H 6850 5250 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7200 5800 50  0001 C CNN
+F 3 "~" H 7200 5800 50  0001 C CNN
+	1    7200 5800
 	-1   0    0    -1  
 $EndComp
 Text Notes -1000 800  0    50   ~ 0
 Used
 NoConn ~ -500 1000
-Text Label 4350 2450 0    50   ~ 0
+Text Label 4350 1950 0    50   ~ 0
 DELAY_CV_SCALED_L
 NoConn ~ -500 900 
 NoConn ~ -500 1300
 Text Label 4350 2150 0    50   ~ 0
 AUDIO_IN_L
-NoConn ~ -500 1400
+NoConn ~ -500 2550
 Text Label 4350 2250 0    50   ~ 0
 AUDIO_IN_R
 Text Label 4350 3750 0    50   ~ 0
 DELAY_POT_L
+NoConn ~ -500 1400
 NoConn ~ -500 1500
-NoConn ~ -500 1600
 Text Label 4350 2050 0    50   ~ 0
 DELAY_POT_R
 Text Notes -1000 2250 0    50   ~ 0
 Spare
-NoConn ~ -500 2400
 NoConn ~ -500 2000
 NoConn ~ -500 1900
-NoConn ~ -500 1700
 NoConn ~ -500 1800
+NoConn ~ -500 1600
+NoConn ~ -500 1700
 $Comp
 L power:GND #PWR02
 U 1 1 6195F4DC
-P 5900 6200
-F 0 "#PWR02" H 5900 5950 50  0001 C CNN
-F 1 "GND" V 5900 6000 50  0000 C CNN
-F 2 "" H 5900 6200 50  0001 C CNN
-F 3 "" H 5900 6200 50  0001 C CNN
-	1    5900 6200
+P 5850 6100
+F 0 "#PWR02" H 5850 5850 50  0001 C CNN
+F 1 "GND" V 5850 5900 50  0000 C CNN
+F 2 "" H 5850 6100 50  0001 C CNN
+F 3 "" H 5850 6100 50  0001 C CNN
+	1    5850 6100
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR08
 U 1 1 61960478
-P 5900 7450
-F 0 "#PWR08" H 5900 7200 50  0001 C CNN
-F 1 "GND" V 5900 7250 50  0000 C CNN
-F 2 "" H 5900 7450 50  0001 C CNN
-F 3 "" H 5900 7450 50  0001 C CNN
-	1    5900 7450
+P 5850 7350
+F 0 "#PWR08" H 5850 7100 50  0001 C CNN
+F 1 "GND" V 5850 7150 50  0000 C CNN
+F 2 "" H 5850 7350 50  0001 C CNN
+F 3 "" H 5850 7350 50  0001 C CNN
+	1    5850 7350
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR012
 U 1 1 61960864
-P 7450 7450
-F 0 "#PWR012" H 7450 7200 50  0001 C CNN
-F 1 "GND" V 7450 7250 50  0000 C CNN
-F 2 "" H 7450 7450 50  0001 C CNN
-F 3 "" H 7450 7450 50  0001 C CNN
-	1    7450 7450
+P 7400 7350
+F 0 "#PWR012" H 7400 7100 50  0001 C CNN
+F 1 "GND" V 7400 7150 50  0000 C CNN
+F 2 "" H 7400 7350 50  0001 C CNN
+F 3 "" H 7400 7350 50  0001 C CNN
+	1    7400 7350
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR013
 U 1 1 6196317E
-P 7450 7550
-F 0 "#PWR013" H 7450 7400 50  0001 C CNN
-F 1 "+3.3VA" V 7450 7650 50  0000 L CNN
-F 2 "" H 7450 7550 50  0001 C CNN
-F 3 "" H 7450 7550 50  0001 C CNN
-	1    7450 7550
+P 7400 7450
+F 0 "#PWR013" H 7400 7300 50  0001 C CNN
+F 1 "+3.3VA" V 7400 7550 50  0000 L CNN
+F 2 "" H 7400 7450 50  0001 C CNN
+F 3 "" H 7400 7450 50  0001 C CNN
+	1    7400 7450
 	0    1    1    0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR09
 U 1 1 619635CF
-P 5900 7550
-F 0 "#PWR09" H 5900 7400 50  0001 C CNN
-F 1 "+3.3VA" V 5900 7650 50  0000 L CNN
-F 2 "" H 5900 7550 50  0001 C CNN
-F 3 "" H 5900 7550 50  0001 C CNN
-	1    5900 7550
+P 5850 7450
+F 0 "#PWR09" H 5850 7300 50  0001 C CNN
+F 1 "+3.3VA" V 5850 7550 50  0000 L CNN
+F 2 "" H 5850 7450 50  0001 C CNN
+F 3 "" H 5850 7450 50  0001 C CNN
+	1    5850 7450
 	0    1    1    0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR03
 U 1 1 61963A13
-P 5900 6300
-F 0 "#PWR03" H 5900 6150 50  0001 C CNN
-F 1 "+3.3VA" V 5900 6400 50  0000 L CNN
-F 2 "" H 5900 6300 50  0001 C CNN
-F 3 "" H 5900 6300 50  0001 C CNN
-	1    5900 6300
+P 5850 6200
+F 0 "#PWR03" H 5850 6050 50  0001 C CNN
+F 1 "+3.3VA" V 5850 6300 50  0000 L CNN
+F 2 "" H 5850 6200 50  0001 C CNN
+F 3 "" H 5850 6200 50  0001 C CNN
+	1    5850 6200
 	0    1    1    0   
 $EndComp
 $Comp
@@ -4022,14 +4009,14 @@ Text Notes 14000 7850 0    100  ~ 20
 Output Amplifiers and Buffers
 Text Notes 8600 12350 0    100  ~ 20
 DAC and VCAs
-Text Label 4350 6050 0    50   ~ 0
+Text Label 1600 7250 2    50   ~ 0
 MODE1
-Text Label 4350 6150 0    50   ~ 0
+Text Label 1600 7350 2    50   ~ 0
 MODE2
 Wire Wire Line
-	4250 6050 4350 6050
+	1750 7250 1600 7250
 Wire Wire Line
-	4250 6150 4350 6150
+	1750 7350 1600 7350
 Text Label 4350 6350 0    50   ~ 0
 LED1
 Text Label 4350 6450 0    50   ~ 0
@@ -4080,40 +4067,56 @@ Text Label 4350 2650 0    50   ~ 0
 CLOCK_SCALED
 Wire Wire Line
 	4350 2150 4250 2150
-NoConn ~ 4250 2350
-Text Label 7450 6850 0    50   ~ 0
+NoConn ~ 4350 5400
+Text Label 7400 6950 0    50   ~ 0
 LED1
-Text Label 7450 6950 0    50   ~ 0
+Text Label 7400 6850 0    50   ~ 0
 LED2
 $Comp
 L power:GND #PWR0113
 U 1 1 60A8280D
-P 7450 5600
-F 0 "#PWR0113" H 7450 5350 50  0001 C CNN
-F 1 "GND" V 7450 5400 50  0000 C CNN
-F 2 "" H 7450 5600 50  0001 C CNN
-F 3 "" H 7450 5600 50  0001 C CNN
-	1    7450 5600
+P 7400 5500
+F 0 "#PWR0113" H 7400 5250 50  0001 C CNN
+F 1 "GND" V 7400 5300 50  0000 C CNN
+F 2 "" H 7400 5500 50  0001 C CNN
+F 3 "" H 7400 5500 50  0001 C CNN
+	1    7400 5500
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR0124
 U 1 1 60A82817
-P 7450 5700
-F 0 "#PWR0124" H 7450 5550 50  0001 C CNN
-F 1 "+3.3VA" V 7450 5800 50  0000 L CNN
-F 2 "" H 7450 5700 50  0001 C CNN
-F 3 "" H 7450 5700 50  0001 C CNN
-	1    7450 5700
+P 7400 5600
+F 0 "#PWR0124" H 7400 5450 50  0001 C CNN
+F 1 "+3.3VA" V 7400 5700 50  0000 L CNN
+F 2 "" H 7400 5600 50  0001 C CNN
+F 3 "" H 7400 5600 50  0001 C CNN
+	1    7400 5600
 	0    1    1    0   
 $EndComp
-Text Label 4350 7550 0    50   ~ 0
+Text Label 4350 6550 0    50   ~ 0
 DELAY_CHORUS
 Wire Wire Line
-	1750 3250 1750 3150
-Wire Wire Line
 	2450 1650 2550 1650
+Wire Wire Line
+	4250 6550 4350 6550
+NoConn ~ 4250 6050
+NoConn ~ 4250 6150
 Connection ~ 3550 1650
 Wire Wire Line
-	4250 7550 4350 7550
+	1750 3350 1750 3150
+$Comp
+L MCU_ST_STM32H7:STM32H743ZITx U1
+U 1 1 602FD32C
+P 3050 5250
+F 0 "U1" H 4050 1650 50  0000 C CNN
+F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
+F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
+	1    3050 5250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2350 1650 2450 1650
+Connection ~ 2450 1650
 $EndSCHEMATC
