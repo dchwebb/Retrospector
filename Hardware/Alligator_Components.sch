@@ -3349,9 +3349,9 @@ Wire Wire Line
 Wire Wire Line
 	13950 9450 14050 9450
 Text Label 13700 9750 2    50   ~ 0
-AUDIO_IN_R
+EXT_AUDIO_IN_R
 Text Label 13700 9450 2    50   ~ 0
-AUDIO_IN_L
+EXT_AUDIO_IN_L
 Text Label 13950 9600 2    50   ~ 0
 MIX_DRY_CTL
 Wire Wire Line
@@ -4067,7 +4067,7 @@ Text Label 4350 2650 0    50   ~ 0
 CLOCK_SCALED
 Wire Wire Line
 	4350 2150 4250 2150
-NoConn ~ 4350 5400
+NoConn ~ 4250 5450
 Text Label 7400 6950 0    50   ~ 0
 LED1
 Text Label 7400 6850 0    50   ~ 0
@@ -4119,4 +4119,6 @@ $EndComp
 Wire Wire Line
 	2350 1650 2450 1650
 Connection ~ 2450 1650
+NoConn ~ 7400 5700
+NoConn ~ 5850 5500
 $EndSCHEMATC
