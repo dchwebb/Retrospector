@@ -1815,17 +1815,6 @@ Text Label 5800 2250 0    50   ~ 0
 FMC_A0
 Wire Wire Line
 	5800 2250 6150 2250
-$Comp
-L power:+3.3VA #PWR0114
-U 1 1 60B4FB5F
-P 1750 2050
-F 0 "#PWR0114" H 1750 1900 50  0001 C CNN
-F 1 "+3.3VA" V 1650 1950 50  0000 L CNN
-F 2 "" H 1750 2050 50  0001 C CNN
-F 3 "" H 1750 2050 50  0001 C CNN
-	1    1750 2050
-	0    -1   -1   0   
-$EndComp
 Wire Wire Line
 	3450 1650 3550 1650
 Wire Wire Line
@@ -2168,9 +2157,9 @@ Text Label 5850 5700 0    50   ~ 0
 EXT_AUDIO_IN_R
 Text Label 5850 5600 0    50   ~ 0
 EXT_AUDIO_IN_L
-Text Label 7400 5800 0    50   ~ 0
-EXT_AUDIO_OUT_R
 Text Label 7400 5900 0    50   ~ 0
+EXT_AUDIO_OUT_R
+Text Label 7400 5800 0    50   ~ 0
 EXT_AUDIO_OUT_L
 Text Label 16450 6800 0    50   ~ 0
 EXT_AUDIO_OUT_R
@@ -3605,17 +3594,6 @@ F 3 "~" H 5650 7050 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L Connector:Conn_01x08_Female J6
-U 1 1 60832E97
-P 7200 7050
-F 0 "J6" H 7150 7500 50  0000 C CNN
-F 1 "Conn_01x08_Female" H 6850 6500 50  0000 C CNN
-F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7200 7050 50  0001 C CNN
-F 3 "~" H 7200 7050 50  0001 C CNN
-	1    7200 7050
-	-1   0    0    -1  
-$EndComp
-$Comp
 L Connector:Conn_01x08_Female J5
 U 1 1 608A2D7D
 P 7200 5800
@@ -3683,17 +3661,6 @@ F 2 "" H 7400 7350 50  0001 C CNN
 F 3 "" H 7400 7350 50  0001 C CNN
 	1    7400 7350
 	0    -1   -1   0   
-$EndComp
-$Comp
-L power:+3.3VA #PWR013
-U 1 1 6196317E
-P 7400 7450
-F 0 "#PWR013" H 7400 7300 50  0001 C CNN
-F 1 "+3.3VA" V 7400 7550 50  0000 L CNN
-F 2 "" H 7400 7450 50  0001 C CNN
-F 3 "" H 7400 7450 50  0001 C CNN
-	1    7400 7450
-	0    1    1    0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR09
@@ -4017,14 +3984,14 @@ Wire Wire Line
 	1750 7250 1600 7250
 Wire Wire Line
 	1750 7350 1600 7350
-Text Label 4350 6350 0    50   ~ 0
+Text Label 4750 6350 0    50   ~ 0
 LED1
-Text Label 4350 6450 0    50   ~ 0
+Text Label 4750 6450 0    50   ~ 0
 LED2
 Wire Wire Line
-	4250 6350 4350 6350
+	4250 6350 4300 6350
 Wire Wire Line
-	4250 6450 4350 6450
+	4250 6450 4300 6450
 Text Label 4350 3650 0    50   ~ 0
 FEEDBACK_POT
 Text Label 4350 2550 0    50   ~ 0
@@ -4083,23 +4050,12 @@ F 3 "" H 7400 5500 50  0001 C CNN
 	1    7400 5500
 	0    -1   -1   0   
 $EndComp
-$Comp
-L power:+3.3VA #PWR0124
-U 1 1 60A82817
-P 7400 5600
-F 0 "#PWR0124" H 7400 5450 50  0001 C CNN
-F 1 "+3.3VA" V 7400 5700 50  0000 L CNN
-F 2 "" H 7400 5600 50  0001 C CNN
-F 3 "" H 7400 5600 50  0001 C CNN
-	1    7400 5600
-	0    1    1    0   
-$EndComp
-Text Label 4350 6550 0    50   ~ 0
+Text Label 4600 6550 0    50   ~ 0
 DELAY_CHORUS
 Wire Wire Line
 	2450 1650 2550 1650
 Wire Wire Line
-	4250 6550 4350 6550
+	4250 6550 4600 6550
 NoConn ~ 4250 6050
 NoConn ~ 4250 6150
 Connection ~ 3550 1650
@@ -4119,6 +4075,195 @@ $EndComp
 Wire Wire Line
 	2350 1650 2450 1650
 Connection ~ 2450 1650
-NoConn ~ 7400 5700
-NoConn ~ 5850 5500
+$Comp
+L Connector:Conn_01x08_Female J6
+U 1 1 60832E97
+P 7200 7050
+F 0 "J6" H 7150 7500 50  0000 C CNN
+F 1 "Conn_01x08_Female" H 6850 6500 50  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_1x08_Pitch2.54mm" H 7200 7050 50  0001 C CNN
+F 3 "~" H 7200 7050 50  0001 C CNN
+	1    7200 7050
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	7400 7450 7400 7350
+Connection ~ 7400 7350
+$Comp
+L power:+3.3V #PWR0114
+U 1 1 5F992632
+P 1750 2050
+F 0 "#PWR0114" H 1750 1900 50  0001 C CNN
+F 1 "+3.3V" V 1750 2300 50  0000 C CNN
+F 2 "" H 1750 2050 50  0001 C CNN
+F 3 "" H 1750 2050 50  0001 C CNN
+	1    1750 2050
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR0124
+U 1 1 5FA6DF94
+P 5850 5500
+F 0 "#PWR0124" H 5850 5250 50  0001 C CNN
+F 1 "GND" V 5850 5300 50  0000 C CNN
+F 2 "" H 5850 5500 50  0001 C CNN
+F 3 "" H 5850 5500 50  0001 C CNN
+	1    5850 5500
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	7400 5700 7400 5600
+Connection ~ 7400 5500
+Connection ~ 7400 5600
+Wire Wire Line
+	7400 5600 7400 5500
+$Comp
+L Connector:TestPoint TP1
+U 1 1 5FBC76F3
+P 7700 8000
+F 0 "TP1" V 7700 8250 50  0000 C CNN
+F 1 "TestPoint" V 7700 8550 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8000 50  0001 C CNN
+F 3 "~" H 7900 8000 50  0001 C CNN
+	1    7700 8000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR010
+U 1 1 5FBC7DF8
+P 7700 8000
+F 0 "#PWR010" H 7700 7750 50  0001 C CNN
+F 1 "GND" V 7705 7872 50  0000 R CNN
+F 2 "" H 7700 8000 50  0001 C CNN
+F 3 "" H 7700 8000 50  0001 C CNN
+	1    7700 8000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector:TestPoint TP2
+U 1 1 5FBC80EE
+P 7700 8150
+F 0 "TP2" V 7700 8400 50  0000 C CNN
+F 1 "TestPoint" V 7700 8700 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8150 50  0001 C CNN
+F 3 "~" H 7900 8150 50  0001 C CNN
+	1    7700 8150
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3V #PWR011
+U 1 1 5FBC8425
+P 7700 8150
+F 0 "#PWR011" H 7700 8000 50  0001 C CNN
+F 1 "+3.3V" V 7700 8250 50  0000 L CNN
+F 2 "" H 7700 8150 50  0001 C CNN
+F 3 "" H 7700 8150 50  0001 C CNN
+	1    7700 8150
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:TestPoint TP3
+U 1 1 5FBC8AAF
+P 7700 8300
+F 0 "TP3" V 7700 8550 50  0000 C CNN
+F 1 "TestPoint" V 7700 8850 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8300 50  0001 C CNN
+F 3 "~" H 7900 8300 50  0001 C CNN
+	1    7700 8300
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3VA #PWR013
+U 1 1 5FBC8BDD
+P 7700 8300
+F 0 "#PWR013" H 7700 8150 50  0001 C CNN
+F 1 "+3.3VA" V 7700 8400 50  0000 L CNN
+F 2 "" H 7700 8300 50  0001 C CNN
+F 3 "" H 7700 8300 50  0001 C CNN
+	1    7700 8300
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:TestPoint TP4
+U 1 1 5FBC8F33
+P 7700 8450
+F 0 "TP4" V 7700 8700 50  0000 C CNN
+F 1 "TestPoint" V 7700 9000 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8450 50  0001 C CNN
+F 3 "~" H 7900 8450 50  0001 C CNN
+	1    7700 8450
+	0    -1   -1   0   
+$EndComp
+Text GLabel 7700 8450 2    50   Input ~ 0
+AREF_-5
+$Comp
+L Connector:TestPoint TP5
+U 1 1 5FBC912F
+P 7700 8600
+F 0 "TP5" V 7700 8850 50  0000 C CNN
+F 1 "TestPoint" V 7700 9150 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8600 50  0001 C CNN
+F 3 "~" H 7900 8600 50  0001 C CNN
+	1    7700 8600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector:TestPoint TP6
+U 1 1 5FBC9283
+P 7700 8750
+F 0 "TP6" V 7700 9000 50  0000 C CNN
+F 1 "TestPoint" V 7700 9300 50  0000 C CNN
+F 2 "Measurement_Points:Test_Point_Keystone_5005-5009_Compact" H 7900 8750 50  0001 C CNN
+F 3 "~" H 7900 8750 50  0001 C CNN
+	1    7700 8750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:VEE #PWR019
+U 1 1 5FBC93A3
+P 7700 8750
+F 0 "#PWR019" H 7700 8600 50  0001 C CNN
+F 1 "VEE" V 7700 8950 50  0000 C CNN
+F 2 "" H 7700 8750 50  0001 C CNN
+F 3 "" H 7700 8750 50  0001 C CNN
+	1    7700 8750
+	0    1    1    0   
+$EndComp
+$Comp
+L power:VCC #PWR018
+U 1 1 5FBC9909
+P 7700 8600
+F 0 "#PWR018" H 7700 8450 50  0001 C CNN
+F 1 "VCC" V 7700 8800 50  0000 C CNN
+F 2 "" H 7700 8600 50  0001 C CNN
+F 3 "" H 7700 8600 50  0001 C CNN
+	1    7700 8600
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R32
+U 1 1 5FE3B49C
+P 4450 6350
+F 0 "R32" V 4400 6550 50  0000 C CNN
+F 1 "330R" V 4450 6350 50  0000 C CNN
+F 2 "Resistors_SMD:R_0603_HandSoldering" V 4380 6350 50  0001 C CNN
+F 3 "~" H 4450 6350 50  0001 C CNN
+	1    4450 6350
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4600 6350 4750 6350
+$Comp
+L Device:R R33
+U 1 1 5FEA3045
+P 4450 6450
+F 0 "R33" V 4400 6650 50  0000 C CNN
+F 1 "330R" V 4450 6450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0603_HandSoldering" V 4380 6450 50  0001 C CNN
+F 3 "~" H 4450 6450 50  0001 C CNN
+	1    4450 6450
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4600 6450 4750 6450
 $EndSCHEMATC
