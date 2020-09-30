@@ -1,4 +1,4 @@
-376943129999536
+378544991900137
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19838,6 +19838,13 @@ ILI9341 LCD SPI
 24
 24
 Custom_Footprints
+JLC_SMT_Tooling_Hole
+Mounting Hole 2.2mm, no annular, M2
+mounting hole 2.2mm no annular m2
+0
+0
+0
+Custom_Footprints
 MIDISocket_Hole_15mm
 Mounting Hole 15mm
 mounting hole 15mm
@@ -19962,7 +19969,7 @@ Micro USB Type B Receptacle
 USB USB_B USB_micro USB_OTG
 0
 9
-6
+5
 Diodes_SMD
 D_0603
 

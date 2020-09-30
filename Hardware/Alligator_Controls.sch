@@ -503,12 +503,6 @@ Text Label 4600 1100 0    50   ~ 0
 FEEDBACK_CV
 Text Label 4650 2000 0    50   ~ 0
 MIX_CV
-Text Label 6500 4750 0    50   ~ 0
-USB_VBUS
-Text Label 6500 5050 0    50   ~ 0
-USB_DM
-Text Label 6500 4950 0    50   ~ 0
-USB_DP
 Text Label 8050 2150 2    50   ~ 0
 LED1
 Text Label 8050 2800 2    50   ~ 0
@@ -873,46 +867,12 @@ F 3 "" H 8550 2900 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	8450 2800 8550 2800
-$Comp
-L Connector:USB_B_Micro J14
-U 1 1 5F8CF76B
-P 6100 4950
-F 0 "J14" H 6157 5417 50  0000 C CNN
-F 1 "USB_B_Micro" H 6157 5326 50  0000 C CNN
-F 2 "Connectors:USB_Micro-B" H 6250 4900 50  0001 C CNN
-F 3 "~" H 6250 4900 50  0001 C CNN
-	1    6100 4950
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR027
-U 1 1 5F8CFC42
-P 6100 5450
-F 0 "#PWR027" H 6100 5200 50  0001 C CNN
-F 1 "GND" H 6105 5277 50  0000 C CNN
-F 2 "" H 6100 5450 50  0001 C CNN
-F 3 "" H 6100 5450 50  0001 C CNN
-	1    6100 5450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	6100 5350 6100 5450
-NoConn ~ 6000 5350
-NoConn ~ 6400 5150
-Wire Wire Line
-	6400 4750 6500 4750
-Wire Wire Line
-	6400 4950 6500 4950
-Wire Wire Line
-	6400 5050 6500 5050
 Wire Notes Line
 	500  6500 6950 6500
 Wire Notes Line
 	500  3550 11200 3550
 Text Notes 9800 6350 0    100  ~ 20
 Potentiometers
-Text Notes 6650 6300 0    100  ~ 20
-USB
 Text Notes 9300 3350 0    100  ~ 20
 Switches and Buttons
 Text Notes 6400 3350 0    100  ~ 20
@@ -921,8 +881,6 @@ Text Notes 4350 3350 0    100  ~ 20
 CV Inputs
 Wire Notes Line
 	7200 500  7200 6500
-Wire Notes Line
-	5350 500  5350 6500
 $Comp
 L power:PWR_FLAG #FLG0101
 U 1 1 5F6CF78D
@@ -939,7 +897,7 @@ L power:+3.3VA #PWR0101
 U 1 1 5F6CFD38
 P 1100 7150
 F 0 "#PWR0101" H 1100 7000 50  0001 C CNN
-F 1 "+3.3VA" H 1000 7300 50  0000 L CNN
+F 1 "+3.3VA" H 1000 7350 50  0000 L CNN
 F 2 "" H 1100 7150 50  0001 C CNN
 F 3 "" H 1100 7150 50  0001 C CNN
 	1    1100 7150
@@ -947,4 +905,45 @@ F 3 "" H 1100 7150 50  0001 C CNN
 $EndComp
 Text Label 10350 5550 0    50   ~ 0
 DELAY_POT_R
+Wire Notes Line
+	5350 500  5350 6500
+Text Notes 6650 6300 0    100  ~ 20
+USB
+Wire Wire Line
+	6400 5050 6500 5050
+Wire Wire Line
+	6400 4950 6500 4950
+Wire Wire Line
+	6400 4750 6500 4750
+Text Label 6500 4950 0    50   ~ 0
+USB_DP
+Text Label 6500 5050 0    50   ~ 0
+USB_DM
+Text Label 6500 4750 0    50   ~ 0
+USB_VBUS
+NoConn ~ 6400 4750
+NoConn ~ 6400 4950
+NoConn ~ 6400 5050
+$Comp
+L power:GND #PWR0102
+U 1 1 6025DB85
+P 1550 7150
+F 0 "#PWR0102" H 1550 6900 50  0001 C CNN
+F 1 "GND" H 1550 6950 50  0000 C CNN
+F 2 "" H 1550 7150 50  0001 C CNN
+F 3 "" H 1550 7150 50  0001 C CNN
+	1    1550 7150
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:PWR_FLAG #FLG0102
+U 1 1 6025E675
+P 1550 7150
+F 0 "#FLG0102" H 1550 7225 50  0001 C CNN
+F 1 "PWR_FLAG" H 1550 7323 50  0000 C CNN
+F 2 "" H 1550 7150 50  0001 C CNN
+F 3 "~" H 1550 7150 50  0001 C CNN
+	1    1550 7150
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
