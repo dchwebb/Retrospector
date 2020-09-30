@@ -1,4 +1,4 @@
-375250774348735
+376943129999536
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19956,6 +19956,13 @@ USB_B_MUSB_Straight female connector straight rugged MUSB D511
 0
 6
 5
+Custom_Footprints
+USB_Micro-B_Amphenol
+Micro USB Type B Receptacle
+USB USB_B USB_micro USB_OTG
+0
+9
+6
 Diodes_SMD
 D_0603
 
