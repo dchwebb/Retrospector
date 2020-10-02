@@ -3639,8 +3639,8 @@ F 3 "~" H 7200 5750 50  0001 C CNN
 	1    7200 5750
 	1    0    0    -1  
 $EndComp
-Text Notes -1000 800  0    50   ~ 0
-Used
+Text Notes -1050 750  0    50   ~ 0
+ADCs Used
 NoConn ~ -500 1000
 Text Label 4350 1950 0    50   ~ 0
 DELAY_CV_SCALED_L
@@ -3657,8 +3657,6 @@ NoConn ~ -500 1400
 NoConn ~ -500 1500
 Text Label 4350 2050 0    50   ~ 0
 DELAY_POT_R
-Text Notes -1000 2250 0    50   ~ 0
-Spare
 NoConn ~ -500 2000
 NoConn ~ -500 1900
 NoConn ~ -500 1800
