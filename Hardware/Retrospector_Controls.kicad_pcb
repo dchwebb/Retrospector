@@ -1180,7 +1180,7 @@
   )
 
   (gr_line (start 130 50) (end 130 160) (layer Dwgs.User) (width 0.05))
-  (gr_text "Alligator Controls v1\nMountjoy Modular" (at 130.9 53.6) (layer B.SilkS) (tstamp 5F75C974)
+  (gr_text "Retrospector Controls v1\nMountjoy Modular" (at 130.9 53.6) (layer B.SilkS) (tstamp 5F75C974)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify mirror))
   )
   (gr_line (start 160 50) (end 160 160) (layer Edge.Cuts) (width 0.2) (tstamp 5E91CFB5))

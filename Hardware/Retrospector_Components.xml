@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="D">
   <design>
-    <source>D:\Eurorack\Alligator\Hardware\Alligator_Components.sch</source>
+    <source>D:\Eurorack\Retrospector\Hardware\Retrospector_Components.sch</source>
     <date>01/10/2020 16:56:05</date>
     <tool>Eeschema (5.1.5)-3</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
-        <title>Addatone</title>
+        <title>Retrospector</title>
         <company>Mountjoy Modular</company>
         <rev/>
         <date/>
-        <source>Alligator_Components.sch</source>
+        <source>Retrospector_Components.sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
         <comment number="3" value=""/>
