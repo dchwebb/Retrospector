@@ -9,7 +9,8 @@
 #define PLL_Q 4
 #define PLL_R 2
 
-void SystemClock_Config() {
+void SystemClock_Config()
+{
 
 	RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;			// Enable System configuration controller clock
 
@@ -63,13 +64,15 @@ void SystemClock_Config() {
 }
 
 
-void InitSysTick() {
+void InitSysTick()
+{
 	SysTick_Config(SystemCoreClock / 1000UL);		// gives 1ms
 	NVIC_SetPriority(SysTick_IRQn, 0);
 }
 
 
-void InitDAC() {
+void InitDAC()
+{
 	// DAC1_OUT2 on PA5
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
 	RCC->APB1LENR |= RCC_APB1LENR_DAC12EN;			// Enable DAC Clock
@@ -81,7 +84,9 @@ void InitDAC() {
 	DAC1->MCR &= DAC_MCR_MODE2_Msk;					// Mode = 0 means Buffer activated, Connected to external pin
 }
 
-void InitADC() {
+
+void InitADC()
+{
 	// PA6 ADC12_INP3 | PC0 ADC123_INP10 | PA3 ADC12_INP15 | PB1 ADC12_INP5
 
 	// Enable instruction and data cache - core_cm7.h
@@ -188,7 +193,6 @@ void InitADC() {
 }
 
 
-
 void InitI2S() {
 	/* Available I2S2 pins on AF5
 	PA9  I2S2_CK
@@ -265,11 +269,29 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
 
+
 void InitClock()
 {
+	// Fire interrupt when clock pulse is received
+	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+	GPIOB->MODER &= ~GPIO_MODER_MODE5_Msk;			// 00: Input mode
+	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI5_PB;	// Select Pin PB5 which uses External interrupt 2
+	EXTI->RTSR1 |= EXTI_RTSR1_TR5;					// Enable rising edge trigger
+	EXTI->IMR1 |= EXTI_IMR1_IM5;					// Activate interrupt using mask register
+
+	NVIC_SetPriority(EXTI9_5_IRQn, 4);			// Lower is higher priority
+	NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+}
+
+
+void InitClockTimer()
+{
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses
+
 	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
 	// See manual page 1670 for info on Capture and Compare Input mode
-	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
 	GPIOB->MODER &= ~GPIO_MODER_MODE5_0;			// Alternate function is Mode 0b10 (defaults to 0b11)
 	GPIOB->AFR[0] |= 2 << GPIO_AFRL_AFSEL5_Pos;		// Alternate Function 2 for TIM3_CH2 on PB5 and PA7
@@ -295,7 +317,5 @@ void InitClock()
 	TIM3->SMCR |= TIM_SMCR_SMS_2;					// 0100: Reset Mode - Rising edge of the selected trigger input (TRGI) reinitializes the counter
 
 	TIM3->CR1 |= TIM_CR1_CEN;
-
-
 
 }

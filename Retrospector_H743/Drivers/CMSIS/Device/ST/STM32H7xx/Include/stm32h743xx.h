@@ -850,7 +850,7 @@ __IO uint32_t DMACMFCR;
 
 typedef struct
 {
-__IO uint32_t RTSR1;               /*!< EXTI Rising trigger selection register,          Address offset: 0x00 */
+__IO uint32_t RTSR1;               /*!<  Rising trigger selection register,          Address offset: 0x00 */
 __IO uint32_t FTSR1;               /*!< EXTI Falling trigger selection register,         Address offset: 0x04 */
 __IO uint32_t SWIER1;              /*!< EXTI Software interrupt event register,          Address offset: 0x08 */
 __IO uint32_t D3PMR1;              /*!< EXTI D3 Pending mask register, (same register as to SRDPMR1) Address offset: 0x0C */

@@ -39,6 +39,17 @@ void SPI2_IRQHandler() {
 	nextSample = true;		// request next sample be prepared
 }
 
+void EXTI9_5_IRQHandler(void) {
+
+	// Left Encoder Button
+	if (EXTI->PR1 & EXTI_PR1_PR5) {
+		debugClkInt++;
+		EXTI->PR1 |= EXTI_PR1_PR5;							// Clear interrupt pending
+	}
+
+
+}
+
 // System interrupts
 void NMI_Handler(void) {}
 
