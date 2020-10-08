@@ -47,6 +47,8 @@ int32_t ns, s_n, ls, rp, nrp;
 int32_t debugVal;
 int32_t debugC;
 int32_t debugD;
+int32_t debugTimer = 0;
+int32_t debugCCR = 0;
 float DACLevel;
 
 bool USBDebug;
@@ -72,8 +74,10 @@ int main(void) {
 	InitUART();
 	InitADC();
 	InitDAC();
-	usb.InitUSB();
-	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+	InitClock();
+
+	//usb.InitUSB();
+	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitI2S();
 
@@ -88,9 +92,11 @@ int main(void) {
 			}
 
 		}*/
+		debugTimer = TIM3->CNT;
+		debugCCR = TIM3->CCR1;
 
 		// Output mix level
-		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bits to 12 bits
+		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
 		DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
 		DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
 

@@ -264,3 +264,38 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
+
+void InitClock()
+{
+	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
+	// See manual page 1670 for info on Capture and Compare Input mode
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+	GPIOB->MODER &= ~GPIO_MODER_MODE5_0;			// Alternate function is Mode 0b10 (defaults to 0b11)
+	GPIOB->AFR[0] |= 2 << GPIO_AFRL_AFSEL5_Pos;		// Alternate Function 2 for TIM3_CH2 on PB5 and PA7
+	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
+	TIM3->ARR = 65535;
+	TIM3->PSC = 2000;
+
+	// TISEL Register is used to select which channel is routed to TI1, TI2, TI3 and TI4 inputs. By default CH2 is routed to TI2 so use that
+	// TIM3->TISEL |= 0 << TIM_TISEL_TI2SEL_Pos;
+
+	// There are two capture and compare registers. Configure the input to CCR1 to be CH2
+	TIM3->CCMR1 |= TIM_CCMR1_CC1S_1;				// 10: CC1 channel is configured as input, IC1 is mapped on TI2
+
+	// Configure the digital filter to allow time for the input signal to stabilise - initially set to 0
+	// Note that the number of units depends on the filter clock - this is either the main timer or a subdivision set by the DTS (See CKD in CR1)
+	TIM3->CCMR1 |= TIM_CCMR1_IC1F_0 & TIM_CCMR1_IC1F_1;
+
+	// TIMx_CCER register controls detection on rising (default) or falling edge of input
+	TIM3->CCER |= TIM_CCER_CC1E;					// Enable capture on 1
+
+	// Configure the timer to reset when a rising edge is detected
+	TIM3->SMCR |= 0b110 << TIM_SMCR_TS_Pos;			// 00110: Filtered Timer Input 2 (TI2FP2)
+	TIM3->SMCR |= TIM_SMCR_SMS_2;					// 0100: Reset Mode - Rising edge of the selected trigger input (TRGI) reinitializes the counter
+
+	TIM3->CR1 |= TIM_CR1_CEN;
+
+
+
+}

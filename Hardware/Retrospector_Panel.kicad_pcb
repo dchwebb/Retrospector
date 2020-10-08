@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 70)
+    (drawings 68)
     (tracks 0)
     (zones 0)
     (modules 43)
@@ -155,37 +155,11 @@
     (uvia_drill 0.1)
   )
 
-  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C57C0) (tstamp 5F775306)
-    (at 116.5 64.5)
-    (descr "Mounting Hole 7mm")
-    (tags "mounting hole 7mm")
-    (fp_text reference Ref** (at 0 6.8) (layer B.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
-    )
-    (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
-    )
-    (fp_circle (center 0 0) (end 7.75 0) (layer Dwgs.User) (width 0.15))
-    (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
-    (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
-    (model :custom_3d:Sifam_Knob_L_Tall_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-    (model :custom_3d:Sifam_Knob_L_Short_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-  )
-
-  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C57C0) (tstamp 5F775307)
+  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7CC90C) (tstamp 5F775307)
     (at 143.5 64.5)
     (descr "Mounting Hole 7mm")
     (tags "mounting hole 7mm")
-    (fp_text reference Ref** (at 0 6.8) (layer B.SilkS) hide
+    (fp_text reference DELAY_L (at 0 6.8) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
     (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
@@ -195,23 +169,364 @@
     (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
     (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
     (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
-    (model :custom_3d:Sifam_Knob_L_Tall_unksirted.wrl
+    (model :custom_3d:Sifam_Knob_Small_Skirted.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-    (model :custom_3d:Sifam_Knob_L_Short_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
+      (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
     )
   )
 
-  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C57C0) (tstamp 5F775307)
+  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_5mm (layer B.Cu) (tedit 5F7CD364) (tstamp 5F775477)
+    (at 113 86.5)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference TYPE (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 2.5 0) (layer Cmts.User) (width 0.15))
+    (fp_circle (center 0 0) (end 4 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 5 5) (drill 5) (layers *.Cu *.Mask))
+    (model ":custom_3d:Eledis 1A11-NF1STSE SPDT Toggle Switch.stp"
+      (offset (xyz 0 3.8 -12))
+      (scale (xyz 0.8 0.8 0.8))
+      (rotate (xyz 0 0 90))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 0.87 0.87 0.87))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_5mm (layer B.Cu) (tedit 5F7CD364) (tstamp 5F775458)
+    (at 146 86.5)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference MODE (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 2.5 0) (layer Cmts.User) (width 0.15))
+    (fp_circle (center 0 0) (end 4 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 5 5) (drill 5) (layers *.Cu *.Mask))
+    (model ":custom_3d:Eledis 1A11-NF1STSE SPDT Toggle Switch.stp"
+      (offset (xyz 0 3.8 -12))
+      (scale (xyz 0.8 0.8 0.8))
+      (rotate (xyz 0 0 90))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 0.87 0.87 0.87))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:LED_Hole_3mm (layer B.Cu) (tedit 5F7CCA4A) (tstamp 5F775414)
+    (at 105.3 58)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference LED_R (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.1))
+    (fp_circle (center 0 0) (end 1.6 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers *.Cu *.Mask))
+    (model ${KISYS3DMOD}/LED_THT.3dshapes/LED_D3.0mm_FlatTop.wrl
+      (offset (xyz -1.27 0 -8.300000000000001))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:LED_Hole_3mm (layer B.Cu) (tedit 5F7CCA4A) (tstamp 5F775433)
+    (at 154.7 58)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference LED_L (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.1))
+    (fp_circle (center 0 0) (end 1.6 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers *.Cu *.Mask))
+    (model ${KISYS3DMOD}/LED_THT.3dshapes/LED_D3.0mm_FlatTop.wrl
+      (offset (xyz -1.27 0 -8.300000000000001))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Small_Pushbutton_Hole_3.5mm (layer B.Cu) (tedit 5F7CC77F) (tstamp 5F77549C)
+    (at 130 108.5)
+    (descr "Button Hole 3.5mm")
+    (fp_text reference RESET (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 1.6 0) (layer B.CrtYd) (width 0.05))
+    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.15))
+    (pad "" np_thru_hole circle (at 0 0) (size 3.5 3.5) (drill 3.5) (layers *.Cu *.Mask))
+    (model ${KISYS3DMOD}/Button_Switch_THT.3dshapes/SW_PUSH_6mm_H13mm.wrl
+      (offset (xyz -3.15 2.25 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 119.5 151)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 109 151)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 140.5 151)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 151 151)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 151 134)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 140.5 134)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F7752A8)
+    (at 130 134)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F775284)
+    (at 119.5 134)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer B.Cu) (tedit 5F7C9DF4) (tstamp 5F77522A)
+    (at 109 134)
+    (descr "Mounting Hole 6mm, no annular")
+    (tags "mounting hole 6mm no annular")
+    (fp_text reference Ref** (at 0 5.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 -5.825) (layer B.Fab)
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 4.5 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
+    (model ":custom_3d:PJ301M-12 Thonkiconn v0.2.stp"
+      (offset (xyz 0 0.7 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model :custom_3d:6mm_Nut.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C9874) (tstamp 5F775306)
+    (at 116.5 64.5)
+    (descr "Mounting Hole 7mm")
+    (tags "mounting hole 7mm")
+    (fp_text reference DELAY_R (at 0 6.8) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 7.75 0) (layer Dwgs.User) (width 0.15))
+    (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
+    (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
+    (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
+    (model :custom_3d:Sifam_Knob_Small_Skirted.wrl
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+  )
+
+  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C9874) (tstamp 5F775307)
     (at 145.5 108.5)
     (descr "Mounting Hole 7mm")
     (tags "mounting hole 7mm")
-    (fp_text reference Ref** (at 0 6.8) (layer B.SilkS) hide
+    (fp_text reference FEEDBACK (at 0 6.8) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
     (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
@@ -221,23 +536,18 @@
     (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
     (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
     (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
-    (model :custom_3d:Sifam_Knob_L_Tall_unksirted.wrl
+    (model :custom_3d:Sifam_Knob_Small_Skirted.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-    (model :custom_3d:Sifam_Knob_L_Short_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
+      (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
     )
   )
 
-  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C57C0) (tstamp 5F775307)
+  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C9874) (tstamp 5F775307)
     (at 114.5 108.5)
     (descr "Mounting Hole 7mm")
     (tags "mounting hole 7mm")
-    (fp_text reference Ref** (at 0 6.8) (layer B.SilkS) hide
+    (fp_text reference MIX (at 0 6.8) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
     (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
@@ -247,23 +557,18 @@
     (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
     (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
     (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
-    (model :custom_3d:Sifam_Knob_L_Tall_unksirted.wrl
+    (model :custom_3d:Sifam_Knob_Small_Skirted.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-    (model :custom_3d:Sifam_Knob_L_Short_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
+      (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
     )
   )
 
-  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C57C0) (tstamp 5F775307)
+  (module Custom_Footprints:Alpha_9mm_pot_hole (layer B.Cu) (tedit 5F7C9874) (tstamp 5F775307)
     (at 130 86.5)
     (descr "Mounting Hole 7mm")
     (tags "mounting hole 7mm")
-    (fp_text reference Ref** (at 0 6.8) (layer B.SilkS) hide
+    (fp_text reference TONE (at 0 6.8) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
     (fp_text value Alpha_9mm_pot_hole (at 0 -7) (layer B.Fab) hide
@@ -273,14 +578,9 @@
     (fp_circle (center 0 0) (end 3.5 0) (layer Cmts.User) (width 0.15))
     (fp_circle (center 0 0) (end 6 0) (layer B.CrtYd) (width 0.05))
     (pad "" np_thru_hole circle (at 0 0) (size 7 7) (drill 7) (layers *.Cu *.Mask))
-    (model :custom_3d:Sifam_Knob_L_Tall_unksirted.wrl
+    (model :custom_3d:Sifam_Knob_Small_Unskirted.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
-      (rotate (xyz 0 0 0))
-    )
-    (model :custom_3d:Sifam_Knob_L_Short_unksirted.wrl
-      (at (xyz 0 0 0))
-      (scale (xyz 0.4 0.4 0.4))
+      (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
     )
   )
@@ -453,81 +753,6 @@
       (xy -14.135444 1.410455) (xy -13.891335 1.416989) (xy -13.60543 1.42012) (xy -13.260256 1.417863)) (layer B.Mask) (width 0.01))
   )
 
-  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_3.5mm (layer F.Cu) (tedit 5D95D0D3) (tstamp 5F77549C)
-    (at 130 108.5)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.4) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Subminiature_Switch (at 0 5.1) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.15))
-    (fp_circle (center 0 0) (end 1.6 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 3.5 3.5) (drill 3.5) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_5mm (layer F.Cu) (tedit 5C92BD58) (tstamp 5F775477)
-    (at 113 86.5)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.4) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Subminiature_Switch (at 0 5.1) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 2.5 0) (layer Cmts.User) (width 0.15))
-    (fp_circle (center 0 0) (end 4 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 5 5) (drill 5) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_5mm (layer F.Cu) (tedit 5C92BD58) (tstamp 5F775458)
-    (at 146 86.5)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.4) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Subminiature_Switch (at 0 5.1) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 2.5 0) (layer Cmts.User) (width 0.15))
-    (fp_circle (center 0 0) (end 4 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 5 5) (drill 5) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_3mm (layer F.Cu) (tedit 5DD6CEE3) (tstamp 5F775433)
-    (at 154.7 58)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.4) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Subminiature_Switch (at 0 5.1) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.1))
-    (fp_circle (center 0 0) (end 1.6 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Sub_Miniature_Switch_MountingHole_3mm (layer F.Cu) (tedit 5DD6CEE3) (tstamp 5F775414)
-    (at 105.3 58)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.4) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Subminiature_Switch (at 0 5.1) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.1))
-    (fp_circle (center 0 0) (end 1.6 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers *.Cu *.Mask))
-  )
-
   (module Custom_Footprints:Oval_Mounting_Hole (layer F.Cu) (tedit 5DD7CD6B) (tstamp 5F7753A0)
     (at 152.9 166.3)
     (descr "Mounting Hole 6mm, no annular")
@@ -616,134 +841,8 @@
     (pad "" np_thru_hole oval (at 0 0) (size 5 3.2) (drill oval 5 3.2) (layers *.Cu *.Mask))
   )
 
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 119.5 151)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 109 151)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 140.5 151)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 151 151)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 151 134)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 140.5 134)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F7752A8)
-    (at 130 134)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F775284)
-    (at 119.5 134)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
-  (module Custom_Footprints:Thonkiconn_Socket_MountingHole_6mm (layer F.Cu) (tedit 5C92C29C) (tstamp 5F77522A)
-    (at 109 134)
-    (descr "Mounting Hole 6mm, no annular")
-    (tags "mounting hole 6mm no annular")
-    (fp_text reference Ref** (at 0 -5.8) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Thonkiconn_Socket_MountingHole_6mm (at 0 5.825) (layer F.Fab)
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_circle (center 0 0) (end 4.5 0) (layer F.CrtYd) (width 0.05))
-    (pad "" np_thru_hole circle (at 0 0) (size 6 6) (drill 6) (layers *.Cu *.Mask))
-  )
-
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F76C16D)
-    (at 224.9 135.5)
+    (at -311.6 142.5)
     (path /5F8949DD)
     (fp_text reference J12 (at 3.81 -6.35) (layer Dwgs.User) hide
       (effects (font (size 1 1) (thickness 0.15)))
@@ -781,7 +880,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F76C0A6)
-    (at 235.4 118.5)
+    (at -301.1 125.5)
     (path /5F88AC3D)
     (fp_text reference J7 (at 3.81 -6.35) (layer Dwgs.User) hide
       (effects (font (size 1 1) (thickness 0.15)))
@@ -819,7 +918,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F76B893)
-    (at 256.4 118.5)
+    (at -280.1 125.5)
     (path /5F88B48E)
     (fp_text reference J10 (at 3.81 -6.35) (layer Dwgs.User) hide
       (effects (font (size 1 1) (thickness 0.15)))
@@ -857,7 +956,7 @@
   )
 
   (module Buttons_Switches_THT:SW_PUSH_6mm (layer B.Cu) (tedit 5923F252) (tstamp 5F774C42)
-    (at 242.65 95.25)
+    (at -293.85 102.25)
     (descr https://www.omron.com/ecb/products/pdf/en-b3f.pdf)
     (tags "tact sw push 6mm")
     (path /5F8AB203)
@@ -908,7 +1007,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CCA1B)
-    (at 224.9 118.5)
+    (at -311.6 125.5)
     (path /5F88887C)
     (fp_text reference J8 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -946,7 +1045,7 @@
   )
 
   (module Custom_Footprints:SPDTSubMiniature (layer B.Cu) (tedit 5CA228FD) (tstamp 5F6CCB4D)
-    (at 228.9 68.4478 270)
+    (at -307.6 75.4478 270)
     (descr "SPDT Sub Miniature Switch")
     (tags "Switch SPDT")
     (path /693BF917)
@@ -989,7 +1088,7 @@
   )
 
   (module Custom_Footprints:SPDTSubMiniature (layer B.Cu) (tedit 5CA228FD) (tstamp 5F6CCB3A)
-    (at 261.9 73.54 90)
+    (at -274.6 80.54 90)
     (descr "SPDT Sub Miniature Switch")
     (tags "Switch SPDT")
     (path /693BDE5C)
@@ -1031,10 +1130,11 @@
   )
 
   (module Custom_Footprints:Alpha_9mm_Potentiometer (layer B.Cu) (tedit 5F76FAB4) (tstamp 5F6CCB27)
-    (at 229.9 56.5 90)
+    (at -306.6 63.5 90)
     (descr "Potentiometer, horizontally mounted, Omeg PC16PU, Omeg PC16PU, Omeg PC16PU, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GH/249GH Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148A/149A Single with mounting plates, Vishay/Spectrol 148/149 Double, Vishay/Spectrol 148A/149A Double with mounting plates, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16SV Single, Piher PC-16 Double, Piher PC-16 Triple, Piher T16H Single, Piher T16L Single, Piher T16H Double, Alps RK163 Single, Alps RK163 Double, Alps RK097 Single, Alps RK097 Double, Bourns PTV09A-2 Single with mounting sleve Single, Bourns PTV09A-1 with mounting sleve Single, Bourns PRS11S Single, Alps RK09K Single with mounting sleve Single, Alps RK09K with mounting sleve Single, http://www.alps.com/prod/info/E/HTML/Potentiometer/RotaryPotentiometers/RK09K/RK09D1130C1B.html")
     (tags "Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GH/249GH Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148A/149A Single with mounting plates  Vishay/Spectrol 148/149 Double  Vishay/Spectrol 148A/149A Double with mounting plates  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16SV Single  Piher PC-16 Double  Piher PC-16 Triple  Piher T16H Single  Piher T16L Single  Piher T16H Double  Alps RK163 Single  Alps RK163 Double  Alps RK097 Single  Alps RK097 Double  Bourns PTV09A-2 Single with mounting sleve Single  Bourns PTV09A-1 with mounting sleve Single  Bourns PRS11S Single  Alps RK09K Single with mounting sleve Single  Alps RK09K with mounting sleve Single")
     (path /5F875D32)
+    (attr virtual)
     (fp_text reference Delay_Pot_R1 (at -2.54 2.54) (layer B.SilkS)
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
@@ -1085,7 +1185,7 @@
   )
 
   (module Custom_Footprints:Alpha_9mm_Potentiometer (layer B.Cu) (tedit 5F76FAB4) (tstamp 5F6CCB09)
-    (at 256.9 56.5 90)
+    (at -279.6 63.5 90)
     (descr "Potentiometer, horizontally mounted, Omeg PC16PU, Omeg PC16PU, Omeg PC16PU, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GH/249GH Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148A/149A Single with mounting plates, Vishay/Spectrol 148/149 Double, Vishay/Spectrol 148A/149A Double with mounting plates, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16SV Single, Piher PC-16 Double, Piher PC-16 Triple, Piher T16H Single, Piher T16L Single, Piher T16H Double, Alps RK163 Single, Alps RK163 Double, Alps RK097 Single, Alps RK097 Double, Bourns PTV09A-2 Single with mounting sleve Single, Bourns PTV09A-1 with mounting sleve Single, Bourns PRS11S Single, Alps RK09K Single with mounting sleve Single, Alps RK09K with mounting sleve Single, http://www.alps.com/prod/info/E/HTML/Potentiometer/RotaryPotentiometers/RK09K/RK09D1130C1B.html")
     (tags "Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GH/249GH Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148A/149A Single with mounting plates  Vishay/Spectrol 148/149 Double  Vishay/Spectrol 148A/149A Double with mounting plates  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16SV Single  Piher PC-16 Double  Piher PC-16 Triple  Piher T16H Single  Piher T16L Single  Piher T16H Double  Alps RK163 Single  Alps RK163 Double  Alps RK097 Single  Alps RK097 Double  Bourns PTV09A-2 Single with mounting sleve Single  Bourns PTV09A-1 with mounting sleve Single  Bourns PRS11S Single  Alps RK09K Single with mounting sleve Single  Alps RK09K with mounting sleve Single")
     (path /5F874E6B)
@@ -1139,7 +1239,7 @@
   )
 
   (module Custom_Footprints:Alpha_9mm_Potentiometer (layer B.Cu) (tedit 5F76FAB4) (tstamp 5F6CCAEB)
-    (at 258.9 100.5 90)
+    (at -277.6 107.5 90)
     (descr "Potentiometer, horizontally mounted, Omeg PC16PU, Omeg PC16PU, Omeg PC16PU, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GH/249GH Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148A/149A Single with mounting plates, Vishay/Spectrol 148/149 Double, Vishay/Spectrol 148A/149A Double with mounting plates, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16SV Single, Piher PC-16 Double, Piher PC-16 Triple, Piher T16H Single, Piher T16L Single, Piher T16H Double, Alps RK163 Single, Alps RK163 Double, Alps RK097 Single, Alps RK097 Double, Bourns PTV09A-2 Single with mounting sleve Single, Bourns PTV09A-1 with mounting sleve Single, Bourns PRS11S Single, Alps RK09K Single with mounting sleve Single, Alps RK09K with mounting sleve Single, http://www.alps.com/prod/info/E/HTML/Potentiometer/RotaryPotentiometers/RK09K/RK09D1130C1B.html")
     (tags "Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GH/249GH Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148A/149A Single with mounting plates  Vishay/Spectrol 148/149 Double  Vishay/Spectrol 148A/149A Double with mounting plates  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16SV Single  Piher PC-16 Double  Piher PC-16 Triple  Piher T16H Single  Piher T16L Single  Piher T16H Double  Alps RK163 Single  Alps RK163 Double  Alps RK097 Single  Alps RK097 Double  Bourns PTV09A-2 Single with mounting sleve Single  Bourns PTV09A-1 with mounting sleve Single  Bourns PRS11S Single  Alps RK09K Single with mounting sleve Single  Alps RK09K with mounting sleve Single")
     (path /5F874318)
@@ -1193,7 +1293,7 @@
   )
 
   (module Custom_Footprints:Alpha_9mm_Potentiometer (layer B.Cu) (tedit 5F76FAB4) (tstamp 5F6CCACD)
-    (at 243.4 78.5 90)
+    (at -293.1 85.5 90)
     (descr "Potentiometer, horizontally mounted, Omeg PC16PU, Omeg PC16PU, Omeg PC16PU, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GH/249GH Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148A/149A Single with mounting plates, Vishay/Spectrol 148/149 Double, Vishay/Spectrol 148A/149A Double with mounting plates, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16SV Single, Piher PC-16 Double, Piher PC-16 Triple, Piher T16H Single, Piher T16L Single, Piher T16H Double, Alps RK163 Single, Alps RK163 Double, Alps RK097 Single, Alps RK097 Double, Bourns PTV09A-2 Single with mounting sleve Single, Bourns PTV09A-1 with mounting sleve Single, Bourns PRS11S Single, Alps RK09K Single with mounting sleve Single, Alps RK09K with mounting sleve Single, http://www.alps.com/prod/info/E/HTML/Potentiometer/RotaryPotentiometers/RK09K/RK09D1130C1B.html")
     (tags "Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GH/249GH Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148A/149A Single with mounting plates  Vishay/Spectrol 148/149 Double  Vishay/Spectrol 148A/149A Double with mounting plates  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16SV Single  Piher PC-16 Double  Piher PC-16 Triple  Piher T16H Single  Piher T16L Single  Piher T16H Double  Alps RK163 Single  Alps RK163 Double  Alps RK097 Single  Alps RK097 Double  Bourns PTV09A-2 Single with mounting sleve Single  Bourns PTV09A-1 with mounting sleve Single  Bourns PRS11S Single  Alps RK09K Single with mounting sleve Single  Alps RK09K with mounting sleve Single")
     (path /5F8725E8)
@@ -1247,7 +1347,7 @@
   )
 
   (module Custom_Footprints:Alpha_9mm_Potentiometer (layer B.Cu) (tedit 5F76FAB4) (tstamp 5F6CCAAF)
-    (at 227.9 100.5 90)
+    (at -308.6 107.5 90)
     (descr "Potentiometer, horizontally mounted, Omeg PC16PU, Omeg PC16PU, Omeg PC16PU, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GJ/249GJ Single, Vishay/Spectrol 248GH/249GH Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148/149 Single, Vishay/Spectrol 148A/149A Single with mounting plates, Vishay/Spectrol 148/149 Double, Vishay/Spectrol 148A/149A Double with mounting plates, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16 Single, Piher PC-16SV Single, Piher PC-16 Double, Piher PC-16 Triple, Piher T16H Single, Piher T16L Single, Piher T16H Double, Alps RK163 Single, Alps RK163 Double, Alps RK097 Single, Alps RK097 Double, Bourns PTV09A-2 Single with mounting sleve Single, Bourns PTV09A-1 with mounting sleve Single, Bourns PRS11S Single, Alps RK09K Single with mounting sleve Single, Alps RK09K with mounting sleve Single, http://www.alps.com/prod/info/E/HTML/Potentiometer/RotaryPotentiometers/RK09K/RK09D1130C1B.html")
     (tags "Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GJ/249GJ Single  Vishay/Spectrol 248GH/249GH Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148/149 Single  Vishay/Spectrol 148A/149A Single with mounting plates  Vishay/Spectrol 148/149 Double  Vishay/Spectrol 148A/149A Double with mounting plates  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16 Single  Piher PC-16SV Single  Piher PC-16 Double  Piher PC-16 Triple  Piher T16H Single  Piher T16L Single  Piher T16H Double  Alps RK163 Single  Alps RK163 Double  Alps RK097 Single  Alps RK097 Double  Bourns PTV09A-2 Single with mounting sleve Single  Bourns PTV09A-1 with mounting sleve Single  Bourns PRS11S Single  Alps RK09K Single with mounting sleve Single  Alps RK09K with mounting sleve Single")
     (path /5F5F0D07)
@@ -1301,7 +1401,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CCA8E)
-    (at 235.4 135.5)
+    (at -301.1 142.5)
     (path /5F891904)
     (fp_text reference J13 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -1339,7 +1439,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CCA60)
-    (at 256.4 135.5)
+    (at -280.1 142.5)
     (path /5F879408)
     (fp_text reference J11 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -1377,7 +1477,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CCA32)
-    (at 245.9 118.5)
+    (at -290.6 125.5)
     (path /5F8B66FC)
     (fp_text reference J9 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -1415,7 +1515,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CC9E5)
-    (at 266.9 118.5)
+    (at -269.6 125.5)
     (path /5F886822)
     (fp_text reference J2 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -1453,7 +1553,7 @@
   )
 
   (module Custom_Footprints:THONKICONN_hole (layer B.Cu) (tedit 5F75E02B) (tstamp 5F6CC9CE)
-    (at 266.9 135.5)
+    (at -269.6 142.5)
     (path /5F8775FB)
     (fp_text reference J1 (at 3.81 -6.35) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
@@ -1491,7 +1591,7 @@
   )
 
   (module LEDs:LED_D3.0mm (layer B.Cu) (tedit 587A3A7B) (tstamp 5F6CC9A9)
-    (at 219.9 42.5)
+    (at -316.6 49.5)
     (descr "LED, diameter 3.0mm, 2 pins")
     (tags "LED diameter 3.0mm 2 pins")
     (path /5F8B9866)
@@ -1526,7 +1626,7 @@
   )
 
   (module LEDs:LED_D3.0mm (layer B.Cu) (tedit 587A3A7B) (tstamp 5F6CC9A6)
-    (at 269.35 42.5)
+    (at -267.15 49.5)
     (descr "LED, diameter 3.0mm, 2 pins")
     (tags "LED diameter 3.0mm 2 pins")
     (path /5F8B8DC2)
@@ -1573,17 +1673,11 @@
   (gr_line (start 140 49) (end 160 49) (layer B.Mask) (width 0.4) (tstamp 5F7B1214))
   (gr_line (start 100.5 49) (end 120 49) (layer B.Mask) (width 0.4) (tstamp 5F7B1213))
   (gr_line (start 159.5 76) (end 140 76) (layer B.Mask) (width 0.4))
-  (gr_text "Mix/Feedback knobs small skirted\n14.2mm base diameter" (at 82.7 108.7) (layer Cmts.User) (tstamp 5F7B0D36)
-    (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
-  )
-  (gr_text "Delay knobs Large unskirted\n15.5mm base diameter" (at 85 64) (layer Cmts.User)
-    (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
-  )
   (gr_poly (pts (xy 125 156.9) (xy 103 156.9) (xy 103 145) (xy 125 145)) (layer B.Mask) (width 0.1))
-  (gr_line (start 276.3 153.8) (end 276.3 151.7) (layer Cmts.User) (width 0.15))
-  (gr_line (start 274.2 153.8) (end 276.3 153.8) (layer Cmts.User) (width 0.15))
-  (gr_line (start 215.5 25.3) (end 217.9 25.3) (layer Cmts.User) (width 0.15))
-  (gr_line (start 215.5 27.8) (end 215.5 25.3) (layer Cmts.User) (width 0.15))
+  (gr_line (start -260.2 160.8) (end -260.2 158.7) (layer Cmts.User) (width 0.15))
+  (gr_line (start -262.3 160.8) (end -260.2 160.8) (layer Cmts.User) (width 0.15))
+  (gr_line (start -321 32.3) (end -318.6 32.3) (layer Cmts.User) (width 0.15))
+  (gr_line (start -321 34.8) (end -321 32.3) (layer Cmts.User) (width 0.15))
   (gr_text JLCJLCJLCJLC (at 131 166) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
   )

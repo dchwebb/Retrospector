@@ -1,4 +1,4 @@
-383523417658401
+386832678886689
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19845,6 +19845,13 @@ mounting hole 2.2mm no annular m2
 0
 0
 Custom_Footprints
+LED_Hole_3mm
+Mounting Hole 6mm, no annular
+mounting hole 6mm no annular
+0
+0
+0
+Custom_Footprints
 MIDISocket_Hole_15mm
 Mounting Hole 15mm
 mounting hole 15mm
@@ -19907,6 +19914,13 @@ Light Touch Switch, https://industrial.panasonic.com/cdbs/www-data/pdf/ATK0000/A
 0
 4
 2
+Custom_Footprints
+Small_Pushbutton_Hole_3.5mm
+Button Hole 3.5mm
+
+0
+0
+0
 Custom_Footprints
 Sub_Miniature_Switch_MountingHole_3.5mm
 Mounting Hole 6mm, no annular

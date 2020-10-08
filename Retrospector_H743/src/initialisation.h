@@ -21,5 +21,5 @@ void uartSendString(const char* s);
 void InitADC();
 void InitDAC();
 void InitI2S();
-
+void InitClock();
 
