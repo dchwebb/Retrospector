@@ -43,7 +43,9 @@ void EXTI9_5_IRQHandler(void) {
 
 	// Left Encoder Button
 	if (EXTI->PR1 & EXTI_PR1_PR5) {
-		debugClkInt++;
+		clockInterval = SysTickVal - lastClock;
+		lastClock = SysTickVal;
+		//debugClkInt++;
 		EXTI->PR1 |= EXTI_PR1_PR5;							// Clear interrupt pending
 	}
 

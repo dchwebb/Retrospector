@@ -42,6 +42,9 @@ uint16_t delayCrossfade;
 int32_t currentDelay;
 int32_t dampedDelay;
 
+int32_t lastClock = 0;
+int32_t clockInterval = 0;
+
 int32_t ns, s_n, ls, rp, nrp;
 
 int32_t debugVal;
@@ -49,6 +52,7 @@ int32_t debugC;
 int32_t debugD;
 int32_t debugTimer = 0;
 int32_t debugCCR = 0;
+
 volatile int32_t debugClkInt = 0;
 float DACLevel;
 
