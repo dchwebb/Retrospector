@@ -128,6 +128,7 @@ F 1 "LM4040DBZ-5" V 4100 11200 50  0000 L CNN
 F 2 "TO_SOT_Packages_SMD:SOT-23" H 4050 11650 50  0001 C CIN
 F 3 "http://www.ti.com/lit/ds/symlink/lm4040-n.pdf" H 4050 11850 50  0001 C CIN
 F 4 "C69316" H 4050 11850 50  0001 C CNN "Part_Number"
+F 5 "90" H 4050 11850 50  0001 C CNN "Rotation"
 	1    4050 11850
 	0    1    1    0   
 $EndComp
@@ -290,9 +291,10 @@ U 1 1 5C7EBE36
 P 4550 10250
 F 0 "C41" H 4750 10250 50  0000 C CNN
 F 1 "47uF" H 4750 10150 50  0000 C CNN
-F 2 "Capacitors_SMD:CP_Elec_5x5.3" H 4588 10100 50  0001 C CNN
+F 2 "Capacitors_SMD:CP_Elec_6.3x7.7" H 4588 10100 50  0001 C CNN
 F 3 "~" H 4550 10250 50  0001 C CNN
-F 4 "C134798" H 4550 10250 50  0001 C CNN "Part_Number"
+F 4 "C108053" H 4550 10250 50  0001 C CNN "Part_Number"
+F 5 "270" H 4550 10250 50  0001 C CNN "Rotation"
 	1    4550 10250
 	1    0    0    -1  
 $EndComp
@@ -305,6 +307,7 @@ F 1 "MCP6004" H 9800 2200 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9750 2050 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 9850 2150 50  0001 C CNN
 F 4 "C7378" H 9800 1950 50  0001 C CNN "Part_Number"
+F 5 "" H 9800 1950 50  0001 C CNN "Rotation"
 	1    9800 1950
 	1    0    0    1   
 $EndComp
@@ -571,9 +574,9 @@ U 1 1 5C909B35
 P 2050 10000
 F 0 "C39" V 1795 10000 50  0000 C CNN
 F 1 "22uF" V 1886 10000 50  0000 C CNN
-F 2 "Capacitors_SMD:CP_Elec_5x5.3" H 2088 9850 50  0001 C CNN
+F 2 "Capacitors_SMD:CP_Elec_6.3x5.3" H 2088 9850 50  0001 C CNN
 F 3 "~" H 2050 10000 50  0001 C CNN
-F 4 "" H 2050 10000 50  0001 C CNN "Part_Number"
+F 4 "C249771" H 2050 10000 50  0001 C CNN "Part_Number"
 	1    2050 10000
 	0    1    1    0   
 $EndComp
@@ -583,9 +586,9 @@ U 1 1 5C9145AA
 P 2050 11300
 F 0 "C40" V 2305 11300 50  0000 C CNN
 F 1 "22uF" V 2214 11300 50  0000 C CNN
-F 2 "Capacitors_SMD:CP_Elec_5x5.3" H 2088 11150 50  0001 C CNN
+F 2 "Capacitors_SMD:CP_Elec_6.3x5.3" H 2088 11150 50  0001 C CNN
 F 3 "~" H 2050 11300 50  0001 C CNN
-F 4 "" H 2050 11300 50  0001 C CNN "Part_Number"
+F 4 "C249771" H 2050 11300 50  0001 C CNN "Part_Number"
 	1    2050 11300
 	0    -1   -1   0   
 $EndComp
@@ -907,6 +910,7 @@ F 1 "LM1117-3.3" H 4050 10201 50  0000 C CNN
 F 2 "TO_SOT_Packages_SMD:SOT-223" H 4050 10050 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/lm1117.pdf" H 4050 10050 50  0001 C CNN
 F 4 "C6186" H 4050 10050 50  0001 C CNN "Part_Number"
+F 5 "90" H 4050 10050 50  0001 C CNN "Rotation"
 	1    4050 10050
 	1    0    0    -1  
 $EndComp
@@ -919,6 +923,7 @@ F 1 "10uF" H 3450 10150 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_3x5.3" H 3688 10100 50  0001 C CNN
 F 3 "https://lcsc.com/product-detail/Aluminum-Electrolytic-Capacitors-SMD_Lelon-VE-100M1HTR-0505_C249452.html/?href=jlc-SMT" H 3650 10250 50  0001 C CNN
 F 4 "C249452" H 3650 10250 50  0001 C CNN "Part_Number"
+F 5 "270" H 3650 10250 50  0001 C CNN "Rotation"
 	1    3650 10250
 	1    0    0    -1  
 $EndComp
@@ -1151,9 +1156,9 @@ U 1 1 5F02061D
 P 1500 2450
 F 0 "C6" V 1450 2350 50  0000 C CNN
 F 1 "2.2uF" V 1450 2600 50  0000 C CNN
-F 2 "Capacitors_SMD:C_0805" H 1500 2450 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 1500 2450 50  0001 C CNN
 F 3 "~" H 1500 2450 50  0001 C CNN
-F 4 "C49217" H 1500 2450 50  0001 C CNN "Part_Number"
+F 4 "C23630" H 1500 2450 50  0001 C CNN "Part_Number"
 	1    1500 2450
 	0    1    1    0   
 $EndComp
@@ -1176,9 +1181,9 @@ U 1 1 5F020632
 P 1200 2550
 F 0 "C4" V 1250 2450 50  0000 C CNN
 F 1 "2.2uF" V 1250 2700 50  0000 C CNN
-F 2 "Capacitors_SMD:C_0805" H 1200 2550 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 1200 2550 50  0001 C CNN
 F 3 "~" H 1200 2550 50  0001 C CNN
-F 4 "C49217" H 1200 2550 50  0001 C CNN "Part_Number"
+F 4 "C23630" H 1200 2550 50  0001 C CNN "Part_Number"
 	1    1200 2550
 	0    1    1    0   
 $EndComp
@@ -1199,8 +1204,9 @@ U 1 1 5F020654
 P 1500 3300
 F 0 "Y1" V 1600 3200 50  0000 R CNN
 F 1 "8MHz 20pF" V 1700 3400 50  0000 R CNN
-F 2 "Crystals:Crystal_SMD_0603-2pin_6.0x3.5mm_HandSoldering" H 1500 3300 50  0001 C CNN
+F 2 "Crystals:Crystal_SMD_5032-2pin_5.0x3.2mm_HandSoldering" H 1500 3300 50  0001 C CNN
 F 3 "~" H 1500 3300 50  0001 C CNN
+F 4 "C115962" H 1500 3300 50  0001 C CNN "Part_Number"
 	1    1500 3300
 	0    -1   -1   0   
 $EndComp
@@ -2824,6 +2830,7 @@ F 1 "PCM5100APW" H 10550 9850 50  0000 C CNN
 F 2 "Custom_Footprints:SSOP-20_4.4x6.5mm_Pitch0.65mm_Round_Pads" H 10450 10650 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/pcm5100.pdf" H 10450 10650 50  0001 C CNN
 F 4 "C131154" H 10500 9900 50  0001 C CNN "Part_Number"
+F 5 "180" H 10500 9900 50  0001 C CNN "Rotation"
 	1    10500 9900
 	1    0    0    -1  
 $EndComp
@@ -2962,9 +2969,9 @@ U 1 1 5EA4C5D9
 P 11150 10550
 F 0 "C33" H 11265 10596 50  0000 L CNN
 F 1 "2.2uF" H 11265 10505 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 11188 10400 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 11188 10400 50  0001 C CNN
 F 3 "~" H 11150 10550 50  0001 C CNN
-F 4 "C49217" H 11150 10550 50  0001 C CNN "Part_Number"
+F 4 "C23630" H 11150 10550 50  0001 C CNN "Part_Number"
 	1    11150 10550
 	1    0    0    -1  
 $EndComp
@@ -2978,9 +2985,9 @@ U 1 1 5E9FADB3
 P 11150 9950
 F 0 "C31" H 11265 9996 50  0000 L CNN
 F 1 "2.2uF" H 11265 9905 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 11188 9800 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 11188 9800 50  0001 C CNN
 F 3 "~" H 11150 9950 50  0001 C CNN
-F 4 "C49217" H 11150 9950 50  0001 C CNN "Part_Number"
+F 4 "C23630" H 11150 9950 50  0001 C CNN "Part_Number"
 	1    11150 9950
 	1    0    0    -1  
 $EndComp
@@ -4093,6 +4100,7 @@ F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
 F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
 F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
 F 4 "C114408" H 3050 5250 50  0001 C CNN "Part_Number"
+F 5 "180" H 3050 5250 50  0001 C CNN "Rotation"
 	1    3050 5250
 	1    0    0    -1  
 $EndComp
@@ -4350,4 +4358,24 @@ F 3 "~" H 5800 8900 50  0001 C CNN
 	1    5800 8900
 	1    0    0    -1  
 $EndComp
+$Comp
+L Device:C_Small C53
+U 1 1 5F91DB5F
+P 6050 10050
+F 0 "C53" H 5850 10150 50  0000 L CNN
+F 1 "10uF" H 5800 9950 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 6088 9900 50  0001 C CNN
+F 3 "~" H 6050 10050 50  0001 C CNN
+F 4 "C15850 " H 6050 10050 50  0001 C CNN "Part_Number"
+	1    6050 10050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6050 9950 6250 9950
+Connection ~ 6250 9950
+Wire Wire Line
+	6050 10150 6050 10550
+Wire Wire Line
+	6050 10550 6250 10550
+Connection ~ 6250 10550
 $EndSCHEMATC
