@@ -280,7 +280,7 @@ void InitClock()
 	EXTI->RTSR1 |= EXTI_RTSR1_TR5;					// Enable rising edge trigger
 	EXTI->IMR1 |= EXTI_IMR1_IM5;					// Activate interrupt using mask register
 
-	NVIC_SetPriority(EXTI9_5_IRQn, 4);			// Lower is higher priority
+	NVIC_SetPriority(EXTI9_5_IRQn, 4);				// Lower is higher priority
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
