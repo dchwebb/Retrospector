@@ -387,7 +387,7 @@ void USB::InitUSB()
 	GPIOA->MODER &= ~GPIO_MODER_MODE9;
 	GPIOA->MODER &= ~GPIO_MODER_MODE11_0;
 	GPIOA->MODER &= ~GPIO_MODER_MODE12_0;
-	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;		// 11: High speed FIXME - set to low in HAL
+	//GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;		// 11: High speed FIXME - set to low in HAL
 	GPIOA->AFR[1] |= (10 << GPIO_AFRH_AFSEL11_Pos) | (10 << GPIO_AFRH_AFSEL12_Pos);		// Alternate Function 10 is OTG_FS
 
 
@@ -412,6 +412,8 @@ void USB::InitUSB()
 	}
 
 	USB_OTG_FS->GCCFG |= USB_OTG_GCCFG_VBDEN; 			// Enable HW VBUS sensing
+
+	// FIXME - delay here???
 	USBx_DEVICE->DCFG |= USB_OTG_DCFG_DSPD;				// 11: Full speed using internal FS PHY
 
 	USB_OTG_FS->GRSTCTL |= USB_OTG_GRSTCTL_TXFNUM_4;	// Select buffers to flush. 10000: Flush all the transmit FIFOs in device or host mode

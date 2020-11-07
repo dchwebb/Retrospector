@@ -29,8 +29,6 @@ void BootDFU() {
 //int16_t samples[SAMPLE_BUFFER_LENGTH];
 uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 
-//int32_t readPos;
-//int32_t writePos = 5;
 
 //int32_t newReadPos;
 //int32_t playSample;
@@ -47,6 +45,7 @@ int32_t clockInterval = 0;
 
 int32_t ns, s_n, ls, rp, nrp;
 
+int16_t testOutput = 0;
 int32_t debugVal;
 int32_t debugC;
 int32_t debugD;
@@ -76,15 +75,15 @@ int main(void) {
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
-	InitUART();
+	//InitUART();
 	InitADC();
 	InitDAC();
 	InitClock();
 
-	//usb.InitUSB();
-	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+	usb.InitUSB();
+	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	InitI2S();
+	//InitI2S();
 
 	DAC1->DHR12R2 = 2048;
 

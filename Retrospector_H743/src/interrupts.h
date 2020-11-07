@@ -23,9 +23,11 @@ void SPI2_IRQHandler() {
 
 	if (sampleClock) {
 		DigitalDelay.samples[writePos] = (int16_t)ADC_array[ADC_AudioL] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample();		// Left Channel
+		//SPI2->TXDR = DigitalDelay.calcSample();		// Left Channel
+		SPI2->TXDR = testOutput;
 	} else {
-		SPI2->TXDR = 32768;				// Right Channel
+
+		SPI2->TXDR = testOutput++;				// Right Channel
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice

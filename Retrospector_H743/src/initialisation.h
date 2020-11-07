@@ -8,6 +8,7 @@ extern volatile uint32_t SysTickVal;
 
 #define ADC_BUFFER_LENGTH 10
 #define SAMPLE_BUFFER_LENGTH 65536
+#define CPUCLOCK 280
 extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 // Define ADC array positions of various controls

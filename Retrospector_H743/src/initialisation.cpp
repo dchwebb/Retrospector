@@ -2,12 +2,30 @@
 #include "initialisation.h"
 //#include "initialisation.h"
 
+#if CPUCLOCK == 320
+// 8MHz (HSE) / 2 (M) * 160 (N) / 2 (P) = 320MHz
+#define PLL_M 2
+#define PLL_N 160
+#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 160 (N) / 2 (Q) = 320MHz
+#define PLL_R 2
 
+#elif CPUCLOCK == 280
+// 8MHz (HSE) / 2 (M) * 140 (N) / 2 (P) = 280MHz
+#define PLL_M 2
+#define PLL_N 140
+#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
+#define PLL_R 2
+
+#else
+// 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
 #define PLL_M 2
 #define PLL_N 240
-#define PLL_P 1		//  0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q 4
+#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 240 (N) / 4 (Q) = 240MHz
 #define PLL_R 2
+#endif
 
 void SystemClock_Config()
 {
@@ -15,18 +33,21 @@ void SystemClock_Config()
 	RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;			// Enable System configuration controller clock
 
 	PWR->CR3 &= ~PWR_CR3_SCUEN;						// Supply configuration update enable - this must be deactivated or VOS ready does not come on
+#if CPUCLOCK == 280
+	PWR->D3CR |= PWR_D3CR_VOS_1;					// Configure voltage scaling level 1 before engaging overdrive (0b10 = VOS2)
+	PWR->D3CR &= ~PWR_D3CR_VOS_0;					// Configure voltage scaling level 1 before engaging overdrive (0b10 = VOS2)
+#else
 	PWR->D3CR |= PWR_D3CR_VOS;						// Configure voltage scaling level 1 before engaging overdrive (0b11 = VOS1)
+#endif
 	while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0);	// Check Voltage ready 1= Ready, voltage level at or above VOS selected level
 
+#if CPUCLOCK == 480
 	SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;				// Activate the LDO regulator overdrive mode. Must be written only in VOS1 voltage scaling mode.
 	while ((SYSCFG->PWRCR & SYSCFG_PWRCR_ODEN) == 0);
+#endif
 
 	RCC->CR |= RCC_CR_HSEON;						// Turn on external oscillator
 	while ((RCC->CR & RCC_CR_HSERDY) == 0);			// Wait till HSE is ready
-
-/*	RCC->CR |= RCC_CR_HSI48ON;						// Enable Internal High Speed oscillator for USB
-	while ((RCC->CR & RCC_CR_HSI48RDY) == 0);		// Wait till internal USB oscillator is ready
-*/
 
 	// Clock source to High speed external and main (M) divider
 	RCC->PLLCKSELR = RCC_PLLCKSELR_PLLSRC_HSE |
@@ -46,7 +67,7 @@ void SystemClock_Config()
 	RCC->CR |= RCC_CR_PLL1ON;						// Turn on main PLL
 	while ((RCC->CR & RCC_CR_PLL1RDY) == 0);		// Wait till PLL is ready
 
-	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - set to 8 for 240MHz - this is then divided for all APB clocks below
+	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide by 480MHz by 2 for 240MHz - this is then divided for all APB clocks below
 	RCC->D1CFGR |= RCC_D1CFGR_D1PPRE_2; 			// Clock divider for APB3 clocks - set to 4 for 120MHz: 100: hclk / 2
 	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE1_2;			// Clock divider for APB1 clocks - set to 4 for 120MHz: 100: hclk / 2
 	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE2_2;			// Clock divider for APB2 clocks - set to 4 for 120MHz: 100: hclk / 2
@@ -151,21 +172,16 @@ void InitADC()
 
 	/*--------------------------------------------------------------------------------------------
 	// Configure ADC Channels to be converted:
-0	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
-1	PC1 ADC123_INP11 	TONE_POT
-2	PA3 ADC12_INP15 	AUDIO_IN_R
-3	PB1 ADC12_INP5		DELAY_POT_L
-4	PA0 ADC1_INP16		DELAY_CV_SCALED_L
-5	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
-6	PC5 ADC12_INP8		WET_DRY_MIX
-7	PA2 ADC12_INP14		AUDIO_IN_L
-
-8	PA1 ADC1_INP17		DELAY_POT_R
-9	PB0 ADC12_INP9		FEEDBACK_POT
-
-	[PA7 ADC12_INP7		CLOCK_SCALED]
-	[PA4 ADC12_INP18	MIX_DRY_CTL]
-	[PA5 ADC12_INP19		MIX_WET_CTL]
+		0	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
+		1	PC1 ADC123_INP11 	TONE_POT
+		2	PA3 ADC12_INP15 	AUDIO_IN_R
+		3	PB1 ADC12_INP5		DELAY_POT_L
+		4	PA0 ADC1_INP16		DELAY_CV_SCALED_L
+		5	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
+		6	PC5 ADC12_INP8		WET_DRY_MIX
+		7	PA2 ADC12_INP14		AUDIO_IN_L
+		8	PA1 ADC1_INP17		DELAY_POT_R
+		9	PB0 ADC12_INP9		FEEDBACK_POT
 	*/
 
 	// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
@@ -180,17 +196,15 @@ void InitADC()
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_16;				// ADC channel preselection register
 	ADC1->SQR2 |= 16 << ADC_SQR2_SQ5_Pos;			// Set 5th conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_4;				// ADC channel preselection register
-	ADC1->SQR2 |= 4 << ADC_SQR2_SQ6_Pos;			// Set 6th conversion in sequence
+	ADC1->SQR2 |= 4  << ADC_SQR2_SQ6_Pos;			// Set 6th conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_8;				// ADC channel preselection register
-	ADC1->SQR2 |= 8 << ADC_SQR2_SQ7_Pos;			// Set 7th conversion in sequence
+	ADC1->SQR2 |= 8  << ADC_SQR2_SQ7_Pos;			// Set 7th conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_14;				// ADC channel preselection register
 	ADC1->SQR2 |= 14 << ADC_SQR2_SQ8_Pos;			// Set 8th conversion in sequence
-
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_17;				// ADC channel preselection register
 	ADC1->SQR2 |= 17 << ADC_SQR2_SQ9_Pos;			// Set 9th conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_9;				// ADC channel preselection register
-	ADC1->SQR3 |= 9 << ADC_SQR3_SQ10_Pos;			// Set 10th conversion in sequence
-
+	ADC1->SQR3 |= 9  << ADC_SQR3_SQ10_Pos;			// Set 10th conversion in sequence
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
@@ -201,7 +215,6 @@ void InitADC()
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP4_Pos;		// Set conversion speed
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP8_Pos;		// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP14_Pos;	// Set conversion speed
-
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP17_Pos;	// Set conversion speed
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP9_Pos;		// Set conversion speed
 
@@ -281,7 +294,7 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
 	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
 
-	/* I2S Clock currently 240MHz
+	/* I2S Clock
 	000: pll1_q_ck clock selected as SPI/I2S1,2 and 3 kernel clock (default after reset)
 	001: pll2_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
 	010: pll3_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
@@ -290,9 +303,25 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	//RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL;
 
 	I2S Prescaler Clock calculations:
+
+	I2S Clock = 240MHz
 	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
+
+	I2S Clock = 300MHz
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
+
+	I2S Clock = 320MHz
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
+
 	*/
+#if CPUCLOCK == 280
+	SPI2->I2SCFGR |= (45 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
+	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
+#elif CPUCLOCK == 320
+	SPI2->I2SCFGR |= (52 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 52 with no Odd factor prescaler
+#else
 	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 39 with no Odd factor prescaler
+#endif
 
 	// Enable interrupt when TxFIFO threshold reached
 	SPI2->IER |= SPI_IER_TXPIE;
