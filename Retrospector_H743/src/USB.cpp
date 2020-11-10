@@ -379,6 +379,7 @@ void USB::InitUSB()
 	while ((RCC->CR & RCC_CR_HSI48RDY) == 0);			// Wait till internal USB oscillator is ready
 	RCC->D2CCIP2R |= RCC_D2CCIP2R_USBSEL;				// Set the USB CLock MUX to RC48
 	RCC->AHB1ENR |= RCC_AHB1ENR_USB2OTGHSEN;			// USB2OTG (OTG_HS2) Peripheral Clocks Enable
+	PWR->CR3 |= PWR_CR3_USB33DEN;						// Enable VDD33USB supply level detector
 
 	// USB_OTG_FS GPIO Configuration: PA8: USB_OTG_FS_SOF; PA9: USB_OTG_FS_VBUS; PA10: USB_OTG_FS_ID; PA11: USB_OTG_FS_DM; PA12: USB_OTG_FS_DP
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;				// GPIO port clock
