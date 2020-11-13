@@ -5,7 +5,7 @@ bool CDCCommand(const std::string ComCmd) {
 	std::stringstream ss;
 
 	if (ComCmd.compare("help\n") == 0) {
-		usb.SendString("Mountjoy Alligator - supported commands:\n\n"
+		usb.SendString("Mountjoy Retrospector - supported commands:\n\n"
 				"help      -  Shows this information\n"
 		);
 

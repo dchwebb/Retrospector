@@ -1,1 +1,1 @@
-void sdram_init(void);
+void InitSDRAM(void);

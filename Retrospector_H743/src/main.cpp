@@ -3,6 +3,7 @@
 #include "USB.h"
 #include "CDCHandler.h"
 #include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
+#include "sdram.h"
 #include <cmath>
 
 volatile uint32_t SysTickVal;
@@ -51,6 +52,8 @@ int32_t debugC;
 int32_t debugD;
 int32_t debugTimer = 0;
 int32_t debugCCR = 0;
+uint32_t testAddr;
+const uint32_t maxAddr = 0x200000;
 
 volatile int32_t debugClkInt = 0;
 float DACLevel;
@@ -79,11 +82,26 @@ int main(void) {
 	InitADC();
 	InitDAC();
 	InitClock();
+	InitSDRAM();
 
-	usb.InitUSB();
-	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+	//usb.InitUSB();
+	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	//InitI2S();
+
+	// Test SDRAM
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		uint32_t* tempaddr = ((uint32_t *)0xD0000000 + testAddr);
+		*((uint32_t *)0xD0000000 + testAddr) = testAddr;
+	}
+
+	int err = 0;
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		uint32_t val = *((uint32_t *)0xD0000000 + testAddr);
+		if (val != testAddr)
+			++err;
+	}
+
 
 	DAC1->DHR12R2 = 2048;
 
