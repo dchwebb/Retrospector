@@ -76,7 +76,8 @@ void InitSDRAM(void) {
 	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
 	                       FMC_SDCRx_NB |					// Number of internal banks: 1: Four internal Banks (2M x16 x4 Banks)
 	                       FMC_SDCRx_MWID_0 |				// Memory data bus width.	00: 8 bits	01: 16 bits	10: 32 bits
-	                       FMC_SDCRx_NR_0;					// Number of row address bits 01: 12 bits (FMC_SDCR2_NC: number of column address bits defaults to 8 bits)
+	                       FMC_SDCRx_NR_0 |					// Number of row address bits 01: 12 bits = 4096 - See RAM datasheet p2 Device Overview
+						   FMC_SDCRx_NC_0;					// Number of column address bits 01: 9 bits = 512
 
 	// ISSI IS42S16800 SDRAM Timings on p17 of datasheet. All settings below in cycles minus one
 	FMC_Bank5_6_R->SDTR[0] = 1 << FMC_SDTRx_TRP_Pos |		// Row precharge delay - requires 15ns (2 cycles)
@@ -140,5 +141,5 @@ void InitSDRAM(void) {
 	*/
 	FMC_Bank5_6_R->SDRTR = 1073 << FMC_SDRTR_COUNT_Pos;
 
-	// 8 megabytes of ram now available at address 0xD0000000 - 0xD0800000 (for SDRAM Bank2 See manual p129)
+	// 16 megabytes of ram now available at address 0xD0000000 - 0xD1000000 (for SDRAM Bank2 See manual p129)
 }

@@ -40,12 +40,13 @@ _Min_Stack_Size = 0x400 ;	/* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  DTCMRAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
-  ITCMRAM    (xrw)    : ORIGIN = 0x00000000,   LENGTH = 64K
-  RAM_D1    (xrw)    : ORIGIN = 0x24000000,   LENGTH = 512K
-  RAM_D2    (xrw)    : ORIGIN = 0x30000000,   LENGTH = 288K
-  RAM_D3    (xrw)    : ORIGIN = 0x38000000,   LENGTH = 64K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 2048K
+  DTCMRAM   (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
+  ITCMRAM   (xrw) : ORIGIN = 0x00000000, LENGTH = 64K
+  RAM_D1    (xrw) : ORIGIN = 0x24000000, LENGTH = 512K
+  RAM_D2    (xrw) : ORIGIN = 0x30000000, LENGTH = 288K
+  RAM_D3    (xrw) : ORIGIN = 0x38000000, LENGTH = 64K
+  FLASH     (rx)  : ORIGIN = 0x8000000,  LENGTH = 2048K
+  MEMORY_B2 (xrw) : ORIGIN = 0xD0000000, LENGTH = 16384K
 }
 
 /* Sections */
@@ -170,6 +171,12 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM_D1
+
+  /* External SDRAM storage */
+  .sdramSection (NOLOAD) :
+  {
+    KEEP(*(.sdramSection)) 
+  } >MEMORY_B2
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

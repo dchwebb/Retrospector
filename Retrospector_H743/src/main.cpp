@@ -74,10 +74,14 @@ extern "C" {
 }
 
 // SDRAM testing variables
-using memSize = uint16_t;
+using memSize = uint32_t;
 uint32_t testAddr;
 memSize* tempAddr;
-const uint32_t maxAddr = 0x800000 / sizeof(memSize);
+constexpr uint32_t maxAddr = 0x1000000 / sizeof(memSize);
+
+// Tell linker script to store buffer in SDRAM
+uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
+
 
 int main(void) {
 	SystemClock_Config();					// Configure the clock and PLL
@@ -106,18 +110,20 @@ int main(void) {
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
 		*tempAddr = static_cast<memSize>(testAddr);
+		if (*tempAddr == 0x00080000) {
+			int susp = 1;
+		}
 	}
 
 	// Read
 	int err = 0;
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
-		memSize val = *tempAddr;
+		memSize val = SDRAMBuffer[testAddr];
 		if (val != static_cast<memSize>(testAddr))
 			++err;
 	}
 
-	uint32_t testDuration = SysTickVal - testStart;		// 7191ms for 16 bit words
+	uint32_t testDuration = SysTickVal - testStart;		// 7766ms for 32 bit words
 
 	DAC1->DHR12R2 = 2048;
 
