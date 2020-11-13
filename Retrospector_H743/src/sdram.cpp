@@ -140,5 +140,5 @@ void InitSDRAM(void) {
 	*/
 	FMC_Bank5_6_R->SDRTR = 1073 << FMC_SDRTR_COUNT_Pos;
 
-	// 16 megabytes of ram now available at address 0xD0000000 (for SDRAM Bank2 See manual p129)
+	// 8 megabytes of ram now available at address 0xD0000000 - 0xD0800000 (for SDRAM Bank2 See manual p129)
 }

@@ -52,8 +52,7 @@ int32_t debugC;
 int32_t debugD;
 int32_t debugTimer = 0;
 int32_t debugCCR = 0;
-uint32_t testAddr;
-const uint32_t maxAddr = 0x200000;
+
 
 volatile int32_t debugClkInt = 0;
 float DACLevel;
@@ -74,6 +73,12 @@ extern "C" {
 #include "interrupts.h"
 }
 
+// SDRAM testing variables
+using memSize = uint16_t;
+uint32_t testAddr;
+memSize* tempAddr;
+const uint32_t maxAddr = 0x800000 / sizeof(memSize);
+
 int main(void) {
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
@@ -90,18 +95,29 @@ int main(void) {
 	//InitI2S();
 
 	// Test SDRAM
+	// Blank
+	uint32_t testStart = SysTickVal;
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-		uint32_t* tempaddr = ((uint32_t *)0xD0000000 + testAddr);
-		*((uint32_t *)0xD0000000 + testAddr) = testAddr;
+		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
+		*tempAddr = 0;
 	}
 
+	// Write
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
+		*tempAddr = static_cast<memSize>(testAddr);
+	}
+
+	// Read
 	int err = 0;
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-		uint32_t val = *((uint32_t *)0xD0000000 + testAddr);
-		if (val != testAddr)
+		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
+		memSize val = *tempAddr;
+		if (val != static_cast<memSize>(testAddr))
 			++err;
 	}
 
+	uint32_t testDuration = SysTickVal - testStart;		// 7191ms for 16 bit words
 
 	DAC1->DHR12R2 = 2048;
 
