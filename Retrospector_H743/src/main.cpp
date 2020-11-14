@@ -78,27 +78,14 @@ using memSize = uint32_t;
 uint32_t testAddr;
 memSize* tempAddr;
 constexpr uint32_t maxAddr = 0x1000000 / sizeof(memSize);
+uint32_t testDuration;
+uint32_t MemTestResult;
 
 // Tell linker script to store buffer in SDRAM
 uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
 
-
-int main(void) {
-	SystemClock_Config();					// Configure the clock and PLL
-	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
-	InitSysTick();
-	//InitUART();
-	InitADC();
-	InitDAC();
-	InitClock();
-	InitSDRAM();
-
-	//usb.InitUSB();
-	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
-
-	//InitI2S();
-
-	// Test SDRAM
+// Test SDRAM
+uint32_t MemoryTest() {
 	// Blank
 	uint32_t testStart = SysTickVal;
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
@@ -123,9 +110,28 @@ int main(void) {
 			++err;
 	}
 
-	uint32_t testDuration = SysTickVal - testStart;		// 7766ms for 32 bit words
+	testDuration = SysTickVal - testStart;		// 7766ms for 32 bit words > 6632 using PLL2 at 143MHz
+	return err;
+}
 
-	DAC1->DHR12R2 = 2048;
+int main(void) {
+	SystemClock_Config();					// Configure the clock and PLL
+	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
+	InitSysTick();
+	//InitUART();
+	InitADC();
+	InitDAC();
+	InitClock();
+	InitSDRAM();
+
+	//usb.InitUSB();
+	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+
+	//InitI2S();
+
+
+	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
+	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
 		// DAC signals that it is ready for the next sample
@@ -136,6 +142,9 @@ int main(void) {
 			}
 
 		}*/
+
+		MemTestResult = MemoryTest();
+
 		debugTimer = TIM3->CNT;
 		debugCCR = TIM3->CCR1;
 

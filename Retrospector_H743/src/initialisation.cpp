@@ -4,27 +4,33 @@
 
 #if CPUCLOCK == 320
 // 8MHz (HSE) / 2 (M) * 160 (N) / 2 (P) = 320MHz
-#define PLL_M 2
-#define PLL_N 160
-#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 160 (N) / 2 (Q) = 320MHz
-#define PLL_R 2
+#define PLL_M1 2
+#define PLL_N1 160
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 160 (N) / 2 (Q) = 320MHz
+#define PLL_R1 2
 
 #elif CPUCLOCK == 280
 // 8MHz (HSE) / 2 (M) * 140 (N) / 2 (P) = 280MHz
-#define PLL_M 2
-#define PLL_N 140
-#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
-#define PLL_R 2
+#define PLL_M1 2
+#define PLL_N1 140
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
+#define PLL_R1 2
+
+// Second PLL used for SDRAM clock
+// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 280MHz
+#define PLL_M2 4
+#define PLL_N2 143
+#define PLL_R2 1			// 1 means Div by 2
 
 #else
 // 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
-#define PLL_M 2
-#define PLL_N 240
-#define PLL_P 1			//  0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 240 (N) / 4 (Q) = 240MHz
-#define PLL_R 2
+#define PLL_M1 2
+#define PLL_N1 240
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 240 (N) / 4 (Q) = 240MHz
+#define PLL_R1 2
 #endif
 
 void SystemClock_Config()
@@ -49,24 +55,36 @@ void SystemClock_Config()
 	RCC->CR |= RCC_CR_HSEON;						// Turn on external oscillator
 	while ((RCC->CR & RCC_CR_HSERDY) == 0);			// Wait till HSE is ready
 
-	// Clock source to High speed external and main (M) divider
+	// Clock source to High speed external and main (M) dividers
 	RCC->PLLCKSELR = RCC_PLLCKSELR_PLLSRC_HSE |
-	                 PLL_M << RCC_PLLCKSELR_DIVM1_Pos;
+	                 PLL_M1 << RCC_PLLCKSELR_DIVM1_Pos |
+					 PLL_M2 << RCC_PLLCKSELR_DIVM2_Pos;
 
-	// PLL dividers
-	RCC->PLL1DIVR = (PLL_N - 1) << RCC_PLL1DIVR_N1_Pos |
-			        PLL_P << RCC_PLL1DIVR_P1_Pos |
-			        (PLL_Q - 1) << RCC_PLL1DIVR_Q1_Pos |
-			        (PLL_R - 1) << RCC_PLL1DIVR_R1_Pos;
+	// PLL 1 dividers
+	RCC->PLL1DIVR = (PLL_N1 - 1) << RCC_PLL1DIVR_N1_Pos |
+			        PLL_P1 << RCC_PLL1DIVR_P1_Pos |
+			        (PLL_Q1 - 1) << RCC_PLL1DIVR_Q1_Pos |
+			        (PLL_R1 - 1) << RCC_PLL1DIVR_R1_Pos;
 
 	RCC->PLLCFGR |= RCC_PLLCFGR_PLL1RGE_2;			// 10: The PLL1 input (ref1_ck) clock range frequency is between 4 and 8 MHz (Will be 4MHz for 8MHz clock divided by 2)
 	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLL1VCOSEL;		// 0: Wide VCO range:192 to 836 MHz (default after reset)	1: Medium VCO range:150 to 420 MHz
-	RCC->PLLCFGR |= RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN | RCC_PLLCFGR_DIVR1EN;		// Enable divider outputs
-	//RCC->PLLCFGR |= RCC_PLLCFGR_PLL1FRACEN;		// FIXME enables fractional divider - not sure if this is necessary as not using
+	RCC->PLLCFGR |= RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN;		// Enable divider outputs
 
 	RCC->CR |= RCC_CR_PLL1ON;						// Turn on main PLL
 	while ((RCC->CR & RCC_CR_PLL1RDY) == 0);		// Wait till PLL is ready
 
+	// PLL 2 dividers
+	RCC->PLL2DIVR = (PLL_N2 - 1) << RCC_PLL2DIVR_N2_Pos |
+			        PLL_R2 << RCC_PLL2DIVR_R2_Pos;
+
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2RGE_1;			// 01: The PLL2 input (ref1_ck) clock range frequency is between 2 and 4 MHz (Will be 2MHz for 8MHz clock divided by 4)
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2VCOSEL;			// 1: Medium VCO range:150 to 420 MHz
+	RCC->PLLCFGR |= RCC_PLLCFGR_DIVR2EN;			// Enable R divider output for SDRAM clock
+
+	RCC->CR |= RCC_CR_PLL2ON;						// Turn on PLL 2
+	while ((RCC->CR & RCC_CR_PLL2RDY) == 0);		// Wait till PLL is ready
+
+	// Peripheral scalers
 	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide by 480MHz by 2 for 240MHz - this is then divided for all APB clocks below
 	RCC->D1CFGR |= RCC_D1CFGR_D1PPRE_2; 			// Clock divider for APB3 clocks - set to 4 for 120MHz: 100: hclk / 2
 	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE1_2;			// Clock divider for APB1 clocks - set to 4 for 120MHz: 100: hclk / 2
