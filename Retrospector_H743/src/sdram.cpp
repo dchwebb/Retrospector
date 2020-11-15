@@ -65,14 +65,14 @@ void InitSDRAM(void) {
 	//while (FMC_Bank5_6_R->SDSR & FMC_SDSR_BUSY_Msk);
 
 	// Clock configuration - FMC clock (fmc_ker_ck) selected with RCC_D1CCIPR_FMCSEL register. Defaults to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 140MHz
-	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;			// 10: pll2_r_ck clock selected as kernel peripheral clock
+	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;			// 10: pll2_r_ck clock selected as kernel peripheral clock (286MHz)
 
 	// Memory maximum clock speed is 140MHz at CAS latency = 3
 
 	// SDCLK, RPIPE, RBURST in Control register and TRP, TRC in Timing register are shared and must be configured against bank 1 even though using bank 2
 	FMC_Bank5_6_R->SDCR[0] = FMC_SDCRx_RPIPE_0 |			// Read pipe: 01: One HCLK clock cycle delay
 			               FMC_SDCRx_RBURST |				// Burst read: 1: single read requests are always managed as bursts
-	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@140MHz = 7.14ns period; 2 x period = 14.23ns, @168MHz = 5.95ns period; 2 x period = 11.90ns)
+	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@286MHz = 3.5ns period; 2 x period = 7ns)
 
 	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
 	                       FMC_SDCRx_NB |					// Number of internal banks: 1: Four internal Banks (2M x16 x4 Banks)
@@ -81,14 +81,14 @@ void InitSDRAM(void) {
 						   FMC_SDCRx_NC_0;					// Number of column address bits 01: 9 bits = 512
 
 	// ISSI IS42S16800 SDRAM Timings on p17 of datasheet. All settings below in cycles minus one
-	FMC_Bank5_6_R->SDTR[0] = 1 << FMC_SDTRx_TRP_Pos |		// Row precharge delay - requires 15ns (2 cycles)
-	                       4 << FMC_SDTRx_TRC_Pos;			// Row Cycle Delay - requires 60ns (5 cycles) in data sheet: trc Command Period (REF to REF / ACT to ACT)
+	FMC_Bank5_6_R->SDTR[0] = 2 << FMC_SDTRx_TRP_Pos |		// Row precharge delay - requires 15ns (3 cycles)
+	                       8 << FMC_SDTRx_TRC_Pos;			// Row Cycle Delay - requires 60ns (9 cycles) in data sheet: trc Command Period (REF to REF / ACT to ACT)
 
-	FMC_Bank5_6_R->SDTR[1] = 1 << FMC_SDTRx_TRCD_Pos |		// Row to column delay - requires 15ns (2 cycles)
-	                       0 << FMC_SDTRx_TWR_Pos |			// Write Recovery Time - requires 14ns (1 cycle) - in dataheet Input Data To Precharge/Command Delay time
-	                       2 << FMC_SDTRx_TRAS_Pos |		// Self Refresh Time - minimum 37ns (3 cycles)
-	                       4 << FMC_SDTRx_TXSR_Pos |		// Exit Self Refresh Time - 67ns (5 cycles)
-	                       0 << FMC_SDTRx_TMRD_Pos;			// Load to Active Delay - requires 14ns (1 cycle)
+	FMC_Bank5_6_R->SDTR[1] = 2 << FMC_SDTRx_TRCD_Pos |		// Row to column delay - requires 15ns (3 cycles)
+	                       1 << FMC_SDTRx_TWR_Pos |			// Write Recovery Time - requires 14ns (2 cycles) - in dataheet Input Data To Precharge/Command Delay time
+	                       5 << FMC_SDTRx_TRAS_Pos |		// Self Refresh Time - minimum 37ns (6 cycles)
+	                       9 << FMC_SDTRx_TXSR_Pos |		// Exit Self Refresh Time - 67ns (10 cycles)
+	                       1 << FMC_SDTRx_TMRD_Pos;			// Load to Active Delay - requires 14ns (2 cycle)
 
 	FMC_Bank1_R->BTCR[0] |= FMC_BCR1_FMCEN;					// Enable the FMC Controller (NB datasheet implies only needed for PSRAM/SRAM but SDRAM also requires from testing)
 
@@ -138,9 +138,9 @@ void InitSDRAM(void) {
 		Refresh rate = ((SDRAM refresh period / Number of rows) × SDRAM clock frequency) - 20
 
 		Eg COUNT = (64ms / 4096) = 15.625uS
-		Refresh rate = (15.625uS * 70MHz) - 20 = 1073.75
+		Refresh rate = (15.625uS * 143MHz) - 20 = 2,214.375
 	*/
-	FMC_Bank5_6_R->SDRTR = 1073 << FMC_SDRTR_COUNT_Pos;
+	FMC_Bank5_6_R->SDRTR = 2214 << FMC_SDRTR_COUNT_Pos;
 
 	// 16 megabytes of ram now available at address 0xD0000000 - 0xD1000000 (for SDRAM Bank2 See manual p129)
 }

@@ -52,7 +52,7 @@ int32_t debugC;
 int32_t debugD;
 int32_t debugTimer = 0;
 int32_t debugCCR = 0;
-
+uint16_t adcTest;
 
 volatile int32_t debugClkInt = 0;
 float DACLevel;
@@ -64,7 +64,7 @@ bool nextSample = false;
 
 char pendingCmd[50];
 
-volatile uint16_t ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
+volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH] __attribute__ ((aligned (32)));
 
 USB usb;
 digitalDelay DigitalDelay;
@@ -78,8 +78,9 @@ using memSize = uint32_t;
 uint32_t testAddr;
 memSize* tempAddr;
 constexpr uint32_t maxAddr = 0x1000000 / sizeof(memSize);
-uint32_t testDuration;
-uint32_t MemTestResult;
+uint32_t MemTestDuration;
+uint32_t MemTestCount = 0;
+uint32_t MemTestErrors = 0;
 
 // Tell linker script to store buffer in SDRAM
 uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
@@ -110,7 +111,8 @@ uint32_t MemoryTest() {
 			++err;
 	}
 
-	testDuration = SysTickVal - testStart;		// 7766ms for 32 bit words > 6632 using PLL2 at 143MHz
+	MemTestDuration = SysTickVal - testStart;		// For 32 bit words > 6632 using PLL2 at 143MHz, 6309 at 220MHz, 6385 (2813 with DCache, 2347 with DCache and ICache) at 100MHz
+	++MemTestCount;
 	return err;
 }
 
@@ -129,6 +131,20 @@ int main(void) {
 
 	//InitI2S();
 
+	// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
+	MPU->RNR = 0;
+	MPU->RBAR = 0x30000000;
+	MPU->RASR = (1     << MPU_RASR_XN_Pos)   |
+				(0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
+				(0b001 << MPU_RASR_TEX_Pos)  |		// disable caching?? Maybe should be 0 - ie strongly ordered
+				(0     << MPU_RASR_S_Pos)    |		// Shareable Not sure if this should be 1 or 0
+				(0     << MPU_RASR_C_Pos)    |		// Cacheable
+				(0     << MPU_RASR_B_Pos)    |		// Bufferable
+				(0x11  << MPU_RASR_SIZE_Pos) |		// 256KB - D3 is actually 288K (size is log 2(mem size) - 1)
+				(1     << MPU_RASR_ENABLE_Pos);
+
+	SCB_EnableDCache();
+	SCB_EnableICache();
 
 	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
@@ -143,7 +159,11 @@ int main(void) {
 
 		}*/
 
-		MemTestResult = MemoryTest();
+		// Code to invalidate data cache for ADC_array
+		SCB_InvalidateDCache_by_Addr((uint32_t*)(((uint32_t)ADC_array) & ~(uint32_t)0x1F), (ADC_BUFFER_LENGTH * 2) + 32);
+		adcTest = ADC_array[0];
+
+		MemTestErrors += MemoryTest();
 
 		debugTimer = TIM3->CNT;
 		debugCCR = TIM3->CCR1;

@@ -19,9 +19,9 @@
 #define PLL_R1 2
 
 // Second PLL used for SDRAM clock
-// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 280MHz
+// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 286MHz
 #define PLL_M2 4
-#define PLL_N2 143
+#define PLL_N2 200
 #define PLL_R2 1			// 1 means Div by 2
 
 #else

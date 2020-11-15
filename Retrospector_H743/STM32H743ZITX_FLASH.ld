@@ -172,12 +172,18 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
-  /* External SDRAM storage */
+  /* DW External SDRAM storage */
   .sdramSection (NOLOAD) :
   {
     KEEP(*(.sdramSection)) 
   } >MEMORY_B2
 
+  /* DW RAM Area for non-cached DMA buffers (ADC) */
+  .dma_buffer : /* Space before ':' is critical */
+  {
+    *(.dma_buffer)
+  } >RAM_D2
+  
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {
