@@ -172,14 +172,16 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
-  /* DW External SDRAM storage */
+  /* DW External SDRAM storage
+     The `(NOLOAD)' directive will mark a section to not be loaded at run time. The linker will process the section normally,
+     but will mark it so that a program loader will not load it into memory. */
   .sdramSection (NOLOAD) :
   {
     KEEP(*(.sdramSection)) 
   } >MEMORY_B2
 
   /* DW RAM Area for non-cached DMA buffers (ADC) */
-  .dma_buffer : /* Space before ':' is critical */
+  .dma_buffer :
   {
     *(.dma_buffer)
   } >RAM_D2

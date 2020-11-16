@@ -131,20 +131,7 @@ int main(void) {
 
 	//InitI2S();
 
-	// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
-	MPU->RNR = 0;
-	MPU->RBAR = 0x30000000;
-	MPU->RASR = (1     << MPU_RASR_XN_Pos)   |
-				(0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
-				(0b001 << MPU_RASR_TEX_Pos)  |		// disable caching?? Maybe should be 0 - ie strongly ordered
-				(0     << MPU_RASR_S_Pos)    |		// Shareable Not sure if this should be 1 or 0
-				(0     << MPU_RASR_C_Pos)    |		// Cacheable
-				(0     << MPU_RASR_B_Pos)    |		// Bufferable
-				(0x11  << MPU_RASR_SIZE_Pos) |		// 256KB - D3 is actually 288K (size is log 2(mem size) - 1)
-				(1     << MPU_RASR_ENABLE_Pos);
-
-	SCB_EnableDCache();
-	SCB_EnableICache();
+	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
 	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
@@ -160,7 +147,7 @@ int main(void) {
 		}*/
 
 		// Code to invalidate data cache for ADC_array
-		SCB_InvalidateDCache_by_Addr((uint32_t*)(((uint32_t)ADC_array) & ~(uint32_t)0x1F), (ADC_BUFFER_LENGTH * 2) + 32);
+		//SCB_InvalidateDCache_by_Addr((uint32_t*)(((uint32_t)ADC_array) & ~(uint32_t)0x1F), (ADC_BUFFER_LENGTH * 2) + 32);
 		adcTest = ADC_array[0];
 
 		MemTestErrors += MemoryTest();

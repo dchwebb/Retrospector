@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stm32h7xx.h"
+#include "mpu_armv7.h"		// Memory protection unit for selectively disabling cache for DMA transfers
 #include <algorithm>
 #include <cstdlib>
 
@@ -15,6 +16,7 @@ extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 enum ADC_Controls { ADC_AudioL = 0, ADC_AudioR = 1, ADC_DelayL= 2, ADC_Mix = 3 };
 
 void SystemClock_Config();
+void InitCache();
 void InitSysTick();
 //void InitUART();
 void uartSendChar(char c);
