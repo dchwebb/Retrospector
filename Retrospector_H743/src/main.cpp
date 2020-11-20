@@ -124,11 +124,11 @@ int main(void) {
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
-	//InitUART();
 	InitADC();
 	InitDAC();
-	InitClock();
+	InitTempoClock();
 	InitSDRAM();
+	InitLEDs();
 
 	//usb.InitUSB();
 	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);

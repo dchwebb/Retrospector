@@ -4302,7 +4302,7 @@ F 0 "C56" V 14950 10300 50  0000 C CNN
 F 1 "10nF" V 14950 10500 50  0000 C CNN
 F 2 "Capacitors_SMD:C_0603_HandSoldering" H 14850 10500 50  0001 C CNN
 F 3 "~" H 14850 10500 50  0001 C CNN
-F 4 "" H 14850 10500 50  0001 C CNN "Part_Number"
+F 4 "C57112" H 14850 10500 50  0001 C CNN "Part_Number"
 	1    14850 10500
 	1    0    0    -1  
 $EndComp
@@ -4408,10 +4408,6 @@ Wire Wire Line
 	4300 11750 4300 11850
 Wire Wire Line
 	4300 11750 4800 11750
-Text Label 4950 11350 0    50   ~ 0
-+7V
-Text Label 3550 10100 2    50   ~ 0
-+7V
 Wire Wire Line
 	14050 10650 14050 10550
 Wire Wire Line
@@ -4499,4 +4495,153 @@ Wire Wire Line
 	7750 12100 7800 12100
 Wire Wire Line
 	7750 12250 7800 12250
+$Comp
+L Regulator_Switching:LM2675M-5 U?
+U 1 1 6DAC0E92
+P 2800 14150
+F 0 "U?" H 2800 14617 50  0000 C CNN
+F 1 "LM2675M-5" H 2800 14526 50  0000 C CNN
+F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 2850 13800 50  0001 L CIN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2675.pdf" H 2800 14150 50  0001 C CNN
+F 4 "C180371" H 2800 14150 50  0001 C CNN "Part_Number"
+	1    2800 14150
+	1    0    0    -1  
+$EndComp
+NoConn ~ 2300 14150
+$Comp
+L power:VCC #PWR?
+U 1 1 6DB2F14A
+P 1900 13950
+F 0 "#PWR?" H 1900 13800 50  0001 C CNN
+F 1 "VCC" V 1918 14077 50  0000 L CNN
+F 2 "" H 1900 13950 50  0001 C CNN
+F 3 "" H 1900 13950 50  0001 C CNN
+	1    1900 13950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:D_Schottky_Small D?
+U 1 1 6DB2FC15
+P 3700 14500
+F 0 "D?" V 3650 14350 50  0000 L CNN
+F 1 "Schottky" V 3750 14100 50  0000 L CNN
+F 2 "" V 3700 14500 50  0001 C CNN
+F 3 "~" V 3700 14500 50  0001 C CNN
+	1    3700 14500
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	3300 14350 3700 14350
+Wire Wire Line
+	3700 14350 3700 14400
+Wire Wire Line
+	2800 14550 2800 14650
+$Comp
+L Device:C_Small C?
+U 1 1 6DC7C12C
+P 3500 14150
+F 0 "C?" V 3350 14150 50  0000 C CNN
+F 1 "10nF" V 3600 14150 50  0000 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 3500 14150 50  0001 C CNN
+F 3 "~" H 3500 14150 50  0001 C CNN
+F 4 "C57112" H 3500 14150 50  0001 C CNN "Part_Number"
+	1    3500 14150
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	3300 14150 3400 14150
+Wire Wire Line
+	3600 14150 3700 14150
+Wire Wire Line
+	3700 14150 3700 14350
+Connection ~ 3700 14350
+$Comp
+L Device:CP_Small C?
+U 1 1 6DEA7A83
+P 4150 14500
+F 0 "C?" H 4238 14546 50  0000 L CNN
+F 1 "68uF" H 4238 14455 50  0000 L CNN
+F 2 "" H 4150 14500 50  0001 C CNN
+F 3 "~" H 4150 14500 50  0001 C CNN
+	1    4150 14500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3700 14350 3850 14350
+Wire Wire Line
+	4050 14350 4150 14350
+Wire Wire Line
+	4150 14350 4150 14400
+Wire Wire Line
+	4150 14650 4150 14600
+Connection ~ 2800 14650
+Wire Wire Line
+	2800 14700 2800 14650
+$Comp
+L power:GND #PWR?
+U 1 1 6DB2F5C6
+P 2800 14700
+F 0 "#PWR?" H 2800 14450 50  0001 C CNN
+F 1 "GND" V 2805 14572 50  0000 R CNN
+F 2 "" H 2800 14700 50  0001 C CNN
+F 3 "" H 2800 14700 50  0001 C CNN
+	1    2800 14700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4150 14350 4150 13950
+Wire Wire Line
+	4150 13950 3300 13950
+Connection ~ 4150 14350
+Wire Wire Line
+	4150 14350 4450 14350
+Text Label 4450 14350 0    50   ~ 0
+Int_V
+Text Label 4950 11350 0    50   ~ 0
+Int_V
+Text Label 3550 10100 2    50   ~ 0
+Int_V
+$Comp
+L Device:CP_Small C?
+U 1 1 6E46AC0A
+P 2050 14500
+F 0 "C?" H 2138 14546 50  0000 L CNN
+F 1 "100uF" H 2138 14455 50  0000 L CNN
+F 2 "" H 2050 14500 50  0001 C CNN
+F 3 "~" H 2050 14500 50  0001 C CNN
+	1    2050 14500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1900 13950 2050 13950
+Wire Wire Line
+	2050 13950 2050 14400
+Wire Wire Line
+	2050 13950 2300 13950
+Connection ~ 2050 13950
+Wire Wire Line
+	2050 14600 2050 14650
+Wire Wire Line
+	2050 14650 2800 14650
+Wire Wire Line
+	2800 14650 3700 14650
+Wire Wire Line
+	3700 14600 3700 14650
+Connection ~ 3700 14650
+Wire Wire Line
+	3700 14650 4150 14650
+Text Notes 2250 13550 0    50   ~ 0
+Buck Converter to 5V option\nCan use LM2762 (slightly cheaper)
+$Comp
+L Device:L_Small L?
+U 1 1 6DEA5F2E
+P 3950 14350
+F 0 "L?" V 4135 14350 50  0000 C CNN
+F 1 "68uH" V 4044 14350 50  0000 C CNN
+F 2 "" H 3950 14350 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1912111437_3L-COILS-SNR6045K-680M_C326343.pdf" H 3950 14350 50  0001 C CNN
+F 4 "C326343" V 3950 14350 50  0001 C CNN "Part_Number"
+	1    3950 14350
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC

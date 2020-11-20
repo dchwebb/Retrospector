@@ -1,6 +1,5 @@
 #include "stm32h743xx.h"
 #include "initialisation.h"
-//#include "initialisation.h"
 
 #if CPUCLOCK == 320
 // 8MHz (HSE) / 2 (M) * 160 (N) / 2 (P) = 320MHz
@@ -18,12 +17,6 @@
 #define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
 #define PLL_R1 2
 
-// Second PLL used for SDRAM clock
-// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 286MHz
-#define PLL_M2 4
-#define PLL_N2 200
-#define PLL_R2 1			// 1 means Div by 2
-
 #else
 // 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
 #define PLL_M1 2
@@ -32,6 +25,12 @@
 #define PLL_Q1 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 240 (N) / 4 (Q) = 240MHz
 #define PLL_R1 2
 #endif
+
+// Second PLL used for SDRAM clock
+// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 286MHz
+#define PLL_M2 4
+#define PLL_N2 200
+#define PLL_R2 1			// 1 means Div by 2
 
 void SystemClock_Config()
 {
@@ -104,6 +103,7 @@ void SystemClock_Config()
 	// RCC->D2CCIP2R |= RCC_D2CCIP2R_USART28SEL;
 }
 
+
 void InitCache()
 {
 	// Use the Memory Protection Unit (MPU) to set up a region of memory with data caching disabled for use with DMA buffers
@@ -149,11 +149,6 @@ void InitDAC()
 
 void InitADC()
 {
-	// Enable instruction and data cache - core_cm7.h
-	// See https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
-	//SCB_EnableICache();
-	//SCB_EnableDCache();
-
 	// Configure clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
@@ -212,7 +207,7 @@ void InitADC()
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
 	/*--------------------------------------------------------------------------------------------
-	// Configure ADC Channels to be converted:
+	Configure ADC Channels to be converted:
 		0	PA2 ADC12_INP14		AUDIO_IN_L
 		1	PA3 ADC12_INP15 	AUDIO_IN_R
 		2	PC5 ADC12_INP8		WET_DRY_MIX
@@ -313,16 +308,6 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	GPIOD->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 	GPIOD->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
 
-/*
-	// PB10 I2S2_CK [alternate function AF5]
-	GPIOB->MODER &= ~GPIO_MODER_MODE10_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
-	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL10_Pos;	// Alternate Function 5 (I2S2)
-
-	// PB15 I2S2_SDO [alternate function AF5]
-	GPIOB->MODER &= ~GPIO_MODER_MODE15_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
-	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL15_Pos;	// Alternate Function 5 (I2S2)
-*/
-
 	// PC3 I2S2_SDO [alternate function AF5]
 	GPIOC->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 	GPIOC->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
@@ -369,15 +354,13 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	SPI2->IER |= SPI_IER_TXPIE;
 	NVIC_SetPriority(SPI2_IRQn, 2);					// Lower is higher priority
 	NVIC_EnableIRQ(SPI2_IRQn);
-	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// FIXME Use LED on PB7 for testing interrupt
-
 
 	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
 
 
-void InitClock()
+void InitTempoClock()
 {
 	// Fire interrupt when clock pulse is received on PA7 - See manual p770
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
@@ -393,7 +376,7 @@ void InitClock()
 
 void InitClockTimer()
 {
-	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using)
 
 	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
 	// See manual page 1670 for info on Capture and Compare Input mode
@@ -423,4 +406,13 @@ void InitClockTimer()
 
 	TIM3->CR1 |= TIM_CR1_CEN;
 
+}
+
+
+void InitLEDs()
+{
+	// Initialise timing LEDs on PC10 and PC11
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
+	GPIOC->MODER &= ~GPIO_MODER_MODE10_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOC->MODER &= ~GPIO_MODER_MODE11_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 }
