@@ -213,51 +213,52 @@ void InitADC()
 
 	/*--------------------------------------------------------------------------------------------
 	// Configure ADC Channels to be converted:
-		0	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
-		1	PC1 ADC123_INP11 	TONE_POT
-		2	PA3 ADC12_INP15 	AUDIO_IN_R
+		0	PA2 ADC12_INP14		AUDIO_IN_L
+		1	PA3 ADC12_INP15 	AUDIO_IN_R
+		2	PC5 ADC12_INP8		WET_DRY_MIX
 		3	PB1 ADC12_INP5		DELAY_POT_L
-		4	PA0 ADC1_INP16		DELAY_CV_SCALED_L
-		5	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
-		6	PC5 ADC12_INP8		WET_DRY_MIX
-		7	PA2 ADC12_INP14		AUDIO_IN_L
-		8	PA1 ADC1_INP17		DELAY_POT_R
-		9	PB0 ADC12_INP9		FEEDBACK_POT
+		4	PA1 ADC1_INP17		DELAY_POT_R
+		5	PA0 ADC1_INP16		DELAY_CV_SCALED_L
+		6	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
+		7	PB0 ADC12_INP9		FEEDBACK_POT
+		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
+		9	PC1 ADC123_INP11 	TONE_POT
 	*/
 
 	// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
-	ADC1->SQR1 |= 3  << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_11;				// ADC channel preselection register
-	ADC1->SQR1 |= 11 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
-	ADC1->SQR1 |= 15 << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_5;				// ADC channel preselection register
-	ADC1->SQR1 |= 5  << ADC_SQR1_SQ4_Pos;			// Set 4th conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_16;				// ADC channel preselection register
-	ADC1->SQR2 |= 16 << ADC_SQR2_SQ5_Pos;			// Set 5th conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_4;				// ADC channel preselection register
-	ADC1->SQR2 |= 4  << ADC_SQR2_SQ6_Pos;			// Set 6th conversion in sequence
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_8;				// ADC channel preselection register
-	ADC1->SQR2 |= 8  << ADC_SQR2_SQ7_Pos;			// Set 7th conversion in sequence
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_14;				// ADC channel preselection register
-	ADC1->SQR2 |= 14 << ADC_SQR2_SQ8_Pos;			// Set 8th conversion in sequence
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_8;				// ADC channel preselection register
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_5;				// ADC channel preselection register
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_17;				// ADC channel preselection register
-	ADC1->SQR2 |= 17 << ADC_SQR2_SQ9_Pos;			// Set 9th conversion in sequence
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_16;				// ADC channel preselection register
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
 	ADC1->PCSEL |= ADC_PCSEL_PCSEL_9;				// ADC channel preselection register
-	ADC1->SQR3 |= 9  << ADC_SQR3_SQ10_Pos;			// Set 10th conversion in sequence
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_4;				// ADC channel preselection register
+	ADC1->PCSEL |= ADC_PCSEL_PCSEL_11;				// ADC channel preselection register
+
+	ADC1->SQR1 |= 14 << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
+	ADC1->SQR1 |= 15 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
+	ADC1->SQR1 |= 8  << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
+	ADC1->SQR1 |= 5  << ADC_SQR1_SQ4_Pos;			// Set 4th conversion in sequence
+	ADC1->SQR2 |= 17 << ADC_SQR2_SQ5_Pos;			// Set 5th conversion in sequence
+	ADC1->SQR2 |= 16 << ADC_SQR2_SQ6_Pos;			// Set 6th conversion in sequence
+	ADC1->SQR2 |= 3  << ADC_SQR2_SQ7_Pos;			// Set 7th conversion in sequence
+	ADC1->SQR2 |= 9  << ADC_SQR2_SQ8_Pos;			// Set 8th conversion in sequence
+	ADC1->SQR2 |= 4  << ADC_SQR2_SQ9_Pos;			// Set 9th conversion in sequence
+	ADC1->SQR3 |= 11 << ADC_SQR3_SQ10_Pos;			// Set 10th conversion in sequence
 
 	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP11_Pos;	// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP5_Pos;		// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP16_Pos;	// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP4_Pos;		// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP8_Pos;		// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP14_Pos;	// Set conversion speed
+	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
+	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP8_Pos;		// Set conversion speed
+	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP5_Pos;		// Set conversion speed
 	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP17_Pos;	// Set conversion speed
+	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP16_Pos;	// Set conversion speed
+	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
 	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP9_Pos;		// Set conversion speed
+	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP4_Pos;		// Set conversion speed
+	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP11_Pos;	// Set conversion speed
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
@@ -378,17 +379,15 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 
 void InitClock()
 {
-	// Fire interrupt when clock pulse is received
-	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
-	GPIOB->MODER &= ~GPIO_MODER_MODE5_Msk;			// 00: Input mode
-	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI5_PB;	// Select Pin PB5 which uses External interrupt 2
-	EXTI->RTSR1 |= EXTI_RTSR1_TR5;					// Enable rising edge trigger
-	EXTI->IMR1 |= EXTI_IMR1_IM5;					// Activate interrupt using mask register
+	// Fire interrupt when clock pulse is received on PA7 - See manual p770
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
+	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PA;	// Select Pin PA7 which uses External interrupt 2
+	EXTI->RTSR1 |= EXTI_RTSR1_TR7;					// Enable rising edge trigger
+	EXTI->IMR1 |= EXTI_IMR1_IM7;					// Activate interrupt using mask register
 
 	NVIC_SetPriority(EXTI9_5_IRQn, 4);				// Lower is higher priority
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
-
 }
 
 

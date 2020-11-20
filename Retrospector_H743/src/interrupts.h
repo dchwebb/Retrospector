@@ -22,12 +22,13 @@ void SPI2_IRQHandler() {
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		DigitalDelay.samples[writePos] = (int16_t)ADC_array[ADC_AudioL] - adcZeroOffset;
+		DigitalDelay.samples[writePos] = (int16_t)ADC_array[ADC_Audio_L] - adcZeroOffset;
 		//SPI2->TXDR = DigitalDelay.calcSample();		// Left Channel
 		SPI2->TXDR = testOutput;
 	} else {
 
-		SPI2->TXDR = testOutput++;				// Right Channel
+		SPI2->TXDR = testOutput;				// Right Channel
+		testOutput += 100;
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
@@ -43,12 +44,12 @@ void SPI2_IRQHandler() {
 
 void EXTI9_5_IRQHandler(void) {
 
-	// Left Encoder Button
-	if (EXTI->PR1 & EXTI_PR1_PR5) {
+	// Handle incoming clock pulse
+	if (EXTI->PR1 & EXTI_PR1_PR7) {
 		clockInterval = SysTickVal - lastClock;
 		lastClock = SysTickVal;
 		//debugClkInt++;
-		EXTI->PR1 |= EXTI_PR1_PR5;							// Clear interrupt pending
+		EXTI->PR1 |= EXTI_PR1_PR7;							// Clear interrupt pending
 	}
 
 

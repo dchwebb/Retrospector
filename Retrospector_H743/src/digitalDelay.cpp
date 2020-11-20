@@ -27,7 +27,7 @@ int32_t digitalDelay::calcSample() {
 	if (++oldReadPos == SAMPLE_BUFFER_LENGTH)		oldReadPos = 0;
 
 	// Get delay time from ADC and average over 32 readings to smooth
-	dampedDelay = std::max((31 * dampedDelay + (static_cast<int32_t>(ADC_array[ADC_DelayL] - 150))) >> 5, 0L);
+	dampedDelay = std::max((31 * dampedDelay + (static_cast<int32_t>(ADC_array[ADC_Delay_Pot_L] - 150))) >> 5, 0L);
 
 	// Change delay times after a pause to avoid pitched artifacts
 	if (std::abs(dampedDelay - currentDelay) > delayHysteresis) {

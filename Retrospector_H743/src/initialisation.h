@@ -13,7 +13,8 @@ extern volatile uint32_t SysTickVal;
 extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 // Define ADC array positions of various controls
-enum ADC_Controls { ADC_AudioL = 0, ADC_AudioR = 1, ADC_DelayL= 2, ADC_Mix = 3 };
+enum ADC_Controls { ADC_Audio_L = 0, ADC_Audio_R = 1, ADC_Mix = 2, ADC_Delay_Pot_L = 3, ADC_Delay_Pot_R = 4, ADC_Delay_CV_L = 5, ADC_Delay_CV_R = 6,
+	ADC_Feedback_Pot_L = 7, ADC_Feedback_CV_L = 8, ADC_Tone = 9};
 
 void SystemClock_Config();
 void InitCache();

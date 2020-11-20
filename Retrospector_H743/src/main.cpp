@@ -82,6 +82,10 @@ uint32_t MemTestDuration;
 uint32_t MemTestCount = 0;
 uint32_t MemTestErrors = 0;
 
+
+uint32_t volDebug = 0;
+uint32_t volDebugLevel = 1024;
+
 // Tell linker script to store buffer in SDRAM
 uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
 
@@ -129,11 +133,11 @@ int main(void) {
 	//usb.InitUSB();
 	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	//InitI2S();
+	InitI2S();
 
 	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
-	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
+	DAC1->DHR12R2 = 1048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
@@ -150,15 +154,29 @@ int main(void) {
 		//SCB_InvalidateDCache_by_Addr((uint32_t*)(((uint32_t)ADC_array) & ~(uint32_t)0x1F), (ADC_BUFFER_LENGTH * 2) + 32);
 		adcTest = ADC_array[0];
 
-		MemTestErrors += MemoryTest();
+		//MemTestErrors += MemoryTest();
 
 		debugTimer = TIM3->CNT;
 		debugCCR = TIM3->CCR1;
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
-		DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
-		DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
+		volDebug += 1;
+		if (volDebug > 1000000) {
+			//DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
+			//DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
+			volDebugLevel += 1024;
+			if (volDebugLevel > 4000) {
+				volDebugLevel = 0;
+			}
+			volDebug = 0;
+			DAC1->DHR12R2 = volDebugLevel; //Pins 3 & 6 on VCA (MIX_WET_CTL)
+			DAC1->DHR12R1 = volDebugLevel; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
+
+		}
+
+		//DAC1->DHR12R2 = std::pow(DACLevel, 5) * 4096;
+		//DAC1->DHR12R1 = std::pow((1.0f - DACLevel), 5) * 4096.0f;
 
 		// Check if a UART command has been received and copy to pending command
 		if (uartCmdRdy) {
