@@ -1,4 +1,4 @@
-388772338185573
+390392997125740
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19844,6 +19844,13 @@ ILI9341 LCD SPI
 0
 24
 24
+Custom_Footprints
+Inductor_SMD_6x6mm
+3L COILS SNR6045K-680M
+inductor smd
+0
+2
+2
 Custom_Footprints
 JLC_SMT_Tooling_Hole
 Mounting Hole 2.2mm, no annular, M2

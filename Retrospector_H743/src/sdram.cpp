@@ -46,12 +46,12 @@ void InitRamPin(GPIO_TypeDef* bank, std::initializer_list<uint8_t> pins) {
 void InitSDRAM(void) {
 
 	// Initialise clock for SDRAM pins
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// reset and clock control - advanced high performance bus - GPIO port B
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// reset and clock control - advanced high performance bus - GPIO port C
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIODEN;			// reset and clock control - advanced high performance bus - GPIO port D
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// reset and clock control - advanced high performance bus - GPIO port E
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// reset and clock control - advanced high performance bus - GPIO port F
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;			// reset and clock control - advanced high performance bus - GPIO port G
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIODEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
 
 	InitRamPin(GPIOB, {5, 6});
 	InitRamPin(GPIOC, {0});
@@ -62,10 +62,9 @@ void InitSDRAM(void) {
 
 	// Enable the SDRAM Controller
 	RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
-	//while (FMC_Bank5_6_R->SDSR & FMC_SDSR_BUSY_Msk);
 
 	// Clock configuration - FMC clock (fmc_ker_ck) selected with RCC_D1CCIPR_FMCSEL register. Defaults to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 140MHz
-	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;			// 10: pll2_r_ck clock selected as kernel peripheral clock (286MHz)
+	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;					// 10: pll2_r_ck clock selected as kernel peripheral clock (286MHz)
 
 	// Memory maximum clock speed is 140MHz at CAS latency = 3
 
