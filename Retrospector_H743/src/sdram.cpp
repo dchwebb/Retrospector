@@ -143,3 +143,46 @@ void InitSDRAM(void) {
 
 	// 16 megabytes of ram now available at address 0xD0000000 - 0xD1000000 (for SDRAM Bank2 See manual p129)
 }
+
+// SDRAM testing variables
+using memSize = uint32_t;
+uint32_t testAddr;
+memSize* tempAddr;
+constexpr uint32_t maxAddr = 0x1000000 / sizeof(memSize);
+uint32_t MemTestDuration;
+uint32_t MemTestCount = 0;
+uint32_t MemTestErrors = 0;
+
+// Tell linker script to store buffer in SDRAM
+uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
+
+// Test SDRAM
+uint32_t MemoryTest() {
+	// Blank
+	uint32_t testStart = SysTickVal;
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
+		*tempAddr = 0;
+	}
+
+	// Write
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
+		*tempAddr = static_cast<memSize>(testAddr);
+		if (*tempAddr == 0x00080000) {
+			int susp = 1;
+		}
+	}
+
+	// Read
+	int err = 0;
+	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+		memSize val = SDRAMBuffer[testAddr];
+		if (val != static_cast<memSize>(testAddr))
+			++err;
+	}
+
+	MemTestDuration = SysTickVal - testStart;		// For 32 bit words > 6632 using PLL2 at 143MHz, 6309 at 220MHz, 6385 (2813 with DCache, 2347 with DCache and ICache) at 100MHz
+	++MemTestCount;
+	return err;
+}

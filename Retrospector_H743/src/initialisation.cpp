@@ -16,7 +16,20 @@
 #define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
 #define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
 #define PLL_R1 2
-
+#elif CPUCLOCK == 240
+// 8MHz (HSE) / 2 (M) * 120 (N) / 2 (P) = 240MHz
+#define PLL_M1 2
+#define PLL_N1 120
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 120 (N) / 2 (Q) = 240MHz
+#define PLL_R1 2
+#elif CPUCLOCK == 200
+// 8MHz (HSE) / 2 (M) * 100 (N) / 2 (P) = 200MHz
+#define PLL_M1 2
+#define PLL_N1 100
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 100 (N) / 2 (Q) = 200MHz
+#define PLL_R1 2
 #else
 // 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
 #define PLL_M1 2
@@ -27,7 +40,7 @@
 #endif
 
 // Second PLL used for SDRAM clock
-// 8MHz (HSE) / 4 (M) * 286 (N) / 2 (R) = 286MHz
+// 8MHz (HSE) / 4 (M) * 200 (N) / 2 (R) = 200MHz
 #define PLL_M2 4
 #define PLL_N2 200
 #define PLL_R2 1			// 1 means Div by 2
@@ -37,10 +50,14 @@ void SystemClock_Config()
 
 	RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;			// Enable System configuration controller clock
 
+	// Voltage scaling - see Datasheet page 113. VOS1 > 300MHz; VOS2 > 200MHz; VOS3 < 200MHz
 	PWR->CR3 &= ~PWR_CR3_SCUEN;						// Supply configuration update enable - this must be deactivated or VOS ready does not come on
-#if CPUCLOCK == 280
-	PWR->D3CR |= PWR_D3CR_VOS_1;					// Configure voltage scaling level 1 before engaging overdrive (0b10 = VOS2)
-	PWR->D3CR &= ~PWR_D3CR_VOS_0;					// Configure voltage scaling level 1 before engaging overdrive (0b10 = VOS2)
+#if CPUCLOCK <= 200
+	PWR->D3CR |= PWR_D3CR_VOS_0;					// Configure voltage scaling level 2 (0b10 = VOS2)
+	PWR->D3CR &= ~PWR_D3CR_VOS_1;
+#elif CPUCLOCK <= 280
+	PWR->D3CR |= PWR_D3CR_VOS_1;					// Configure voltage scaling level 2 (0b10 = VOS2)
+	PWR->D3CR &= ~PWR_D3CR_VOS_0;
 #else
 	PWR->D3CR |= PWR_D3CR_VOS;						// Configure voltage scaling level 1 before engaging overdrive (0b11 = VOS1)
 #endif
@@ -330,18 +347,18 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	//RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL;
 
 	I2S Prescaler Clock calculations:
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]
 
-	I2S Clock = 240MHz
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
-
-	I2S Clock = 300MHz
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
-
-	I2S Clock = 320MHz
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
+	I2S Clock = 200MHz:			200000000 / (32*2  * ((2 * 32) + 1)) = 48076.92
+	I2S Clock = 240MHz:			240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
+	I2S Clock = 300MHz:			280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
+	I2S Clock = 320MHz: 		320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
 
 	*/
-#if CPUCLOCK == 280
+#if CPUCLOCK == 200
+	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
+	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
+#elif CPUCLOCK == 280
 	SPI2->I2SCFGR |= (45 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
 #elif CPUCLOCK == 320
