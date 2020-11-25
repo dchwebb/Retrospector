@@ -264,7 +264,7 @@ F 1 "22uF" H 6350 10000 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 6188 9950 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 6150 10100 50  0001 C CNN
 F 4 "C178597" H 6150 10100 50  0001 C CNN "Part_Number"
-F 5 "" H 6150 10100 50  0001 C CNN "Rotation"
+F 5 "90" H 6150 10100 50  0001 C CNN "Rotation"
 	1    6150 10100
 	1    0    0    -1  
 $EndComp
@@ -543,6 +543,7 @@ F 1 "22uF" V 1786 9900 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 1988 9750 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 1950 9900 50  0001 C CNN
 F 4 "C178597" H 1950 9900 50  0001 C CNN "Part_Number"
+F 5 "360" H 1950 9900 50  0001 C CNN "Rotation"
 	1    1950 9900
 	0    1    1    0   
 $EndComp
@@ -555,6 +556,7 @@ F 1 "22uF" V 2114 11200 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 1988 11050 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 1950 11200 50  0001 C CNN
 F 4 "C178597" H 1950 11200 50  0001 C CNN "Part_Number"
+F 5 "360" H 1950 11200 50  0001 C CNN "Rotation"
 	1    1950 11200
 	0    -1   -1   0   
 $EndComp
@@ -874,7 +876,7 @@ F 1 "22uF" H 5000 10000 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 5238 9950 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 5200 10100 50  0001 C CNN
 F 4 "C178597" H 5200 10100 50  0001 C CNN "Part_Number"
-F 5 "" H 5200 10100 50  0001 C CNN "Rotation"
+F 5 "90" H 5200 10100 50  0001 C CNN "Rotation"
 	1    5200 10100
 	1    0    0    -1  
 $EndComp
@@ -3920,7 +3922,7 @@ F 1 "22uF" H 3300 9950 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 3538 9900 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 3500 10050 50  0001 C CNN
 F 4 "C178597" H 3500 10050 50  0001 C CNN "Part_Number"
-F 5 "" H 3500 10050 50  0001 C CNN "Rotation"
+F 5 "360" H 3500 10050 50  0001 C CNN "Rotation"
 	1    3500 10050
 	1    0    0    -1  
 $EndComp
@@ -4106,6 +4108,7 @@ F 1 "100uF" H 5438 11755 50  0000 L CNN
 F 2 "Capacitors_SMD:CP_Elec_6.3x5.8" H 5350 11800 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1811201537_Lelon-VZT101M1V0606-TRO_C249982.pdf" H 5350 11800 50  0001 C CNN
 F 4 "C249982" H 5350 11800 50  0001 C CNN "Part_Number"
+F 5 "270" H 5350 11800 50  0001 C CNN "Rotation"
 	1    5350 11800
 	1    0    0    -1  
 $EndComp
@@ -4153,6 +4156,7 @@ F 1 "22uF" H 3538 11755 50  0000 L CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 3450 11800 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 3450 11800 50  0001 C CNN
 F 4 "C178597" H 3450 11800 50  0001 C CNN "Part_Number"
+F 5 "360" H 3450 11800 50  0001 C CNN "Rotation"
 	1    3450 11800
 	1    0    0    -1  
 $EndComp
@@ -4595,6 +4599,7 @@ F 1 "TL072" H 15950 5024 50  0000 C CNN
 F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 15950 5300 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/STMicroelectronics-TL072CDT_C6961.pdf" H 15950 5300 50  0001 C CNN
 F 4 "C6961" H 15950 5300 50  0001 C CNN "Part_Number"
+F 5 "180" H 15950 5300 50  0001 C CNN "Rotation"
 	1    15950 5300
 	1    0    0    1   
 $EndComp
@@ -4607,6 +4612,7 @@ F 1 "TL072" H 15950 6624 50  0000 C CNN
 F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 15950 6900 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/STMicroelectronics-TL072CDT_C6961.pdf" H 15950 6900 50  0001 C CNN
 F 4 "C6961" H 15950 6900 50  0001 C CNN "Part_Number"
+F 5 "180" H 15950 6900 50  0001 C CNN "Rotation"
 	2    15950 6900
 	1    0    0    1   
 $EndComp
@@ -4623,6 +4629,7 @@ F 1 "TL072" H 8400 11700 50  0000 R CNN
 F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 8200 11600 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/STMicroelectronics-TL072CDT_C6961.pdf" H 8200 11600 50  0001 C CNN
 F 4 "C6961" H 8200 11600 50  0001 C CNN "Part_Number"
+F 5 "180" H 8200 11600 50  0001 C CNN "Rotation"
 	3    8200 11600
 	1    0    0    -1  
 $EndComp
@@ -4704,4 +4711,15 @@ Wire Wire Line
 	8100 11250 8100 11300
 Wire Wire Line
 	8100 11900 8100 11950
+$Comp
+L MCU_ST_STM32H7:STM32H743IITx U?
+U 1 1 63B62A64
+P -2250 5200
+F 0 "U?" H -2250 611 50  0000 C CNN
+F 1 "STM32H743IITx" H -2250 520 50  0000 C CNN
+F 2 "Package_QFP:LQFP-176_24x24mm_P0.5mm" H -3450 900 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H -2250 5200 50  0001 C CNN
+	1    -2250 5200
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

@@ -1,0 +1,973 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr User 18000 13000
+encoding utf-8
+Sheet 1 1
+Title "Retrospector"
+Date ""
+Rev "2"
+Comp "Mountjoy Modular"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L power:PWR_FLAG #FLG05
+U 1 1 5C368914
+P 2250 4700
+F 0 "#FLG05" H 2250 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 2250 4874 50  0000 C CNN
+F 2 "" H 2250 4700 50  0001 C CNN
+F 3 "~" H 2250 4700 50  0001 C CNN
+	1    2250 4700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR089
+U 1 1 5C368939
+P 2250 4750
+F 0 "#PWR089" H 2250 4500 50  0001 C CNN
+F 1 "GND" H 2250 4600 50  0000 C CNN
+F 2 "" H 2250 4750 50  0001 C CNN
+F 3 "" H 2250 4750 50  0001 C CNN
+	1    2250 4750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2250 4700 2250 4750
+$Comp
+L Device:CP_Small C41
+U 1 1 5C7EBE36
+P 6650 1800
+F 0 "C41" H 6850 1800 50  0000 C CNN
+F 1 "22uF" H 6850 1700 50  0000 C CNN
+F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 6688 1650 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 6650 1800 50  0001 C CNN
+F 4 "C178597" H 6650 1800 50  0001 C CNN "Part_Number"
+F 5 "90" H 6650 1800 50  0001 C CNN "Rotation"
+	1    6650 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Diode:1N5819 D3
+U 1 1 5C90987E
+P 2150 1900
+F 0 "D3" H 2150 1684 50  0000 C CNN
+F 1 "1N5819" H 2150 1775 50  0000 C CNN
+F 2 "Diodes_SMD:D_SOD-123" H 2150 1725 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/Changjiang-Electronics-Tech-CJ-B5819W_C8598.pdf" H 2150 1900 50  0001 C CNN
+F 4 "C8598" H 2150 1900 50  0001 C CNN "Part_Number"
+	1    2150 1900
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	2300 1900 2350 1900
+Wire Wire Line
+	2350 1900 2350 1700
+Wire Wire Line
+	1950 2000 1450 2000
+Wire Wire Line
+	1950 2100 1450 2100
+Wire Wire Line
+	1950 2200 1450 2200
+$Comp
+L power:VCC #PWR076
+U 1 1 5C9AB39C
+P 2350 1700
+F 0 "#PWR076" H 2350 1550 50  0001 C CNN
+F 1 "VCC" H 2367 1873 50  0000 C CNN
+F 2 "" H 2350 1700 50  0001 C CNN
+F 3 "" H 2350 1700 50  0001 C CNN
+	1    2350 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:-12V #PWR071
+U 1 1 5C9AB842
+P 1400 2300
+F 0 "#PWR071" H 1400 2400 50  0001 C CNN
+F 1 "-12V" V 1400 2550 50  0000 C CNN
+F 2 "" H 1400 2300 50  0001 C CNN
+F 3 "" H 1400 2300 50  0001 C CNN
+	1    1400 2300
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+12V #PWR070
+U 1 1 5C9ABB1D
+P 1400 1900
+F 0 "#PWR070" H 1400 1750 50  0001 C CNN
+F 1 "+12V" V 1415 2028 50  0000 L CNN
+F 2 "" H 1400 1900 50  0001 C CNN
+F 3 "" H 1400 1900 50  0001 C CNN
+	1    1400 1900
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR066
+U 1 1 5C9E963D
+P 2350 2400
+F 0 "#PWR066" H 2350 2150 50  0001 C CNN
+F 1 "GND" H 2355 2227 50  0000 C CNN
+F 2 "" H 2350 2400 50  0001 C CNN
+F 3 "" H 2350 2400 50  0001 C CNN
+	1    2350 2400
+	1    0    0    -1  
+$EndComp
+Text Notes 1250 5250 0    100  ~ 20
+Power
+$Comp
+L power:+12V #PWR088
+U 1 1 5D477E58
+P 1850 4750
+F 0 "#PWR088" H 1850 4600 50  0001 C CNN
+F 1 "+12V" H 1750 4900 50  0000 L CNN
+F 2 "" H 1850 4750 50  0001 C CNN
+F 3 "" H 1850 4750 50  0001 C CNN
+	1    1850 4750
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:PWR_FLAG #FLG04
+U 1 1 5D477FFD
+P 1850 4700
+F 0 "#FLG04" H 1850 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 1850 4874 50  0000 C CNN
+F 2 "" H 1850 4700 50  0001 C CNN
+F 3 "~" H 1850 4700 50  0001 C CNN
+	1    1850 4700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1850 4700 1850 4750
+$Comp
+L power:PWR_FLAG #FLG02
+U 1 1 5CB20466
+P 2650 4700
+F 0 "#FLG02" H 2650 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 2650 4874 50  0000 C CNN
+F 2 "" H 2650 4700 50  0001 C CNN
+F 3 "~" H 2650 4700 50  0001 C CNN
+	1    2650 4700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2650 4700 2650 4750
+$Comp
+L power:+3.3VA #PWR084
+U 1 1 5CB34D3A
+P 2650 4750
+F 0 "#PWR084" H 2650 4600 50  0001 C CNN
+F 1 "+3.3VA" H 2500 4900 50  0000 L CNN
+F 2 "" H 2650 4750 50  0001 C CNN
+F 3 "" H 2650 4750 50  0001 C CNN
+	1    2650 4750
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:VEE #PWR090
+U 1 1 5CB35B68
+P 3450 4750
+F 0 "#PWR090" H 3450 4600 50  0001 C CNN
+F 1 "VEE" H 3450 4900 50  0000 C CNN
+F 2 "" H 3450 4750 50  0001 C CNN
+F 3 "" H 3450 4750 50  0001 C CNN
+	1    3450 4750
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	1450 4700 1450 4750
+$Comp
+L power:PWR_FLAG #FLG01
+U 1 1 5D48BCA2
+P 1450 4700
+F 0 "#FLG01" H 1450 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 1450 4874 50  0000 C CNN
+F 2 "" H 1450 4700 50  0001 C CNN
+F 3 "~" H 1450 4700 50  0001 C CNN
+	1    1450 4700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:-12V #PWR083
+U 1 1 5D48BAFD
+P 1450 4750
+F 0 "#PWR083" H 1450 4850 50  0001 C CNN
+F 1 "-12V" H 1450 4900 50  0000 C CNN
+F 2 "" H 1450 4750 50  0001 C CNN
+F 3 "" H 1450 4750 50  0001 C CNN
+	1    1450 4750
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	3450 4700 3450 4750
+$Comp
+L power:PWR_FLAG #FLG06
+U 1 1 5CB4D472
+P 3450 4700
+F 0 "#FLG06" H 3450 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 3450 4874 50  0000 C CNN
+F 2 "" H 3450 4700 50  0001 C CNN
+F 3 "~" H 3450 4700 50  0001 C CNN
+	1    3450 4700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3050 4700 3050 4750
+$Comp
+L power:PWR_FLAG #FLG03
+U 1 1 5CB61F63
+P 3050 4700
+F 0 "#FLG03" H 3050 4775 50  0001 C CNN
+F 1 "PWR_FLAG" H 3050 4874 50  0000 C CNN
+F 2 "" H 3050 4700 50  0001 C CNN
+F 3 "~" H 3050 4700 50  0001 C CNN
+	1    3050 4700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR085
+U 1 1 5CB7826E
+P 3050 4750
+F 0 "#PWR085" H 3050 4600 50  0001 C CNN
+F 1 "VCC" H 3050 4900 50  0000 C CNN
+F 2 "" H 3050 4750 50  0001 C CNN
+F 3 "" H 3050 4750 50  0001 C CNN
+	1    3050 4750
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR073
+U 1 1 5E9CB32E
+P 6150 2050
+F 0 "#PWR073" H 6150 1800 50  0001 C CNN
+F 1 "GND" V 6155 1922 50  0000 R CNN
+F 2 "" H 6150 2050 50  0001 C CNN
+F 3 "" H 6150 2050 50  0001 C CNN
+	1    6150 2050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR078
+U 1 1 5E9BEF3C
+P 6650 1550
+F 0 "#PWR078" H 6650 1400 50  0001 C CNN
+F 1 "+3.3V" H 6650 1700 50  0000 C CNN
+F 2 "" H 6650 1550 50  0001 C CNN
+F 3 "" H 6650 1550 50  0001 C CNN
+	1    6650 1550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6650 1650 6650 1700
+Wire Wire Line
+	6650 1550 6650 1650
+Connection ~ 6650 1650
+$Comp
+L Device:L L1
+U 1 1 5E9BEF54
+P 6950 1650
+F 0 "L1" V 6772 1650 50  0000 C CNN
+F 1 "L" V 6863 1650 50  0000 C CNN
+F 2 "Inductors_SMD:L_0805_HandSoldering" H 6950 1650 50  0001 C CNN
+F 3 "~" H 6950 1650 50  0001 C CNN
+F 4 "C1046" H 6950 1650 50  0001 C CNN "Part_Number"
+	1    6950 1650
+	0    1    1    0   
+$EndComp
+$Comp
+L power:+3.3VA #PWR082
+U 1 1 5E9BEF5F
+P 7150 1550
+F 0 "#PWR082" H 7150 1400 50  0001 C CNN
+F 1 "+3.3VA" H 7050 1700 50  0000 L CNN
+F 2 "" H 7150 1550 50  0001 C CNN
+F 3 "" H 7150 1550 50  0001 C CNN
+	1    7150 1550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7150 1550 7150 1650
+Wire Wire Line
+	7150 1650 7100 1650
+Wire Wire Line
+	6450 1650 6650 1650
+Wire Wire Line
+	6650 1900 6650 2000
+$Comp
+L Device:CP_Small C36
+U 1 1 5F1D3990
+P 5700 1800
+F 0 "C36" H 5500 1800 50  0000 C CNN
+F 1 "22uF" H 5500 1700 50  0000 C CNN
+F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 5738 1650 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 5700 1800 50  0001 C CNN
+F 4 "C178597" H 5700 1800 50  0001 C CNN "Part_Number"
+F 5 "90" H 5700 1800 50  0001 C CNN "Rotation"
+	1    5700 1800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5700 1900 5700 2000
+Wire Wire Line
+	5700 2000 6150 2000
+Wire Wire Line
+	6650 1650 6800 1650
+Connection ~ 6150 2000
+Wire Wire Line
+	6150 2000 6150 2050
+Wire Wire Line
+	6150 2000 6650 2000
+$Comp
+L Eurorack_Header:Eurorack_10_pin_power J2
+U 1 1 5F72E001
+P 1750 2100
+F 0 "J2" H 1950 1600 50  0000 C CNN
+F 1 "Eurorack_10_pin_power" H 2000 1700 50  0000 C CNN
+F 2 "Custom_Footprints:Eurorack_10_pin_header" H 1750 2100 50  0001 C CNN
+F 3 "" H 1750 2100 50  0001 C CNN
+	1    1750 2100
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	1400 2300 1450 2300
+Wire Wire Line
+	1400 1900 1450 1900
+Wire Wire Line
+	1950 1900 2000 1900
+Connection ~ 1450 2100
+Wire Wire Line
+	1450 2000 1450 2100
+Wire Wire Line
+	1450 2100 1450 2200
+Connection ~ 1450 2000
+Connection ~ 1450 2200
+Wire Wire Line
+	1450 1900 1950 1900
+Connection ~ 1450 1900
+Connection ~ 1950 1900
+Wire Wire Line
+	1450 2300 1950 2300
+Connection ~ 1450 2300
+Wire Wire Line
+	2350 2400 2350 2200
+$Comp
+L Connector:TestPoint TP5
+U 1 1 5FBC912F
+P 9750 2250
+F 0 "TP5" V 9750 2500 50  0000 C CNN
+F 1 "TestPoint" V 9750 2800 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 9950 2250 50  0001 C CNN
+F 3 "~" H 9950 2250 50  0001 C CNN
+	1    9750 2250
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:VCC #PWR018
+U 1 1 5FBC9909
+P 9750 2250
+F 0 "#PWR018" H 9750 2100 50  0001 C CNN
+F 1 "VCC" V 9750 2450 50  0000 C CNN
+F 2 "" H 9750 2250 50  0001 C CNN
+F 3 "" H 9750 2250 50  0001 C CNN
+	1    9750 2250
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR020
+U 1 1 6008746F
+P 4350 2000
+F 0 "#PWR020" H 4350 1750 50  0001 C CNN
+F 1 "GND" V 4355 1872 50  0000 R CNN
+F 2 "" H 4350 2000 50  0001 C CNN
+F 3 "" H 4350 2000 50  0001 C CNN
+	1    4350 2000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4350 1900 4350 1950
+$Comp
+L Device:CP_Small C54
+U 1 1 60087497
+P 4000 1750
+F 0 "C54" H 3800 1750 50  0000 C CNN
+F 1 "22uF" H 3800 1650 50  0000 C CNN
+F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 4038 1600 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 4000 1750 50  0001 C CNN
+F 4 "C178597" H 4000 1750 50  0001 C CNN "Part_Number"
+F 5 "360" H 4000 1750 50  0001 C CNN "Rotation"
+	1    4000 1750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3950 1600 4000 1600
+Wire Wire Line
+	4000 1650 4000 1600
+Connection ~ 4000 1600
+Wire Wire Line
+	4000 1600 4050 1600
+$Comp
+L power:VCC #PWR02
+U 1 1 600874A5
+P 3950 1600
+F 0 "#PWR02" H 3950 1450 50  0001 C CNN
+F 1 "VCC" V 3968 1727 50  0000 L CNN
+F 2 "" H 3950 1600 50  0001 C CNN
+F 3 "" H 3950 1600 50  0001 C CNN
+	1    3950 1600
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4000 1850 4000 1950
+Wire Wire Line
+	4000 1950 4350 1950
+Connection ~ 4350 1950
+Wire Wire Line
+	4350 1950 4350 2000
+Wire Wire Line
+	5400 1650 5700 1650
+Wire Wire Line
+	5700 1700 5700 1650
+Connection ~ 5700 1650
+Wire Wire Line
+	5700 1650 5850 1650
+$Comp
+L LDO_DPAK:BA7807FP-E2 U9
+U 1 1 61DAD9CD
+P 4350 1600
+F 0 "U9" H 4350 1842 50  0000 C CNN
+F 1 "BA7807FP-E2" H 4350 1751 50  0000 C CNN
+F 2 "TO_SOT_Packages_SMD:TO-252-2_Rectifier" H 4350 1825 50  0001 C CIN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809301322_ROHM-Semicon-BA7807FP-E2_C79648.pdf" H 4350 1550 50  0001 C CNN
+	1    4350 1600
+	1    0    0    -1  
+$EndComp
+$Comp
+L LDO_DPAK:NCV1117DT33T5G U8
+U 1 1 61DAF253
+P 6150 1650
+F 0 "U8" H 6150 1892 50  0000 C CNN
+F 1 "NCV1117DT33T5G" H 6150 1801 50  0000 C CNN
+F 2 "TO_SOT_Packages_SMD:TO-252-2_Rectifier" H 6150 1875 50  0001 C CIN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809192013_ON-Semiconductor-NCV1117DT33T5G_C20625.pdf" H 6150 1600 50  0001 C CNN
+	1    6150 1650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Regulator_Switching:LM2675M-5 U10
+U 1 1 6DAC0E92
+P 4600 3150
+F 0 "U10" H 4600 3617 50  0000 C CNN
+F 1 "LM2675M-5" H 4600 3526 50  0000 C CNN
+F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 4650 2800 50  0001 L CIN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2675.pdf" H 4600 3150 50  0001 C CNN
+F 4 "C180371" H 4600 3150 50  0001 C CNN "Part_Number"
+	1    4600 3150
+	1    0    0    -1  
+$EndComp
+NoConn ~ 4100 3150
+$Comp
+L power:VCC #PWR0118
+U 1 1 6DB2F14A
+P 3850 2950
+F 0 "#PWR0118" H 3850 2800 50  0001 C CNN
+F 1 "VCC" V 3868 3077 50  0000 L CNN
+F 2 "" H 3850 2950 50  0001 C CNN
+F 3 "" H 3850 2950 50  0001 C CNN
+	1    3850 2950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:D_Schottky_Small D1
+U 1 1 6DB2FC15
+P 5450 3500
+F 0 "D1" V 5400 3350 50  0000 L CNN
+F 1 "1N5819" V 5500 3100 50  0000 L CNN
+F 2 "Diodes_SMD:D_SOD-123" V 5450 3500 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/Changjiang-Electronics-Tech-CJ-B5819W_C8598.pdf" V 5450 3500 50  0001 C CNN
+F 4 "C8598" H 5450 3500 50  0001 C CNN "Part_Number"
+	1    5450 3500
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5100 3350 5450 3350
+Wire Wire Line
+	5450 3350 5450 3400
+Wire Wire Line
+	4600 3550 4600 3650
+$Comp
+L Device:C_Small C58
+U 1 1 6DC7C12C
+P 5250 3150
+F 0 "C58" V 5100 3150 50  0000 C CNN
+F 1 "10nF" V 5350 3150 50  0000 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 5250 3150 50  0001 C CNN
+F 3 "~" H 5250 3150 50  0001 C CNN
+F 4 "C57112" H 5250 3150 50  0001 C CNN "Part_Number"
+	1    5250 3150
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5100 3150 5150 3150
+Wire Wire Line
+	5350 3150 5450 3150
+Wire Wire Line
+	5450 3150 5450 3350
+Connection ~ 5450 3350
+$Comp
+L Device:CP_Small C59
+U 1 1 6DEA7A83
+P 5850 3500
+F 0 "C59" H 5938 3546 50  0000 L CNN
+F 1 "100uF" H 5938 3455 50  0000 L CNN
+F 2 "Capacitors_SMD:CP_Elec_6.3x5.8" H 5850 3500 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1811201537_Lelon-VZT101M1V0606-TRO_C249982.pdf" H 5850 3500 50  0001 C CNN
+F 4 "C249982" H 5850 3500 50  0001 C CNN "Part_Number"
+F 5 "270" H 5850 3500 50  0001 C CNN "Rotation"
+	1    5850 3500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5450 3350 5550 3350
+Wire Wire Line
+	5750 3350 5850 3350
+Wire Wire Line
+	5850 3350 5850 3400
+Wire Wire Line
+	5850 3650 5850 3600
+Connection ~ 4600 3650
+Wire Wire Line
+	4600 3700 4600 3650
+$Comp
+L power:GND #PWR0125
+U 1 1 6DB2F5C6
+P 4600 3700
+F 0 "#PWR0125" H 4600 3450 50  0001 C CNN
+F 1 "GND" V 4605 3572 50  0000 R CNN
+F 2 "" H 4600 3700 50  0001 C CNN
+F 3 "" H 4600 3700 50  0001 C CNN
+	1    4600 3700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5850 3350 5850 2950
+Wire Wire Line
+	5850 2950 5100 2950
+Connection ~ 5850 3350
+Wire Wire Line
+	5850 3350 6050 3350
+Text Label 6050 3350 0    50   ~ 0
+Int_V
+Text Label 4700 1600 0    50   ~ 0
+Int_V
+Text Label 5400 1650 2    50   ~ 0
+Int_V
+$Comp
+L Device:CP_Small C57
+U 1 1 6E46AC0A
+P 3950 3500
+F 0 "C57" H 4038 3546 50  0000 L CNN
+F 1 "22uF" H 4038 3455 50  0000 L CNN
+F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 3950 3500 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 3950 3500 50  0001 C CNN
+F 4 "C178597" H 3950 3500 50  0001 C CNN "Part_Number"
+F 5 "360" H 3950 3500 50  0001 C CNN "Rotation"
+	1    3950 3500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3850 2950 3950 2950
+Wire Wire Line
+	3950 2950 3950 3400
+Wire Wire Line
+	3950 2950 4100 2950
+Connection ~ 3950 2950
+Wire Wire Line
+	3950 3600 3950 3650
+Wire Wire Line
+	3950 3650 4600 3650
+Wire Wire Line
+	4600 3650 5450 3650
+Wire Wire Line
+	5450 3600 5450 3650
+Connection ~ 5450 3650
+Wire Wire Line
+	5450 3650 5850 3650
+Text Notes 4900 4000 0    50   ~ 0
+Buck Converter to 5V option\nCan use LM2762 (slightly cheaper)
+$Comp
+L Device:L_Small L2
+U 1 1 6DEA5F2E
+P 5650 3350
+F 0 "L2" V 5835 3350 50  0000 C CNN
+F 1 "68uH" V 5744 3350 50  0000 C CNN
+F 2 "Custom_Footprints:Inductor_SMD_6x6mm" H 5650 3350 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1912111437_3L-COILS-SNR6045K-680M_C326343.pdf" H 5650 3350 50  0001 C CNN
+F 4 "C326343" V 5650 3350 50  0001 C CNN "Part_Number"
+	1    5650 3350
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4650 1600 4700 1600
+Text Notes 3500 2450 0    50   ~ 0
+Optional test circuit for intermediate LDO
+Text Notes 9200 1150 0    100  ~ 20
+Test Points
+Text Label 5100 3350 0    50   ~ 0
+VSW
+Wire Wire Line
+	6150 1950 6150 2000
+$Comp
+L power:+3.3VA #PWR013
+U 1 1 5FBC8BDD
+P 9750 2050
+F 0 "#PWR013" H 9750 1900 50  0001 C CNN
+F 1 "+3.3VA" V 9750 2150 50  0000 L CNN
+F 2 "" H 9750 2050 50  0001 C CNN
+F 3 "" H 9750 2050 50  0001 C CNN
+	1    9750 2050
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:TestPoint TP3
+U 1 1 5FBC8AAF
+P 9750 2050
+F 0 "TP3" V 9750 2300 50  0000 C CNN
+F 1 "TestPoint" V 9750 2600 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 9950 2050 50  0001 C CNN
+F 3 "~" H 9950 2050 50  0001 C CNN
+	1    9750 2050
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+3.3V #PWR011
+U 1 1 5FBC8425
+P 9750 1850
+F 0 "#PWR011" H 9750 1700 50  0001 C CNN
+F 1 "+3.3V" V 9750 1950 50  0000 L CNN
+F 2 "" H 9750 1850 50  0001 C CNN
+F 3 "" H 9750 1850 50  0001 C CNN
+	1    9750 1850
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:TestPoint TP2
+U 1 1 5FBC80EE
+P 9750 1850
+F 0 "TP2" V 9750 2100 50  0000 C CNN
+F 1 "TestPoint" V 9750 2400 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 9950 1850 50  0001 C CNN
+F 3 "~" H 9950 1850 50  0001 C CNN
+	1    9750 1850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR010
+U 1 1 5FBC7DF8
+P 9750 1650
+F 0 "#PWR010" H 9750 1400 50  0001 C CNN
+F 1 "GND" V 9755 1522 50  0000 R CNN
+F 2 "" H 9750 1650 50  0001 C CNN
+F 3 "" H 9750 1650 50  0001 C CNN
+	1    9750 1650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector:TestPoint TP1
+U 1 1 5FBC76F3
+P 9750 1650
+F 0 "TP1" V 9750 1900 50  0000 C CNN
+F 1 "TestPoint" V 9750 2200 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 9950 1650 50  0001 C CNN
+F 3 "~" H 9950 1650 50  0001 C CNN
+	1    9750 1650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Eurorack_Header:Eurorack_10_pin_power J1
+U 1 1 5FD3D9F2
+P 1750 3300
+F 0 "J1" H 1800 2850 50  0000 C CNN
+F 1 "Board_Connector" H 1800 2950 50  0000 C CNN
+F 2 "Custom_Footprints:Eurorack_10_pin_header" H 1750 3300 50  0001 C CNN
+F 3 "" H 1750 3300 50  0001 C CNN
+	1    1750 3300
+	-1   0    0    1   
+$EndComp
+$Comp
+L Device:CP_Small C1
+U 1 1 5FD4F6D0
+P 2350 2050
+F 0 "C1" H 2438 2096 50  0000 L CNN
+F 1 "22uF" H 2438 2005 50  0000 L CNN
+F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 2350 2050 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 2350 2050 50  0001 C CNN
+F 4 "C178597" H 2350 2050 50  0001 C CNN "Part_Number"
+F 5 "360" H 2350 2050 50  0001 C CNN "Rotation"
+	1    2350 2050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2350 1900 2350 1950
+Connection ~ 2350 1900
+Wire Wire Line
+	1950 2200 2350 2200
+Connection ~ 1950 2200
+Connection ~ 2350 2200
+Wire Wire Line
+	2350 2200 2350 2150
+$Comp
+L power:-12V #PWR0101
+U 1 1 5FD69315
+P 1450 3500
+F 0 "#PWR0101" H 1450 3600 50  0001 C CNN
+F 1 "-12V" V 1450 3750 50  0000 C CNN
+F 2 "" H 1450 3500 50  0001 C CNN
+F 3 "" H 1450 3500 50  0001 C CNN
+	1    1450 3500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:VCC #PWR0102
+U 1 1 5FD6963F
+P 1450 3100
+F 0 "#PWR0102" H 1450 2950 50  0001 C CNN
+F 1 "VCC" H 1467 3273 50  0000 C CNN
+F 2 "" H 1450 3100 50  0001 C CNN
+F 3 "" H 1450 3100 50  0001 C CNN
+	1    1450 3100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR0103
+U 1 1 5FD69CE5
+P 2200 3350
+F 0 "#PWR0103" H 2200 3100 50  0001 C CNN
+F 1 "GND" H 2205 3177 50  0000 C CNN
+F 2 "" H 2200 3350 50  0001 C CNN
+F 3 "" H 2200 3350 50  0001 C CNN
+	1    2200 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1450 3200 1450 3300
+Wire Wire Line
+	1450 3400 1950 3400
+Connection ~ 1450 3400
+Connection ~ 1450 3300
+Wire Wire Line
+	1450 3300 1450 3400
+Wire Wire Line
+	1950 3400 1950 3300
+Connection ~ 1950 3400
+Connection ~ 1950 3300
+Wire Wire Line
+	1950 3300 1950 3200
+Wire Wire Line
+	1950 3300 2200 3300
+Wire Wire Line
+	2200 3300 2200 3350
+Wire Wire Line
+	1450 3100 1950 3100
+Connection ~ 1450 3100
+Wire Wire Line
+	1950 3500 1450 3500
+Connection ~ 1450 3500
+$Comp
+L TPS5410DR:TPS5410D U1
+U 1 1 63B9AA59
+P 7900 3150
+F 0 "U1" H 7900 3617 50  0000 C CNN
+F 1 "TPS5410D" H 7900 3526 50  0000 C CNN
+F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 7850 3600 50  0001 C CNN
+F 3 "https://www.ti.com/lit/gpn/tps5410" H 7900 3150 50  0001 C CNN
+	1    7900 3150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C3
+U 1 1 63B9D019
+P 8500 3050
+F 0 "C3" H 8350 3050 50  0000 C CNN
+F 1 "10nF" H 8500 2900 50  0000 C CNN
+F 2 "Capacitors_SMD:C_0603_HandSoldering" H 8500 3050 50  0001 C CNN
+F 3 "~" H 8500 3050 50  0001 C CNN
+F 4 "C57112" H 8500 3050 50  0001 C CNN "Part_Number"
+	1    8500 3050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8300 2950 8500 2950
+Wire Wire Line
+	8300 3150 8500 3150
+NoConn ~ 7500 3150
+$Comp
+L power:GND #PWR03
+U 1 1 63BB87EE
+P 7900 3850
+F 0 "#PWR03" H 7900 3600 50  0001 C CNN
+F 1 "GND" V 7905 3722 50  0000 R CNN
+F 2 "" H 7900 3850 50  0001 C CNN
+F 3 "" H 7900 3850 50  0001 C CNN
+	1    7900 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7900 3550 7900 3750
+Wire Wire Line
+	7500 2950 7250 2950
+Wire Wire Line
+	7250 2950 7250 3200
+Wire Wire Line
+	7250 3400 7250 3750
+Wire Wire Line
+	7250 3750 7900 3750
+Connection ~ 7900 3750
+$Comp
+L power:VCC #PWR01
+U 1 1 63BCE4C9
+P 7150 2950
+F 0 "#PWR01" H 7150 2800 50  0001 C CNN
+F 1 "VCC" V 7168 3077 50  0000 L CNN
+F 2 "" H 7150 2950 50  0001 C CNN
+F 3 "" H 7150 2950 50  0001 C CNN
+	1    7150 2950
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	7150 2950 7250 2950
+Connection ~ 7250 2950
+Wire Wire Line
+	7900 3850 7900 3750
+Connection ~ 9250 3750
+Wire Wire Line
+	9700 3450 9700 3750
+Wire Wire Line
+	9700 3750 9250 3750
+Wire Wire Line
+	8800 2950 8900 2950
+Wire Wire Line
+	8800 3050 8800 2950
+$Comp
+L Device:D_Schottky_Small D2
+U 1 1 63B9D800
+P 8800 3150
+F 0 "D2" V 8800 3250 50  0000 L CNN
+F 1 "1N5819" V 8900 3200 50  0000 L CNN
+F 2 "Diodes_SMD:D_SOD-123" V 8800 3150 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/Changjiang-Electronics-Tech-CJ-B5819W_C8598.pdf" V 8800 3150 50  0001 C CNN
+F 4 "C8598" H 8800 3150 50  0001 C CNN "Part_Number"
+	1    8800 3150
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	9250 3750 8800 3750
+Wire Wire Line
+	9250 3650 9250 3750
+Connection ~ 9250 2950
+Wire Wire Line
+	9700 2950 9700 3250
+Wire Wire Line
+	9250 2950 9700 2950
+Wire Wire Line
+	9250 2950 9250 3050
+Wire Wire Line
+	9100 2950 9250 2950
+$Comp
+L Device:CP_Small C4
+U 1 1 63BA5427
+P 9700 3350
+F 0 "C4" H 9788 3396 50  0000 L CNN
+F 1 "150uF" H 9788 3305 50  0000 L CNN
+F 2 "Capacitors_SMD:C_1210" H 9700 3350 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 9700 3350 50  0001 C CNN
+F 4 "C178597" H 9700 3350 50  0001 C CNN "Part_Number"
+F 5 "360" H 9700 3350 50  0001 C CNN "Rotation"
+	1    9700 3350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R2
+U 1 1 63BA51B4
+P 9250 3550
+F 0 "R2" H 9309 3596 50  0000 L CNN
+F 1 "5.9k" H 9309 3505 50  0000 L CNN
+F 2 "" H 9250 3550 50  0001 C CNN
+F 3 "~" H 9250 3550 50  0001 C CNN
+	1    9250 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R1
+U 1 1 63B9EB15
+P 9250 3150
+F 0 "R1" H 9309 3196 50  0000 L CNN
+F 1 "10k" H 9309 3105 50  0000 L CNN
+F 2 "" H 9250 3150 50  0001 C CNN
+F 3 "~" H 9250 3150 50  0001 C CNN
+	1    9250 3150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:L_Small L3
+U 1 1 63B9E041
+P 9000 2950
+F 0 "L3" V 9185 2950 50  0000 C CNN
+F 1 "56uH" V 9094 2950 50  0000 C CNN
+F 2 "Custom_Footprints:Inductor_SMD_6x6mm" H 9000 2950 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1912111437_3L-COILS-SNR6045K-680M_C326343.pdf" H 9000 2950 50  0001 C CNN
+F 4 "C326343" V 9000 2950 50  0001 C CNN "Part_Number"
+	1    9000 2950
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	9250 3250 9250 3350
+Wire Wire Line
+	8500 2950 8800 2950
+Connection ~ 8500 2950
+Connection ~ 8800 2950
+Wire Wire Line
+	8300 3350 9250 3350
+Connection ~ 9250 3350
+Wire Wire Line
+	9250 3350 9250 3450
+Wire Wire Line
+	8800 3250 8800 3750
+Wire Wire Line
+	8800 3750 7900 3750
+Connection ~ 8800 3750
+$Comp
+L power:+3.3V #PWR04
+U 1 1 63C1C940
+P 9900 2850
+F 0 "#PWR04" H 9900 2700 50  0001 C CNN
+F 1 "+3.3V" H 9900 3000 50  0000 C CNN
+F 2 "" H 9900 2850 50  0001 C CNN
+F 3 "" H 9900 2850 50  0001 C CNN
+	1    9900 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9900 2850 9900 2950
+Wire Wire Line
+	9900 2950 9700 2950
+Connection ~ 9700 2950
+Text Notes 8300 4150 0    50   ~ 0
+For 5V output change:\n- Output Capacitor from 150uF to 100uF\n- Lower FB resistor from 5.9k to 3.24k\nNB 5.6k gives output of 3.4V; 6.2k gives 3.2V
+Text Notes 6500 3650 0    50   ~ 0
+Input Capacitor\nCeramic, XR5 1206
+$Comp
+L Device:C_Small C2
+U 1 1 63C237DB
+P 7250 3300
+F 0 "C2" H 7100 3300 50  0000 C CNN
+F 1 "10uF" H 7250 3150 50  0000 C CNN
+F 2 "Capacitors_SMD:C_1206" H 7250 3300 50  0001 C CNN
+F 3 "~" H 7250 3300 50  0001 C CNN
+F 4 "C57112" H 7250 3300 50  0001 C CNN "Part_Number"
+	1    7250 3300
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
