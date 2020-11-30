@@ -1,6 +1,10 @@
 #include "digitaldelay.h"
 #include <limits>
 
+extern uint32_t clockInterval;
+extern bool clockValid;
+
+
 int32_t digitalDelay::calcSample() {
 	int32_t nextSample;
 
@@ -27,7 +31,8 @@ int32_t digitalDelay::calcSample() {
 	if (++oldReadPos == SAMPLE_BUFFER_LENGTH)		oldReadPos = 0;
 
 	// Get delay time from ADC and average over 32 readings to smooth
-	dampedDelay = std::max((31 * dampedDelay + (static_cast<int32_t>(ADC_array[ADC_Delay_Pot_L] - 150))) >> 5, 0L);
+	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[ADC_Delay_Pot_L] - 150);
+	dampedDelay = std::max((31 * dampedDelay + delayClkCV) >> 5, 0UL);
 
 	// Change delay times after a pause to avoid pitched artifacts
 	if (std::abs(dampedDelay - currentDelay) > delayHysteresis) {
@@ -40,7 +45,7 @@ int32_t digitalDelay::calcSample() {
 		if (delayChanged == 1) {
 			oldReadPos = readPos;
 			readPos = writePos - dampedDelay;
-			if (readPos < 0) 		readPos += SAMPLE_BUFFER_LENGTH;
+			while (readPos < 0) 		readPos += SAMPLE_BUFFER_LENGTH;
 			delayCrossfade = crossFade;
 			GPIOB->ODR |= GPIO_ODR_OD7;
 		}

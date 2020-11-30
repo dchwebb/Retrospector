@@ -48,7 +48,7 @@ void EXTI9_5_IRQHandler(void) {
 	if (EXTI->PR1 & EXTI_PR1_PR7) {
 		clockInterval = SysTickVal - lastClock;
 		lastClock = SysTickVal;
-		//debugClkInt++;
+		newClock = true;
 		EXTI->PR1 |= EXTI_PR1_PR7;							// Clear interrupt pending
 	}
 

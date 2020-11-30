@@ -300,93 +300,93 @@ Wire Wire Line
 $Comp
 L Connector:TestPoint TP5
 U 1 1 5FBC912F
-P 6450 4900
-F 0 "TP5" V 6450 5150 50  0000 C CNN
-F 1 "TestPoint" V 6450 5450 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 6650 4900 50  0001 C CNN
-F 3 "~" H 6650 4900 50  0001 C CNN
-	1    6450 4900
+P 5500 5200
+F 0 "TP5" V 5500 5450 50  0000 C CNN
+F 1 "TestPoint" V 5500 5750 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 5700 5200 50  0001 C CNN
+F 3 "~" H 5700 5200 50  0001 C CNN
+	1    5500 5200
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:VCC #PWR018
 U 1 1 5FBC9909
-P 6450 4900
-F 0 "#PWR018" H 6450 4750 50  0001 C CNN
-F 1 "VCC" V 6450 5100 50  0000 C CNN
-F 2 "" H 6450 4900 50  0001 C CNN
-F 3 "" H 6450 4900 50  0001 C CNN
-	1    6450 4900
+P 5500 5200
+F 0 "#PWR018" H 5500 5050 50  0001 C CNN
+F 1 "VCC" V 5500 5400 50  0000 C CNN
+F 2 "" H 5500 5200 50  0001 C CNN
+F 3 "" H 5500 5200 50  0001 C CNN
+	1    5500 5200
 	0    1    1    0   
 $EndComp
-Text Notes 5900 3800 0    100  ~ 20
+Text Notes 4800 4400 0    100  ~ 20
 Test Points
 Wire Wire Line
 	3950 1700 3950 1750
 $Comp
 L power:+3.3VA #PWR013
 U 1 1 5FBC8BDD
-P 6450 4700
-F 0 "#PWR013" H 6450 4550 50  0001 C CNN
-F 1 "+3.3VA" V 6450 4800 50  0000 L CNN
-F 2 "" H 6450 4700 50  0001 C CNN
-F 3 "" H 6450 4700 50  0001 C CNN
-	1    6450 4700
+P 5500 5000
+F 0 "#PWR013" H 5500 4850 50  0001 C CNN
+F 1 "+3.3VA" V 5500 5100 50  0000 L CNN
+F 2 "" H 5500 5000 50  0001 C CNN
+F 3 "" H 5500 5000 50  0001 C CNN
+	1    5500 5000
 	0    1    1    0   
 $EndComp
 $Comp
 L Connector:TestPoint TP3
 U 1 1 5FBC8AAF
-P 6450 4700
-F 0 "TP3" V 6450 4950 50  0000 C CNN
-F 1 "TestPoint" V 6450 5250 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 6650 4700 50  0001 C CNN
-F 3 "~" H 6650 4700 50  0001 C CNN
-	1    6450 4700
+P 5500 5000
+F 0 "TP3" V 5500 5250 50  0000 C CNN
+F 1 "TestPoint" V 5500 5550 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 5700 5000 50  0001 C CNN
+F 3 "~" H 5700 5000 50  0001 C CNN
+	1    5500 5000
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3V #PWR011
 U 1 1 5FBC8425
-P 6450 4500
-F 0 "#PWR011" H 6450 4350 50  0001 C CNN
-F 1 "+3.3V" V 6450 4600 50  0000 L CNN
-F 2 "" H 6450 4500 50  0001 C CNN
-F 3 "" H 6450 4500 50  0001 C CNN
-	1    6450 4500
+P 5500 4800
+F 0 "#PWR011" H 5500 4650 50  0001 C CNN
+F 1 "+3.3V" V 5500 4900 50  0000 L CNN
+F 2 "" H 5500 4800 50  0001 C CNN
+F 3 "" H 5500 4800 50  0001 C CNN
+	1    5500 4800
 	0    1    1    0   
 $EndComp
 $Comp
 L Connector:TestPoint TP2
 U 1 1 5FBC80EE
-P 6450 4500
-F 0 "TP2" V 6450 4750 50  0000 C CNN
-F 1 "TestPoint" V 6450 5050 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 6650 4500 50  0001 C CNN
-F 3 "~" H 6650 4500 50  0001 C CNN
-	1    6450 4500
+P 5500 4800
+F 0 "TP2" V 5500 5050 50  0000 C CNN
+F 1 "TestPoint" V 5500 5350 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 5700 4800 50  0001 C CNN
+F 3 "~" H 5700 4800 50  0001 C CNN
+	1    5500 4800
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR010
 U 1 1 5FBC7DF8
-P 6450 4300
-F 0 "#PWR010" H 6450 4050 50  0001 C CNN
-F 1 "GND" V 6455 4172 50  0000 R CNN
-F 2 "" H 6450 4300 50  0001 C CNN
-F 3 "" H 6450 4300 50  0001 C CNN
-	1    6450 4300
+P 5500 4600
+F 0 "#PWR010" H 5500 4350 50  0001 C CNN
+F 1 "GND" V 5505 4472 50  0000 R CNN
+F 2 "" H 5500 4600 50  0001 C CNN
+F 3 "" H 5500 4600 50  0001 C CNN
+	1    5500 4600
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP1
 U 1 1 5FBC76F3
-P 6450 4300
-F 0 "TP1" V 6450 4550 50  0000 C CNN
-F 1 "TestPoint" V 6450 4850 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 6650 4300 50  0001 C CNN
-F 3 "~" H 6650 4300 50  0001 C CNN
-	1    6450 4300
+P 5500 4600
+F 0 "TP1" V 5500 4850 50  0000 C CNN
+F 1 "TestPoint" V 5500 5150 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 5700 4600 50  0001 C CNN
+F 3 "~" H 5700 4600 50  0001 C CNN
+	1    5500 4600
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
@@ -394,20 +394,18 @@ Wire Wire Line
 $Comp
 L Device:C_Small C3
 U 1 1 63B9D019
-P 2800 3050
-F 0 "C3" H 2650 3050 50  0000 C CNN
-F 1 "10nF" H 2800 2900 50  0000 C CNN
-F 2 "Capacitors_SMD:C_0603_HandSoldering" H 2800 3050 50  0001 C CNN
-F 3 "~" H 2800 3050 50  0001 C CNN
-F 4 "C57112" H 2800 3050 50  0001 C CNN "Part_Number"
-	1    2800 3050
+P 2850 3050
+F 0 "C3" H 2950 3000 50  0000 C CNN
+F 1 "100nF" H 2850 2900 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 2850 3050 50  0001 C CNN
+F 3 "~" H 2850 3050 50  0001 C CNN
+F 4 "C57112" H 2850 3050 50  0001 C CNN "Part_Number"
+	1    2850 3050
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2600 2950 2800 2950
-Wire Wire Line
-	2600 3150 2800 3150
-NoConn ~ 1550 3150
+	2600 3150 2850 3150
+NoConn ~ 1600 3150
 $Comp
 L power:GND #PWR03
 U 1 1 63BB87EE
@@ -422,13 +420,13 @@ $EndComp
 Wire Wire Line
 	2100 3550 2100 3750
 Wire Wire Line
-	1600 2950 1300 2950
+	1600 2950 1500 2950
 Wire Wire Line
-	1300 2950 1300 3200
+	1250 2950 1250 3200
 Wire Wire Line
-	1300 3400 1300 3750
+	1250 3400 1250 3750
 Wire Wire Line
-	1300 3750 2100 3750
+	1250 3750 1500 3750
 Connection ~ 2100 3750
 $Comp
 L power:VCC #PWR01
@@ -442,134 +440,87 @@ F 3 "" H 1200 2950 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	1200 2950 1300 2950
-Connection ~ 1300 2950
+	1200 2950 1250 2950
+Connection ~ 1250 2950
 Wire Wire Line
 	2100 3850 2100 3750
-Connection ~ 3550 3750
+Connection ~ 3300 3750
 Wire Wire Line
-	4000 3450 4000 3750
+	3750 3450 3750 3750
 Wire Wire Line
-	4000 3750 3550 3750
+	3750 3750 3300 3750
 Wire Wire Line
-	3100 2950 3200 2950
+	3300 3650 3300 3750
+Connection ~ 3300 2950
 Wire Wire Line
-	3100 3050 3100 2950
-$Comp
-L Device:D_Schottky_Small D2
-U 1 1 63B9D800
-P 3100 3150
-F 0 "D2" V 3100 3250 50  0000 L CNN
-F 1 "1N5819" V 3200 3200 50  0000 L CNN
-F 2 "Diodes_SMD:D_SOD-123" V 3100 3150 50  0001 C CNN
-F 3 "https://datasheet.lcsc.com/szlcsc/Changjiang-Electronics-Tech-CJ-B5819W_C8598.pdf" V 3100 3150 50  0001 C CNN
-F 4 "C8598" H 3100 3150 50  0001 C CNN "Part_Number"
-	1    3100 3150
-	0    1    1    0   
-$EndComp
+	3300 2950 3750 2950
 Wire Wire Line
-	3550 3750 3100 3750
+	3300 2950 3300 3050
 Wire Wire Line
-	3550 3650 3550 3750
-Connection ~ 3550 2950
-Wire Wire Line
-	4000 2950 4000 3250
-Wire Wire Line
-	3550 2950 4000 2950
-Wire Wire Line
-	3550 2950 3550 3050
-Wire Wire Line
-	3400 2950 3550 2950
-$Comp
-L Device:CP_Small C4
-U 1 1 63BA5427
-P 4000 3350
-F 0 "C4" H 4088 3396 50  0000 L CNN
-F 1 "150uF" H 4088 3305 50  0000 L CNN
-F 2 "Capacitors_SMD:C_1210" H 4000 3350 50  0001 C CNN
-F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 4000 3350 50  0001 C CNN
-F 4 "C178597" H 4000 3350 50  0001 C CNN "Part_Number"
-F 5 "360" H 4000 3350 50  0001 C CNN "Rotation"
-	1    4000 3350
-	1    0    0    -1  
-$EndComp
+	3150 2950 3300 2950
 $Comp
 L Device:R_Small R2
 U 1 1 63BA51B4
-P 3550 3550
-F 0 "R2" H 3609 3596 50  0000 L CNN
-F 1 "1k" H 3609 3505 50  0000 L CNN
-F 2 "Resistors_SMD:R_0603_HandSoldering" H 3550 3550 50  0001 C CNN
-F 3 "~" H 3550 3550 50  0001 C CNN
-	1    3550 3550
+P 3300 3550
+F 0 "R2" H 3359 3596 50  0000 L CNN
+F 1 "10k" H 3359 3505 50  0000 L CNN
+F 2 "Resistors_SMD:R_0603_HandSoldering" H 3300 3550 50  0001 C CNN
+F 3 "~" H 3300 3550 50  0001 C CNN
+	1    3300 3550
 	1    0    0    -1  
 $EndComp
 $Comp
 L Device:R_Small R1
 U 1 1 63B9EB15
-P 3550 3150
-F 0 "R1" H 3609 3196 50  0000 L CNN
-F 1 "1.74k" H 3609 3105 50  0000 L CNN
-F 2 "Resistors_SMD:R_0603_HandSoldering" H 3550 3150 50  0001 C CNN
-F 3 "~" H 3550 3150 50  0001 C CNN
-	1    3550 3150
+P 3300 3150
+F 0 "R1" H 3359 3196 50  0000 L CNN
+F 1 "56k" H 3359 3105 50  0000 L CNN
+F 2 "Resistors_SMD:R_0603_HandSoldering" H 3300 3150 50  0001 C CNN
+F 3 "~" H 3300 3150 50  0001 C CNN
+	1    3300 3150
 	1    0    0    -1  
 $EndComp
 $Comp
 L Device:L_Small L3
 U 1 1 63B9E041
-P 3300 2950
-F 0 "L3" V 3485 2950 50  0000 C CNN
-F 1 "47uH" V 3394 2950 50  0000 C CNN
-F 2 "Inductors_SMD:L_6.3x6.3_H3" H 3300 2950 50  0001 C CNN
-F 3 "https://www.mouser.com/datasheet/2/400/nductor_automotive_power_clf7045-d_en-1280129.pdf" H 3300 2950 50  0001 C CNN
-F 4 "C326343" V 3300 2950 50  0001 C CNN "Part_Number"
-	1    3300 2950
+P 3050 2950
+F 0 "L3" V 3235 2950 50  0000 C CNN
+F 1 "4.7uH" V 3144 2950 50  0000 C CNN
+F 2 "Custom_Footprints:L_0806" H 3050 2950 50  0001 C CNN
+F 3 "https://www.mouser.com/datasheet/2/400/nductor_automotive_power_clf7045-d_en-1280129.pdf" H 3050 2950 50  0001 C CNN
+F 4 "C326343" V 3050 2950 50  0001 C CNN "Part_Number"
+	1    3050 2950
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	3550 3250 3550 3350
+	3300 3250 3300 3350
+Connection ~ 3300 3350
 Wire Wire Line
-	2800 2950 3100 2950
-Connection ~ 2800 2950
-Connection ~ 3100 2950
-Wire Wire Line
-	2600 3350 3550 3350
-Connection ~ 3550 3350
-Wire Wire Line
-	3550 3350 3550 3450
-Wire Wire Line
-	3100 3250 3100 3750
-Wire Wire Line
-	3100 3750 2100 3750
+	3300 3350 3300 3450
 $Comp
 L power:+3.3V #PWR04
 U 1 1 63C1C940
-P 4000 2500
-F 0 "#PWR04" H 4000 2350 50  0001 C CNN
-F 1 "+3.3V" H 4000 2650 50  0000 C CNN
-F 2 "" H 4000 2500 50  0001 C CNN
-F 3 "" H 4000 2500 50  0001 C CNN
-	1    4000 2500
+P 3750 2500
+F 0 "#PWR04" H 3750 2350 50  0001 C CNN
+F 1 "+3.3V" H 3750 2650 50  0000 C CNN
+F 2 "" H 3750 2500 50  0001 C CNN
+F 3 "" H 3750 2500 50  0001 C CNN
+	1    3750 2500
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4200 2950 4000 2950
-Connection ~ 4000 2950
-Text Notes 2600 4150 0    50   ~ 0
-For 5V output change:\n- Output Capacitor from 150uF to 100uF\n- Lower FB resistor from 5.9k to 3.24k\nNB 5.6k gives output of 3.4V; 6.2k gives 3.2V
-Text Notes 550  3650 0    50   ~ 0
-Input Capacitor\nCeramic, XR5 1206
+	3950 2950 3750 2950
+Connection ~ 3750 2950
 $Comp
 L Device:C_Small C2
 U 1 1 63C237DB
-P 1300 3300
-F 0 "C2" H 1150 3300 50  0000 C CNN
-F 1 "10uF" H 1200 3200 50  0000 C CNN
-F 2 "Capacitors_SMD:C_1210" H 1300 3300 50  0001 C CNN
-F 3 "~" H 1300 3300 50  0001 C CNN
-F 4 "C57112" H 1300 3300 50  0001 C CNN "Part_Number"
-	1    1300 3300
+P 1250 3300
+F 0 "C2" H 1150 3400 50  0000 C CNN
+F 1 "10uF" H 1150 3200 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 1250 3300 50  0001 C CNN
+F 3 "~" H 1250 3300 50  0001 C CNN
+F 4 "C57112" H 1250 3300 50  0001 C CNN "Part_Number"
+	1    1250 3300
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -611,7 +562,7 @@ Wire Wire Line
 Wire Wire Line
 	3450 1200 3450 1400
 Wire Wire Line
-	3450 1400 3650 1400
+	3450 1400 3600 1400
 Wire Wire Line
 	2900 1400 3050 1400
 Wire Wire Line
@@ -631,11 +582,11 @@ F 3 "" H 4450 850 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4000 2950 4000 2850
-Text Label 4200 2950 0    50   ~ 0
+	3750 2950 3750 2850
+Text Label 3950 2950 0    50   ~ 0
 V_Int
 Wire Wire Line
-	4000 2500 4000 2550
+	3750 2500 3750 2550
 Text Label 2900 1400 2    50   ~ 0
 V_Int
 $Comp
@@ -653,8 +604,8 @@ $Comp
 L Jumper:SolderJumper_2_Open JP2
 U 1 1 63CA47C6
 P 3200 1400
-F 0 "JP2" H 3200 1550 50  0000 C CNN
-F 1 "Jumper_Open" H 3200 1650 50  0000 C CNN
+F 0 "JP2" H 3300 1550 50  0000 C CNN
+F 1 "Jumper_Open" H 3300 1650 50  0000 C CNN
 F 2 "Resistors_SMD:R_1206" H 3200 1400 50  0001 C CNN
 F 3 "~" H 3200 1400 50  0001 C CNN
 	1    3200 1400
@@ -674,12 +625,12 @@ $EndComp
 $Comp
 L Jumper:SolderJumper_2_Bridged JP3
 U 1 1 63CA9641
-P 4000 2700
-F 0 "JP3" V 3954 2768 50  0000 L CNN
-F 1 "Jumper_Closed" V 4045 2768 50  0000 L CNN
-F 2 "Resistors_SMD:R_1206" H 4000 2700 50  0001 C CNN
-F 3 "~" H 4000 2700 50  0001 C CNN
-	1    4000 2700
+P 3750 2700
+F 0 "JP3" V 3704 2768 50  0000 L CNN
+F 1 "Jumper_Closed" V 3795 2768 50  0000 L CNN
+F 2 "Resistors_SMD:R_1206" H 3750 2700 50  0001 C CNN
+F 3 "~" H 3750 2700 50  0001 C CNN
+	1    3750 2700
 	0    1    1    0   
 $EndComp
 Text Label 3450 1400 0    50   ~ 0
@@ -708,30 +659,91 @@ F 3 "" H 3450 4750 50  0001 C CNN
 	1    3450 4750
 	-1   0    0    1   
 $EndComp
-Connection ~ 3100 3750
+Text Notes 4500 3800 0    50   ~ 0
+R1\nR2\nL3\nC2\nC4\n\nRipple\nSwitching
+Text Notes 5100 2950 0    50   ~ 0
+TPS561201
+Text Notes 4950 3800 0    50   ~ 0
+3.3V\n\n56k\n10k\n4.7uH\n10uF+10uF\n47uF\n\n19mV\n425.46 kHz
 $Comp
-L LM2675M-ADJ:LM2675M-ADJ U1
-U 1 1 5FBEEB41
-P 2100 3150
-F 0 "U1" H 2100 3617 50  0000 C CNN
-F 1 "LM2675M-ADJ" H 2100 3526 50  0000 C CNN
-F 2 "Housings_SOIC:SOIC-8_3.9x4.9mm_Pitch1.27mm" H 2150 2800 50  0001 L CIN
-F 3 "https://www.ti.com/lit/gpn/lm2675" H 2100 3150 50  0001 C CNN
-	1    2100 3150
+L TPS561201:TPS561201 U1
+U 1 1 5FC04DDA
+P 2100 3050
+F 0 "U1" H 2100 3417 50  0000 C CNN
+F 1 "TPS561201" H 2100 3326 50  0000 C CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23-6_Handsoldering" H 2300 2600 50  0001 L CNN
+F 3 "https://www.ti.com/lit/gpn/tps561201" H 2100 3050 50  0001 C CNN
+	1    2100 3050
 	1    0    0    -1  
 $EndComp
-Text Notes 5350 1800 0    50   ~ 0
-R1\nR2\nL3\nC2\nC4\n\nRipple
-Text Notes 6000 1000 0    50   ~ 0
-LM2675
-Text Notes 7050 1000 0    50   ~ 0
-TPS5410
-Text Notes 5750 1900 0    50   ~ 0
-3.3V\n\n1.74k\n1k\n47uH\n33uF+100nF\n100uF\n\n15.5mV\n260kHz
-Text Notes 6300 1900 0    50   ~ 0
-5V\n\n3.16k\n1k\n68uF\n100uF+100nF\n47uF\n\n13mV\n260kHz
-Text Notes 6900 1900 0    50   ~ 0
-3.3V\n\n10k\n5.9k\n68uH\n10uF\n150uF\n\n6.2mV\n500kHz
-Text Notes 7450 1650 0    50   ~ 0
-5V\n\n10k\n3.24k\n68uH\n10uF\n100uF
+$Comp
+L Device:C_Small C1
+U 1 1 5FC099B7
+P 1500 3300
+F 0 "C1" H 1450 3400 50  0000 C CNN
+F 1 "10uF" H 1400 3200 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 1500 3300 50  0001 C CNN
+F 3 "~" H 1500 3300 50  0001 C CNN
+F 4 "C57112" H 1500 3300 50  0001 C CNN "Part_Number"
+	1    1500 3300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1500 3200 1500 2950
+Connection ~ 1500 2950
+Wire Wire Line
+	1500 2950 1250 2950
+Wire Wire Line
+	1500 3400 1500 3750
+Connection ~ 1500 3750
+Text Notes 5500 3800 0    50   ~ 0
+5V\n\n33.2k\n10k\n3.3uH\n10uF+10uF\n47uF\n\n18mV\n496.87kHz
+Wire Wire Line
+	2100 3750 3300 3750
+Wire Wire Line
+	2850 2950 2950 2950
+Wire Wire Line
+	2600 2950 2850 2950
+Wire Wire Line
+	1500 3750 2100 3750
+Connection ~ 2850 2950
+Wire Wire Line
+	2600 3350 3300 3350
+Text Notes 6200 3250 0    50   ~ 0
+Vout = 0.768 x (1 + R1/R2)\n0.768 * (1 + 56/10) = 5.069\n0.768 * (1 + 33/10) = 3.302
+$Comp
+L Device:C_Small C4
+U 1 1 5FC2770E
+P 3750 3350
+F 0 "C4" H 3650 3450 50  0000 C CNN
+F 1 "47uF" H 3650 3250 50  0000 C CNN
+F 2 "Resistors_SMD:R_1206" H 3750 3350 50  0001 C CNN
+F 3 "~" H 3750 3350 50  0001 C CNN
+F 4 "C57112" H 3750 3350 50  0001 C CNN "Part_Number"
+	1    3750 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3750 2950 3750 3250
+$Comp
+L Device:C_Small C5
+U 1 1 5FC1C026
+P 3600 1600
+F 0 "C5" H 3500 1700 50  0000 C CNN
+F 1 "10uF" H 3500 1500 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 3600 1600 50  0001 C CNN
+F 3 "~" H 3600 1600 50  0001 C CNN
+F 4 "C57112" H 3600 1600 50  0001 C CNN "Part_Number"
+	1    3600 1600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3600 1500 3600 1400
+Connection ~ 3600 1400
+Wire Wire Line
+	3600 1400 3650 1400
+Wire Wire Line
+	3600 1700 3600 1750
+Wire Wire Line
+	3600 1750 3950 1750
 $EndSCHEMATC

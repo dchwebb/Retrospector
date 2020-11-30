@@ -38,8 +38,10 @@ int16_t delayChanged;
 uint16_t delayCrossfade;
 int32_t currentDelay;
 int32_t dampedDelay;
-int32_t lastClock = 0;
-int32_t clockInterval = 0;
+uint32_t lastClock = 0;
+uint32_t clockInterval = 0;
+bool ledL, ledR;
+bool newClock, clockValid;
 int16_t testOutput = 0;
 float DACLevel;							// Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
@@ -83,7 +85,16 @@ int main(void) {
 				playSample = DigitalDelay.calcSample();
 			}
 		}*/
+		if (newClock) {
+			if (SysTickVal - lastClock < 10)
+				GPIOC->ODR |= GPIO_ODR_OD10;
+			else {
+				GPIOC->ODR &= ~GPIO_ODR_OD10;
+				newClock = false;
+			}
+		}
 
+		clockValid = (SysTickVal - lastClock < 1000);		// Valid clock interval is within a second
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
