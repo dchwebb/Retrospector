@@ -2,9 +2,9 @@
 #include "digitalDelay.h"
 #include "USB.h"
 #include "CDCHandler.h"
-#include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
 #include "sdram.h"
 #include <cmath>
+#include <string>
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -47,7 +47,8 @@ float DACLevel;							// Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
 bool nextSample = false;
 
-volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
+//volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
+volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 USB usb;
 digitalDelay DigitalDelay;
@@ -65,18 +66,18 @@ int main(void) {
 	InitTempoClock();
 	InitSDRAM();
 	InitLEDs();
+	//	InitI2S();
 
-	//usb.InitUSB();
-	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+//	usb.InitUSB();
+//	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	InitI2S();
-
-	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
 	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
+		//MemoryTest();
+
 		// DAC signals that it is ready for the next sample
 		/*
 		if (nextSample) {

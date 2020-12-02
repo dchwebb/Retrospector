@@ -559,7 +559,7 @@ Connection ~ 4000 2950
 Text Notes 2600 4150 0    50   ~ 0
 For 5V output change:\n- Output Capacitor from 150uF to 100uF\n- Lower FB resistor from 5.9k to 3.24k\nNB 5.6k gives output of 3.4V; 6.2k gives 3.2V
 Text Notes 550  3650 0    50   ~ 0
-Input Capacitor\nCeramic, XR5 1206
+Input Capacitor\nCeramic, XR5 1210
 $Comp
 L Device:C_Small C2
 U 1 1 63C237DB
@@ -724,14 +724,16 @@ Text Notes 5350 1800 0    50   ~ 0
 R1\nR2\nL3\nC2\nC4\n\nRipple
 Text Notes 6000 1000 0    50   ~ 0
 LM2675
-Text Notes 7050 1000 0    50   ~ 0
+Text Notes 7600 1000 0    50   ~ 0
 TPS5410
 Text Notes 5750 1900 0    50   ~ 0
-3.3V\n\n1.74k\n1k\n47uH\n33uF+100nF\n100uF\n\n15.5mV\n260kHz
+3.3V\n\n1.74k\n1k\n47uH\n22uF+100nF\n100uF\n\n969uV\n260kHz
 Text Notes 6300 1900 0    50   ~ 0
-5V\n\n3.16k\n1k\n68uF\n100uF+100nF\n47uF\n\n13mV\n260kHz
-Text Notes 6900 1900 0    50   ~ 0
+5V\n\n3.16k\n1k\n68uF\n22uF+100nF\n47uF\n\n13mV\n260kHz
+Text Notes 8000 1900 0    50   ~ 0
+5V\n\n10k\n3.24k\n68uH\n10uF\n100uF\n\n9mV\n500kHz
+Text Notes 7450 1900 0    50   ~ 0
 3.3V\n\n10k\n5.9k\n68uH\n10uF\n150uF\n\n6.2mV\n500kHz
-Text Notes 7450 1650 0    50   ~ 0
-5V\n\n10k\n3.24k\n68uH\n10uF\n100uF
+Text Notes 7200 2100 0    50   ~ 0
+NB - no good as output capacitor too large
 $EndSCHEMATC
