@@ -69,7 +69,7 @@ int main(void) {
 	//usb.InitUSB();
 	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	InitI2S();
+//	InitI2S();
 
 	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
@@ -77,6 +77,8 @@ int main(void) {
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
+		MemoryTest();
+
 		// DAC signals that it is ready for the next sample
 		/*
 		if (nextSample) {

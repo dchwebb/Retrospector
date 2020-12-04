@@ -64,14 +64,14 @@ void InitSDRAM(void) {
 	RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
 
 	// Clock configuration - FMC clock (fmc_ker_ck) selected with RCC_D1CCIPR_FMCSEL register. Defaults to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 140MHz
-	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;					// 10: pll2_r_ck clock selected as kernel peripheral clock (286MHz)
+	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;					// 10: pll2_r_ck clock selected as kernel peripheral clock (200MHz)
 
 	// Memory maximum clock speed is 140MHz at CAS latency = 3
 
 	// SDCLK, RPIPE, RBURST in Control register and TRP, TRC in Timing register are shared and must be configured against bank 1 even though using bank 2
 	FMC_Bank5_6_R->SDCR[0] = FMC_SDCRx_RPIPE_0 |			// Read pipe: 01: One HCLK clock cycle delay
 			               FMC_SDCRx_RBURST |				// Burst read: 1: single read requests are always managed as bursts
-	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@286MHz = 3.5ns period; 2 x period = 7ns)
+	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@200MHz = 5ns period; 2 x period = 10ns)
 
 	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
 	                       FMC_SDCRx_NB |					// Number of internal banks: 1: Four internal Banks (2M x16 x4 Banks)
@@ -157,32 +157,36 @@ uint32_t MemTestErrors = 0;
 uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
 
 // Test SDRAM
-uint32_t MemoryTest() {
-	// Blank
+void MemoryTest() {
+	static uint32_t memErrs = 0;
 	uint32_t testStart = SysTickVal;
+
+	// Blank Memory
+	GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
 		*tempAddr = 0;
 	}
+	GPIOC->ODR &= ~GPIO_ODR_OD11;
 
 	// Write
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
 		*tempAddr = static_cast<memSize>(testAddr);
-		if (*tempAddr == 0x00080000) {
-			int susp = 1;
-		}
+
 	}
 
 	// Read
-	int err = 0;
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		memSize val = SDRAMBuffer[testAddr];
 		if (val != static_cast<memSize>(testAddr))
-			++err;
+			++memErrs;
 	}
 
-	MemTestDuration = SysTickVal - testStart;		// For 32 bit words > 6632 using PLL2 at 143MHz, 6309 at 220MHz, 6385 (2813 with DCache, 2347 with DCache and ICache) at 100MHz
+	// H743: 32 bit words @ 100MHz (with DCache and ICache): 2017-2027
+	// F429: 32 bit words @ 180MHz / 2 = 90MHz: 2975
+
+	MemTestDuration = SysTickVal - testStart;
 	++MemTestCount;
-	return err;
+	MemTestErrors = memErrs;
 }

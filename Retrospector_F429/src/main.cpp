@@ -59,7 +59,7 @@ int main(void) {
 	InitTempoClock();
 	InitSDRAM();
 	InitLEDs();
-	InitI2S();
+//	InitI2S();
 
 //	usb.InitUSB();
 //	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -69,7 +69,7 @@ int main(void) {
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
-		//MemoryTest();
+		MemoryTest();
 
 		// DAC signals that it is ready for the next sample
 		/*

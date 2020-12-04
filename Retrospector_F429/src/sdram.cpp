@@ -154,18 +154,21 @@ uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
 // Test SDRAM
 void MemoryTest() {
 	static uint32_t memErrs = 0;
-
-	// Blank
 	uint32_t testStart = SysTickVal;
+
+	// Blank Memory
+	GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
 		*tempAddr = 0;
 	}
+	GPIOC->ODR &= ~GPIO_ODR_OD11;
 
 	// Write
 	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
 		tempAddr = (memSize *)(0xD0000000 + (testAddr * sizeof(memSize)));
 		*tempAddr = static_cast<memSize>(testAddr);
+
 	}
 
 	// Read
