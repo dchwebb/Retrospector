@@ -22,22 +22,20 @@ void SPI2_IRQHandler() {
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		DigitalDelay.samples[writePos] = (int16_t)ADC_array[ADC_Audio_L] - adcZeroOffset;
+		DigitalDelay.samples[writePos] = (int16_t)(ADC_array[ADC_Audio_L] << 4) - adcZeroOffset;
 		SPI2->DR = DigitalDelay.calcSample();		// Left Channel
-		//SPI2->TXDR = testOutput;
+		//SPI2->DR = testOutput;
 	} else {
 
 		SPI2->DR = testOutput;				// Right Channel
 		testOutput += 100;
 	}
 
-	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
-
-	if ((GPIOB->ODR & GPIO_ODR_OD8) == 0)
-		GPIOB->ODR |= GPIO_ODR_OD8;
+	// Toggle LED for testing
+	if (sampleClock)
+		GPIOC->ODR |= GPIO_ODR_OD11;
 	else
-		GPIOB->ODR &= ~GPIO_ODR_OD8;
-
+		GPIOC->ODR &= ~GPIO_ODR_OD11;
 
 	nextSample = true;		// request next sample be prepared
 }

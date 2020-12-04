@@ -4,21 +4,13 @@
 #include "CDCHandler.h"
 #include "sdram.h"
 #include <cmath>
-#include <string>
+//#include <string>
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
+extern bool CmdPending;
+extern char ComCmd[CDC_CMD_LEN];
 
-bool USBDebug;
-
-// As this is called from an interrupt assign the command to a variable so it can be handled in the main loop
-bool CmdPending = false;
-std::string ComCmd;
-
-void CDCHandler(uint8_t* data, uint32_t length) {
-	ComCmd = std::string((char*)data, length);
-	CmdPending = true;
-}
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 void BootDFU() {
@@ -50,6 +42,7 @@ bool nextSample = false;
 //volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
+bool USBDebug;
 USB usb;
 digitalDelay DigitalDelay;
 
@@ -66,7 +59,7 @@ int main(void) {
 	InitTempoClock();
 	InitSDRAM();
 	InitLEDs();
-	//	InitI2S();
+	InitI2S();
 
 //	usb.InitUSB();
 //	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);

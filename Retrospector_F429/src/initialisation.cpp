@@ -320,7 +320,7 @@ void InitI2S()
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit; 11=Master receive
 //	SPI2->I2SCFGR |= SPI2_I2SCFGR_I2SSTD;			// I2S standard selection:	00=Philips; 01=MSB justified; 10=LSB justified; 11=PCM
-	SPI2->I2SCFGR |= SPI_I2SCFGR_DATLEN_1;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
+//	SPI2->I2SCFGR |= SPI_I2SCFGR_DATLEN_1;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
 	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
 
 	/* RCC Clock calculations:
@@ -334,16 +334,23 @@ void InitI2S()
 	11: I2S2 clock frequency = HSI/HSE depends on PLLSRC bit (PLLCFGR[22])
 
 	RCC->PLLI2SCFGR
-	Try: M = 8; N = 154; R = 2		ie 8Mz / 8 * 154 / 2 = 77kHz
+	Try: M = 8; N = 154; R = 2		ie 8Mz / 8 * 154 / 2 = 77MHz
 	*/
 	RCC->CFGR &= ~RCC_CFGR_I2SSRC;					// Set I2S PLL source to internal
 	RCC->PLLI2SCFGR = (RCC_PLLI2SCFGR_PLLI2SN_Msk & (77 << RCC_PLLI2SCFGR_PLLI2SN_Pos)) | (RCC_PLLI2SCFGR_PLLI2SR_Msk & (2 << RCC_PLLI2SCFGR_PLLI2SR_Pos));
 	RCC->CR |= RCC_CR_PLLI2SON;
 
 	/* I2S Prescaler Clock calculations:
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  76.8 / (64 * ((2 * 12) + 1)) = 48kHz
+	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]					Eg  77 / (64 * ((2 * 12) + 1)) = 48,125Hz
+	NB This tests out by a factor of 2 so divide 12 by 2 = 6
 	*/
-	SPI2->I2SPR = (SPI_I2SPR_I2SDIV_Msk & 12) | SPI_I2SPR_ODD;		// Set Linear prescaler to 12 and enable Odd factor prescaler
+	SPI2->I2SPR = (SPI_I2SPR_I2SDIV_Msk & 6) | SPI_I2SPR_ODD;		// Set Linear prescaler to 12 and enable Odd factor prescaler
+
+	// Enable interrupt when TxFIFO threshold reached
+	SPI2->CR2 |= SPI_CR2_TXEIE;
+	NVIC_SetPriority(SPI2_IRQn, 2);					// Lower is higher priority
+	NVIC_EnableIRQ(SPI2_IRQn);
+
 
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;				// Enable I2S
 }
