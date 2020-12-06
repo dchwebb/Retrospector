@@ -31,13 +31,14 @@ void BootDFU() {
 
 uint16_t adcZeroOffset = 34067;		// 0V ADC reading
 
-int32_t readPos;
-int32_t oldReadPos;
-int32_t writePos;
-int16_t delayChanged;
-uint16_t delayCrossfade;
-int32_t currentDelay;
-int32_t dampedDelay;
+//int32_t readPos;
+//int32_t oldReadPos;
+//int32_t writePos;
+//int16_t delayChanged;
+//uint16_t delayCrossfade;
+//int32_t currentDelay;
+//int32_t dampedDelay;
+
 uint32_t lastClock = 0;
 uint32_t clockInterval = 0;
 bool ledL, ledR;
@@ -51,6 +52,8 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 
 USB usb;
 digitalDelay DigitalDelay;
+
+int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
 
 extern "C" {
 #include "interrupts.h"
@@ -69,7 +72,7 @@ int main(void) {
 	//usb.InitUSB();
 	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-//	InitI2S();
+	InitI2S();
 
 	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
@@ -77,7 +80,7 @@ int main(void) {
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	while (1) {
-		MemoryTest();
+		//MemoryTest();
 
 		// DAC signals that it is ready for the next sample
 		/*

@@ -3,53 +3,48 @@
 
 extern uint32_t clockInterval;
 extern bool clockValid;
+extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 
-int32_t digitalDelay::calcSample() {
+int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	int32_t nextSample;
 
 	// Cross fade if moving playback position
-	if (delayCrossfade > 0) {
-		float scale = static_cast<float>(delayCrossfade) / static_cast<float>(crossFade);
-		nextSample = static_cast<float>(samples[readPos]) * (1.0f - scale) + static_cast<float>(samples[oldReadPos]) * (scale);
-		--delayCrossfade;
-		if (SysTickVal > 2000) {
-			int susp = 1;
-		}
-		if (delayCrossfade == 0) {
-			GPIOB->ODR &= ~GPIO_ODR_OD7;
-		}
+	if (delayCrossfade[LOrR] > 0) {
+		float scale = static_cast<float>(delayCrossfade[LOrR]) / static_cast<float>(crossFade);
+		nextSample = static_cast<float>(samples[LOrR][readPos[LOrR]]) * (1.0f - scale) + static_cast<float>(samples[LOrR][oldReadPos[LOrR]]) * (scale);
+		--delayCrossfade[LOrR];
 	} else {
-		nextSample = samples[readPos];
+		nextSample = samples[LOrR][readPos[LOrR]];
 	}
-	lastSample = nextSample;
+	lastSample[LOrR] = nextSample;
 
 
 	// Move write and read heads one sample forwards
-	if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
-	if (++readPos == SAMPLE_BUFFER_LENGTH)			readPos = 0;
-	if (++oldReadPos == SAMPLE_BUFFER_LENGTH)		oldReadPos = 0;
+	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
+	if (++readPos[LOrR] == SAMPLE_BUFFER_LENGTH)		readPos[LOrR] = 0;
+	if (++oldReadPos[LOrR] == SAMPLE_BUFFER_LENGTH)		oldReadPos[LOrR] = 0;
 
 	// Get delay time from ADC and average over 32 readings to smooth
-	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[ADC_Delay_Pot_L] - 150);
-	dampedDelay = std::max((31 * dampedDelay + delayClkCV) >> 5, 0UL);
+	//uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[LOrR == digitalDelay::channelL ? ADC_Delay_Pot_L : ADC_Delay_Pot_R] - 150);
+	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[ADC_Delay_CV_L] - 150);
+	dampedDelay[LOrR] = std::max((31 * dampedDelay[LOrR] + delayClkCV) >> 5, 0UL);
 
 	// Change delay times after a pause to avoid pitched artifacts
-	if (std::abs(dampedDelay - currentDelay) > delayHysteresis) {
-		if (delayChanged == 0)
-			delayChanged = 1000;
-		currentDelay = dampedDelay;
+	if (std::abs(dampedDelay[LOrR] - currentDelay[LOrR]) > delayHysteresis) {
+		if (delayChanged[LOrR] == 0)
+			delayChanged[LOrR] = 1000;
+		currentDelay[LOrR] = dampedDelay[LOrR];
 	}
 
-	if (delayChanged > 0 && delayCrossfade == 0) {
-		if (delayChanged == 1) {
-			oldReadPos = readPos;
-			readPos = writePos - dampedDelay;
-			while (readPos < 0) 		readPos += SAMPLE_BUFFER_LENGTH;
-			delayCrossfade = crossFade;
-			GPIOB->ODR |= GPIO_ODR_OD7;
+	if (delayChanged[LOrR] > 0 && delayCrossfade[LOrR] == 0) {
+		if (delayChanged[LOrR] == 1) {
+			oldReadPos[LOrR] = readPos[LOrR];
+			readPos[LOrR] = writePos[LOrR] - dampedDelay[LOrR];
+			while (readPos[LOrR] < 0) 		readPos[LOrR] += SAMPLE_BUFFER_LENGTH;
+			delayCrossfade[LOrR] = crossFade;
 		}
-		--delayChanged;
+		--delayChanged[LOrR];
 	}
 
 

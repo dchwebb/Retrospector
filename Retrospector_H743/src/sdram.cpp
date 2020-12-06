@@ -144,6 +144,7 @@ void InitSDRAM(void) {
 	// 16 megabytes of ram now available at address 0xD0000000 - 0xD1000000 (for SDRAM Bank2 See manual p129)
 }
 
+#ifdef MEMTEST
 // SDRAM testing variables
 using memSize = uint32_t;
 uint32_t testAddr;
@@ -190,3 +191,4 @@ void MemoryTest() {
 	++MemTestCount;
 	MemTestErrors = memErrs;
 }
+#endif
