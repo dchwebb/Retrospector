@@ -1,3 +1,5 @@
+#pragma once
+
 #include "initialisation.h"
 
 extern int32_t readPos;

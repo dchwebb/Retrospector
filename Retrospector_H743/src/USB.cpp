@@ -392,7 +392,7 @@ void USB::InitUSB()
 	GPIOA->AFR[1] |= (10 << GPIO_AFRH_AFSEL11_Pos) | (10 << GPIO_AFRH_AFSEL12_Pos);		// Alternate Function 10 is OTG_FS
 
 
-	NVIC_SetPriority(OTG_FS_IRQn, 0);
+	NVIC_SetPriority(OTG_FS_IRQn, 3);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
 
 	USB_OTG_FS->GAHBCFG &= ~USB_OTG_GAHBCFG_GINT;		// Disable the controller's Global Int in the AHB Config reg
@@ -767,6 +767,10 @@ void USB::SendString(const char* s) {
 	while (transmitting);
 	SendData((uint8_t*)s, strlen(s), CDC_In);
 }
+void USB::SendString(std::string s) {
+	SendString(s.c_str());
+}
+
 
 #if (USB_DEBUG)
 void USB::OutputDebug() {

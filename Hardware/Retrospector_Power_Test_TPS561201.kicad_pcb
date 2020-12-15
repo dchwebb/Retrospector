@@ -30,7 +30,7 @@
     (46 B.CrtYd user)
     (47 F.CrtYd user hide)
     (48 B.Fab user hide)
-    (49 F.Fab user hide)
+    (49 F.Fab user)
   )
 
   (setup
@@ -217,7 +217,7 @@
     (tags "resistor 0805")
     (path /63B9E041)
     (attr smd)
-    (fp_text reference L3 (at 0 -2.5 180) (layer F.SilkS)
+    (fp_text reference L3 (at 0.1 0 180) (layer F.SilkS)
       (effects (font (size 0.7 0.7) (thickness 0.1)))
     )
     (fp_text value 4.7uH (at 0 2.1 90) (layer F.Fab)
@@ -289,7 +289,7 @@
     (tags "resistor 0805")
     (path /63B9D019)
     (attr smd)
-    (fp_text reference C3 (at 0 -2.5 180) (layer F.SilkS)
+    (fp_text reference C3 (at -0.1 0 180) (layer F.SilkS)
       (effects (font (size 0.7 0.7) (thickness 0.1)))
     )
     (fp_text value 100nF (at 0 1.75 90) (layer F.Fab)

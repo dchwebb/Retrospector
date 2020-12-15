@@ -139,6 +139,7 @@ void InitCache()
 
 	// Enable data and instruction caches
 	SCB_EnableDCache();
+
 	SCB_EnableICache();
 }
 
@@ -164,6 +165,34 @@ void InitDAC()
 }
 
 
+void InitAdcPins(std::initializer_list<uint8_t> channels) {
+	uint8_t sequence = 1;
+
+	for (auto channel: channels) {
+		// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
+		ADC1->PCSEL |= 1 << channel;					// ADC channel preselection register
+
+		// Set conversion sequence to order ADC channels are passed to this function
+		if (sequence < 5) {
+			ADC1->SQR1 |= channel << (sequence * 6);
+		} else if (sequence < 10) {
+			ADC1->SQR2 |= channel << ((sequence - 5) * 6);
+		} else if (sequence < 15)  {
+			ADC1->SQR3 |= channel << ((sequence - 10) * 6);
+		} else {
+			ADC1->SQR4 |= channel << ((sequence - 15) * 6);
+		}
+
+		// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
+		if (channel < 10)
+			ADC1->SMPR1 |= 0b000 << (3 * channel);
+		else
+			ADC1->SMPR2 |= 0b000 << (3 * (channel - 10));
+
+		sequence++;
+	}
+}
+
 void InitADC()
 {
 	// Configure clocks
@@ -175,6 +204,8 @@ void InitADC()
 	// FIXME - currently ADC clock is set to HSI - might be more accurate to use HSE
 	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	//ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
 
 	// Initialize ADC peripheral
 	DMA1_Stream1->CR &= ~DMA_SxCR_EN;
@@ -209,9 +240,15 @@ void InitADC()
 	ADC1->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
 
 	// Initialise 8x oversampling
-	ADC1->CFGR2 |= (8-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 8
-	ADC1->CFGR2 |= 3 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 3 - ie divide by 8
-	ADC1->CFGR2 |= ADC_CFGR2_ROVSE;
+//	ADC1->CFGR2 |= (8-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 8
+//	ADC1->CFGR2 |= 3 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 3 - ie divide by 8
+//	ADC1->CFGR2 |= ADC_CFGR2_ROVSE;
+
+	// Oversampling 2x (Smoother with no oversampling)
+//	ADC1->CFGR2 |= (2-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 2
+//	ADC1->CFGR2 |= 1 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 1 - ie divide by 2
+//	ADC1->CFGR2 |= ADC_CFGR2_ROVSE;
+
 
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
 	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
@@ -236,41 +273,7 @@ void InitADC()
 		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
 		9	PC1 ADC123_INP11 	TONE_POT
 	*/
-
-	// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_14;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_15;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_8;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_5;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_17;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_16;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_3;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_9;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_4;				// ADC channel preselection register
-	ADC1->PCSEL |= ADC_PCSEL_PCSEL_11;				// ADC channel preselection register
-
-	ADC1->SQR1 |= 14 << ADC_SQR1_SQ1_Pos;			// Set 1st conversion in sequence
-	ADC1->SQR1 |= 15 << ADC_SQR1_SQ2_Pos;			// Set 2nd conversion in sequence
-	ADC1->SQR1 |= 8  << ADC_SQR1_SQ3_Pos;			// Set 3rd conversion in sequence
-	ADC1->SQR1 |= 5  << ADC_SQR1_SQ4_Pos;			// Set 4th conversion in sequence
-	ADC1->SQR2 |= 17 << ADC_SQR2_SQ5_Pos;			// Set 5th conversion in sequence
-	ADC1->SQR2 |= 16 << ADC_SQR2_SQ6_Pos;			// Set 6th conversion in sequence
-	ADC1->SQR2 |= 3  << ADC_SQR2_SQ7_Pos;			// Set 7th conversion in sequence
-	ADC1->SQR2 |= 9  << ADC_SQR2_SQ8_Pos;			// Set 8th conversion in sequence
-	ADC1->SQR2 |= 4  << ADC_SQR2_SQ9_Pos;			// Set 9th conversion in sequence
-	ADC1->SQR3 |= 11 << ADC_SQR3_SQ10_Pos;			// Set 10th conversion in sequence
-
-	// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP14_Pos;	// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP15_Pos;	// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP8_Pos;		// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP5_Pos;		// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP17_Pos;	// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP16_Pos;	// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP3_Pos;		// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP9_Pos;		// Set conversion speed
-	ADC1->SMPR1 |= 0b010 << ADC_SMPR1_SMP4_Pos;		// Set conversion speed
-	ADC1->SMPR2 |= 0b010 << ADC_SMPR2_SMP11_Pos;	// Set conversion speed
+	InitAdcPins({14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
@@ -353,9 +356,16 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	I2S Clock = 240MHz:			240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
 	I2S Clock = 300MHz:			280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
 	I2S Clock = 320MHz: 		320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
-
+	PER_CLK = 64MHz				64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
 	*/
-#if CPUCLOCK == 200
+#define I2S_PER_CLK
+#ifdef I2S_PER_CLK
+	// Use peripheral clock - configured to internal HSI at 64MHz
+	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_2;
+	SPI2->I2SCFGR |= (10 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
+	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
+
+#elif CPUCLOCK == 200
 	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
 #elif CPUCLOCK == 280

@@ -29,19 +29,59 @@ void SPI2_IRQHandler() {
 	 * Opt -O0: sdram, constant DR: 1.64uS; variable DR: 2.35uS
 	 *
 	 */
-	GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
+	static uint16_t zeroCount = 0;
+	static uint16_t gapCount = 0;
+	static bool zeroSection = false;
+	extern int32_t gapDuration;
+
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
+//		GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
 		samples[digitalDelay::channelL][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_array[ADC_Audio_L] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelL);		// Left Channel
+		uint16_t tempSample = DigitalDelay.calcSample(digitalDelay::channelL);		// Left Channel
+		SPI2->TXDR = tempSample;
+		samplesMeasure[sampleOutCount] = -1 * (ADC_array[ADC_Audio_R] - adcZeroOffset - 160);
+
+		// Toggle LED when in blank section
+		if (!zeroSection && std::abs(samplesMeasure[sampleOutCount]) < 50) {
+			if (zeroCount > 60) {
+				GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
+				gapCount = 0;
+				zeroSection = true;
+				zeroCount = 0;
+			} else {
+				zeroCount++;
+			}
+		}
+		if (zeroSection) {
+			gapCount++;
+		}
+		if (zeroSection && std::abs(samplesMeasure[sampleOutCount]) > 50) {
+			if (zeroCount > 10) {
+				GPIOC->ODR &= ~GPIO_ODR_OD11;
+				zeroSection = false;
+				gapDuration = gapCount;
+				zeroCount = 0;
+			} else {
+				zeroCount++;
+			}
+		}
+
+
+		//samplesOut[sampleOutCount++] = tempSample;
+
+		if (sampleOutCount == SAMPLE_BUFFER_LENGTH)
+			sampleOutCount = 0;
+
 		//SPI2->TXDR = testOutput;
 	} else {
-		samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_R]] = (int16_t)ADC_array[ADC_Audio_R] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
+//		samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_array[ADC_Audio_L] - adcZeroOffset;
+//		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
 
-		//SPI2->TXDR = testOutput;				// Right Channel
-		//testOutput += 100;
+		DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
+		SPI2->TXDR = testOutput;				// Right Channel
+		testOutput += 100;
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
@@ -50,7 +90,7 @@ void SPI2_IRQHandler() {
 
 	nextSample = true;		// request next sample be prepared
 
-	GPIOC->ODR &= ~GPIO_ODR_OD11;
+	//GPIOC->ODR &= ~GPIO_ODR_OD11;
 
 }
 

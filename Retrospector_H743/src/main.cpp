@@ -29,7 +29,7 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-uint16_t adcZeroOffset = 34067;		// 0V ADC reading
+uint16_t adcZeroOffset = 33800;		// 0V ADC reading
 
 //int32_t readPos;
 //int32_t oldReadPos;
@@ -54,6 +54,14 @@ USB usb;
 digitalDelay DigitalDelay;
 
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
+//int16_t samples[2][SAMPLE_BUFFER_LENGTH];
+
+// Debug code for DAC muting
+int16_t samplesOut[SAMPLE_BUFFER_LENGTH];
+int16_t samplesMeasure[SAMPLE_BUFFER_LENGTH];
+
+int32_t sampleOutCount;
+int32_t gapDuration = 0;
 
 extern "C" {
 #include "interrupts.h"
@@ -69,8 +77,8 @@ int main(void) {
 	InitSDRAM();
 	InitLEDs();
 
-	//usb.InitUSB();
-	//usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+	usb.InitUSB();
+	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitI2S();
 

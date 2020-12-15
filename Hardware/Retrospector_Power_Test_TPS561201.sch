@@ -405,7 +405,6 @@ F 4 "C57112" H 2850 3050 50  0001 C CNN "Part_Number"
 $EndComp
 Wire Wire Line
 	2600 3150 2850 3150
-NoConn ~ 1600 3150
 $Comp
 L power:GND #PWR03
 U 1 1 63BB87EE
@@ -664,7 +663,7 @@ R1\nR2\nL3\nC2\nC4\n\nRipple\nSwitching
 Text Notes 5100 2950 0    50   ~ 0
 TPS561201
 Text Notes 4950 3800 0    50   ~ 0
-3.3V\n\n56k\n10k\n4.7uH\n10uF+10uF\n47uF\n\n19mV\n425.46 kHz
+3.3V\n\n33.2k\n10k\n3.3uH\n10uF+10uF\n47uF\n\n19mV\n425.46 kHz
 $Comp
 L TPS561201:TPS561201 U1
 U 1 1 5FC04DDA
@@ -697,7 +696,7 @@ Wire Wire Line
 	1500 3400 1500 3750
 Connection ~ 1500 3750
 Text Notes 5500 3800 0    50   ~ 0
-5V\n\n33.2k\n10k\n3.3uH\n10uF+10uF\n47uF\n\n18mV\n496.87kHz
+5V\n\n56.2k\n10k\n4.7uH\n10uF+10uF\n47uF\n\n18mV\n496.87kHz
 Wire Wire Line
 	2100 3750 3300 3750
 Wire Wire Line
@@ -746,4 +745,7 @@ Wire Wire Line
 	3600 1700 3600 1750
 Wire Wire Line
 	3600 1750 3950 1750
+Wire Wire Line
+	1600 3150 1600 2950
+Connection ~ 1600 2950
 $EndSCHEMATC

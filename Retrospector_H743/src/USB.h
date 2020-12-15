@@ -104,6 +104,7 @@ public:
 	void InitUSB();
 	void SendData(const uint8_t *data, uint16_t len, uint8_t endpoint);
 	void SendString(const char* s);
+	void SendString(std::string s);
 
 	std::function<void(uint8_t*,uint32_t)> cdcDataHandler;			// Declare data handler to store incoming CDC data
 	std::function<void(uint8_t*,uint32_t)> midiDataHandler;			// Declare data handler to store incoming midi data
