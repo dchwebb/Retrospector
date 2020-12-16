@@ -729,7 +729,7 @@ TPS5410
 Text Notes 5750 1900 0    50   ~ 0
 3.3V\n\n1.74k\n1k\n47uH\n22uF+100nF\n100uF\n\n969uV\n260kHz
 Text Notes 6300 1900 0    50   ~ 0
-5V\n\n3.16k\n1k\n68uF\n22uF+100nF\n47uF\n\n13mV\n260kHz
+5V\n\n3.16k\n1k\n68uH\n22uF+100nF\n47uF\n\n13mV\n260kHz
 Text Notes 8000 1900 0    50   ~ 0
 5V\n\n10k\n3.24k\n68uH\n10uF\n100uF\n\n9mV\n500kHz
 Text Notes 7450 1900 0    50   ~ 0

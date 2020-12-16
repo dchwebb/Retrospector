@@ -28,7 +28,7 @@
 #define PLL_M1 2
 #define PLL_N1 100
 #define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 100 (N) / 2 (Q) = 200MHz
+#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 100 (N) / 2 (Q) = 200MHz FIXME - problems using this PLL divider and FMC
 #define PLL_R1 2
 #else
 // 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
@@ -357,15 +357,26 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	I2S Clock = 300MHz:			280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
 	I2S Clock = 320MHz: 		320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
 	PER_CLK = 64MHz				64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
+
+	Note timing problems experienced using both pll1_q_ck and pll2_p_ck
 	*/
 #define I2S_PER_CLK
+#ifdef I2S_PLL2P_CLK
+	// Use PLL2 clock - configured to 200MHz
+	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_0;
+	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
+	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
+#endif
+
 #ifdef I2S_PER_CLK
 	// Use peripheral clock - configured to internal HSI at 64MHz
 	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_2;
 	SPI2->I2SCFGR |= (10 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
+#endif
 
-#elif CPUCLOCK == 200
+#ifdef I2S_DEFAULT
+#if CPUCLOCK == 200
 	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
 #elif CPUCLOCK == 280
@@ -375,6 +386,7 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	SPI2->I2SCFGR |= (52 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 52 with no Odd factor prescaler
 #else
 	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 39 with no Odd factor prescaler
+#endif
 #endif
 
 	// Enable interrupt when TxFIFO threshold reached
