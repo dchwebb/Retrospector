@@ -8,6 +8,7 @@ bool CDCCommand(const std::string ComCmd) {
 		usb.SendString("Mountjoy Retrospector - supported commands:\n\n"
 				"help      -  Shows this information\n"
 				"d1        -  Dump samples for channel 1\n"
+				"o         -  Dump debug samples (for loopback testing)\n"
 		);
 	} else if (ComCmd.compare("d1\n") == 0) {		// Dump sample buffer for L output
 		// Suspend I2S
@@ -21,6 +22,9 @@ bool CDCCommand(const std::string ComCmd) {
 		}
 
 		// Resume I2S
+		extern volatile bool sampleClock;
+		sampleClock = true;
+
 		SPI2->IFCR |= SPI_IFCR_SUSPC;
 		while ((SPI2->SR & SPI_SR_SUSP) != 0);
 

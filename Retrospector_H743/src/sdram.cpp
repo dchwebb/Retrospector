@@ -63,8 +63,8 @@ void InitSDRAM(void) {
 	// Enable the SDRAM Controller
 	RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
 
-	// Clock configuration - FMC clock (fmc_ker_ck) selected with RCC_D1CCIPR_FMCSEL register. Defaults to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 140MHz
-	RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;					// 10: pll2_r_ck clock selected as kernel peripheral clock (200MHz)
+	// Clock configuration - FMC clock (fmc_ker_ck) selected with RCC_D1CCIPR_FMCSEL register. Defaults to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 200MHz
+	//RCC->D1CCIPR |= RCC_D1CCIPR_FMCSEL_1;					// 10: pll2_r_ck clock selected as kernel peripheral clock (200MHz)
 
 	// Memory maximum clock speed is 140MHz at CAS latency = 3
 

@@ -1,7 +1,20 @@
 #include "stm32h743xx.h"
 #include "initialisation.h"
 
-#if CPUCLOCK == 320
+// Clock overview:
+// Main clock 4MHz: 8MHz (HSE) / 2 (M) * 200 (N) / 2 (P) = 400MHz
+// SDRAM: 200MHz: Defaulted to D1 domain AHB prescaler (RCC_D1CFGR_HPRE_3) ie main clock /2 = 200MHz (AKA HCLK3)
+// I2S: Peripheral Clock (AKA per_ck) set to HSI = 64MHz
+// ADC: Peripheral Clock (AKA per_ck) set to HSI = 64MHz
+
+#if CPUCLOCK == 400
+// 8MHz (HSE) / 2 (M) * 200 (N) / 2 (P) = 400MHz
+#define PLL_M1 2
+#define PLL_N1 200
+#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
+#define PLL_Q1 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 200 (N) / 4 (Q) = 200MHz
+#define PLL_R1 2
+#elif CPUCLOCK == 320
 // 8MHz (HSE) / 2 (M) * 160 (N) / 2 (P) = 320MHz
 #define PLL_M1 2
 #define PLL_N1 160
@@ -39,7 +52,7 @@
 #define PLL_R1 2
 #endif
 
-// Second PLL used for SDRAM clock
+// Second PLL used for SDRAM clock FIXME - not currently used as was interfering with timing on I2S
 // 8MHz (HSE) / 4 (M) * 200 (N) / 2 (R) = 200MHz
 #define PLL_M2 4
 #define PLL_N2 200
@@ -63,8 +76,10 @@ void SystemClock_Config()
 #endif
 	while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0);	// Check Voltage ready 1= Ready, voltage level at or above VOS selected level
 
-#if CPUCLOCK == 480
-	SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;				// Activate the LDO regulator overdrive mode. Must be written only in VOS1 voltage scaling mode.
+#if CPUCLOCK > 400
+	// Activate the LDO regulator overdrive mode. Must be written only in VOS1 voltage scaling mode.
+	// This activates VSO0 mode for use in clock speeds from 400MHz to 480MHz
+	SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
 	while ((SYSCFG->PWRCR & SYSCFG_PWRCR_ODEN) == 0);
 #endif
 
@@ -101,11 +116,11 @@ void SystemClock_Config()
 	while ((RCC->CR & RCC_CR_PLL2RDY) == 0);		// Wait till PLL is ready
 
 	// Peripheral scalers
-	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide by 480MHz by 2 for 240MHz - this is then divided for all APB clocks below
-	RCC->D1CFGR |= RCC_D1CFGR_D1PPRE_2; 			// Clock divider for APB3 clocks - set to 4 for 120MHz: 100: hclk / 2
-	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE1_2;			// Clock divider for APB1 clocks - set to 4 for 120MHz: 100: hclk / 2
-	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE2_2;			// Clock divider for APB2 clocks - set to 4 for 120MHz: 100: hclk / 2
-	RCC->D3CFGR |= RCC_D3CFGR_D3PPRE_2;				// Clock divider for APB4 clocks - set to 4 for 120MHz: 100: hclk / 2
+	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide 400MHz by 2 for 200MHz - this is then divided for all APB clocks below
+	RCC->D1CFGR |= RCC_D1CFGR_D1PPRE_2; 			// Clock divider for APB3 clocks - set to 4 for 100MHz: 100: hclk / 2
+	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE1_2;			// Clock divider for APB1 clocks - set to 4 for 100MHz: 100: hclk / 2
+	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE2_2;			// Clock divider for APB2 clocks - set to 4 for 100MHz: 100: hclk / 2
+	RCC->D3CFGR |= RCC_D3CFGR_D3PPRE_2;				// Clock divider for APB4 clocks - set to 4 for 100MHz: 100: hclk / 2
 
 
 
@@ -165,35 +180,138 @@ void InitDAC()
 }
 
 
-void InitAdcPins(std::initializer_list<uint8_t> channels) {
+void InitAdcPins(ADC_TypeDef* ADC_No, std::initializer_list<uint8_t> channels) {
 	uint8_t sequence = 1;
 
 	for (auto channel: channels) {
 		// NB reset mode of GPIO pins is 0b11 = analog mode so shouldn't need to change
-		ADC1->PCSEL |= 1 << channel;					// ADC channel preselection register
+		ADC_No->PCSEL |= 1 << channel;					// ADC channel preselection register
 
 		// Set conversion sequence to order ADC channels are passed to this function
 		if (sequence < 5) {
-			ADC1->SQR1 |= channel << (sequence * 6);
+			ADC_No->SQR1 |= channel << (sequence * 6);
 		} else if (sequence < 10) {
-			ADC1->SQR2 |= channel << ((sequence - 5) * 6);
+			ADC_No->SQR2 |= channel << ((sequence - 5) * 6);
 		} else if (sequence < 15)  {
-			ADC1->SQR3 |= channel << ((sequence - 10) * 6);
+			ADC_No->SQR3 |= channel << ((sequence - 10) * 6);
 		} else {
-			ADC1->SQR4 |= channel << ((sequence - 15) * 6);
+			ADC_No->SQR4 |= channel << ((sequence - 15) * 6);
 		}
 
 		// 000: 1.5 ADC clock cycles; 001: 2.5 cycles; 010: 8.5 cycles;	011: 16.5 cycles; 100: 32.5 cycles; 101: 64.5 cycles; 110: 387.5 cycles; 111: 810.5 cycles
 		if (channel < 10)
-			ADC1->SMPR1 |= 0b000 << (3 * channel);
+			ADC_No->SMPR1 |= 0b000 << (3 * channel);
 		else
-			ADC1->SMPR2 |= 0b000 << (3 * (channel - 10));
+			ADC_No->SMPR2 |= 0b000 << (3 * (channel - 10));
 
 		sequence++;
 	}
 }
 
 void InitADC()
+{
+	// Configure clocks
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+	// FIXME - currently ADC clock is set to HSI - might be more accurate to use HSE
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	// Initialize ADC peripheral
+	DMA1_Stream2->CR &= ~DMA_SxCR_EN;
+	DMA1_Stream2->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
+	DMA1_Stream2->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream2->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream2->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream2->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+
+	DMA1_Stream2->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
+	DMA1->LIFCR = 0x3FUL << 6;						// clear interrupts for this stream
+
+	DMAMUX1_Channel2->CCR |= 10; 					// DMA request MUX input 10 = adc2_dma (See p.695)
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
+
+	//NVIC_SetPriority(DMA1_Stream1_IRQn, 1);
+	//NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+
+	ADC2->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC2->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
+
+	// Wait until voltage regulator settled
+	volatile uint32_t wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+		wait_loop_index--;
+	}
+	while ((ADC2->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
+
+	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
+	ADC2->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
+	ADC2->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
+	ADC2->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
+
+	// Initialise 8x oversampling
+//	ADC2->CFGR2 |= (8-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 8
+//	ADC2->CFGR2 |= 3 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 3 - ie divide by 8
+//	ADC2->CFGR2 |= ADC_CFGR2_ROVSE;
+
+	// Oversampling 2x (Smoother with no oversampling)
+//	ADC2->CFGR2 |= (2-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 2
+//	ADC2->CFGR2 |= 1 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 1 - ie divide by 2
+//	ADC2->CFGR2 |= ADC_CFGR2_ROVSE;
+
+
+	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
+	ADC2->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
+
+	// For scan mode: set number of channels to be converted
+	ADC2->SQR1 |= (ADC_BUFFER_LENGTH - 1);
+
+	// Start calibration
+	ADC2->CR |= ADC_CR_ADCAL;
+	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
+
+	/*--------------------------------------------------------------------------------------------
+	Configure ADC Channels to be converted:
+		0	PA2 ADC12_INP14		AUDIO_IN_L
+		1	PA3 ADC12_INP15 	AUDIO_IN_R
+		2	PC5 ADC12_INP8		WET_DRY_MIX
+		3	PB1 ADC12_INP5		DELAY_POT_L
+		4	PA1 ADC1_INP17		DELAY_POT_R
+		5	PA0 ADC1_INP16		DELAY_CV_SCALED_L
+		6	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
+		7	PB0 ADC12_INP9		FEEDBACK_POT
+		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
+		9	PC1 ADC123_INP11 	TONE_POT
+	*/
+	InitAdcPins(ADC2, {14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
+
+	// Enable ADC
+	ADC2->CR |= ADC_CR_ADEN;
+	while ((ADC2->ISR & ADC_ISR_ADRDY) == 0) {}
+
+	// With DMA, overrun event is always considered as an error even if hadc->Init.Overrun is set to ADC_OVR_DATA_OVERWRITTEN. Therefore, ADC_IT_OVR is enabled.
+	//ADC2->IER |= ADC_IER_OVRIE;
+
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
+
+	DMA1_Stream2->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream2->PAR = (uint32_t)(&(ADC2->DR));	// Configure the peripheral data register address 0x40022040
+	DMA1_Stream2->M0AR = (uint32_t)(ADC_array);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
+
+	DMA1_Stream2->CR |= DMA_SxCR_EN;				// Enable DMA and wait
+	wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+	  wait_loop_index--;
+	}
+
+	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+}
+
+void InitADCbu()
 {
 	// Configure clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
@@ -218,13 +336,13 @@ void InitADC()
 	DMA1_Stream1->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
 	DMA1->LIFCR = 0x3FUL << 6;						// clear interrupts for this stream
 
-	DMAMUX1_Channel1->CCR |= 0x9; 					// DMA request MUX input 9 = adc1_dma (See p.695)
+	DMAMUX1_Channel1->CCR |= 9; 					// DMA request MUX input 9 = adc1_dma (See p.695)
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
 
 	//NVIC_SetPriority(DMA1_Stream1_IRQn, 1);
 	//NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
-	ADC1->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC1->CR &= ~ADC_CR_DEEPPWD;					// Deep powDMA1_Stream2own: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
 	ADC1->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
 
 	// Wait until voltage regulator settled
@@ -273,7 +391,7 @@ void InitADC()
 		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
 		9	PC1 ADC123_INP11 	TONE_POT
 	*/
-	InitAdcPins({14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
+	InitAdcPins(ADC1, {14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
@@ -297,7 +415,6 @@ void InitADC()
 
 	ADC1->CR |= ADC_CR_ADSTART;						// Start ADC
 }
-
 
 void InitI2S() {
 	/* Available I2S2 pins on AF5
@@ -358,7 +475,7 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 	I2S Clock = 320MHz: 		320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
 	PER_CLK = 64MHz				64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
 
-	Note timing problems experienced using both pll1_q_ck and pll2_p_ck
+	Note timing problems experienced using both pll1_q_ck and pll2_p_ck when FMC controller is using PLL2
 	*/
 #define I2S_PER_CLK
 #ifdef I2S_PLL2P_CLK
@@ -376,8 +493,8 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 #endif
 
 #ifdef I2S_DEFAULT
-#if CPUCLOCK == 200
-	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
+#if CPUCLOCK == 200 | CPUCLOCK == 400
+	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 32 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
 #elif CPUCLOCK == 280
 	SPI2->I2SCFGR |= (45 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
@@ -415,7 +532,7 @@ void InitTempoClock()
 
 void InitClockTimer()
 {
-	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using)
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
 
 	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
 	// See manual page 1670 for info on Capture and Compare Input mode
