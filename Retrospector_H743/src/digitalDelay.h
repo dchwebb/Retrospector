@@ -1,6 +1,7 @@
 #pragma once
 
 #include "initialisation.h"
+#include "filter.h"
 
 extern int32_t readPos;
 extern int32_t oldReadPos;

@@ -19,6 +19,19 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	}
 	lastSample[LOrR] = nextSample;
 
+	// Filter output - for now ignore crossfade
+	if (activateFilter) {
+		float outputSample = 0.0;
+		int32_t samplePos = readPos[LOrR];
+		for (uint16_t i = 0; i < FIRTAPS; ++i) {
+
+			if (--samplePos < 0)
+				samplePos = SAMPLE_BUFFER_LENGTH - 1;
+			outputSample += firCoeff[activeFilter][i] * samples[LOrR][samplePos];
+		}
+		nextSample = static_cast<int32_t>(outputSample);
+	}
+
 	// Move write and read heads one sample forwards
 	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
 	if (++readPos[LOrR] == SAMPLE_BUFFER_LENGTH)		readPos[LOrR] = 0;
@@ -45,6 +58,8 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 		}
 		--delayChanged[LOrR];
 	}
+
+
 
 
 	return nextSample;

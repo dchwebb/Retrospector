@@ -4,6 +4,7 @@
 #include "CDCHandler.h"
 #include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
 #include "sdram.h"
+#include "filter.h"
 #include <cmath>
 
 volatile uint32_t SysTickVal;
@@ -12,7 +13,7 @@ extern uint32_t SystemCoreClock;
 bool USBDebug;
 
 // As this is called from an interrupt assign the command to a variable so it can be handled in the main loop
-bool CmdPending = false;
+volatile bool CmdPending = false;
 std::string ComCmd;
 
 void CDCHandler(uint8_t* data, uint32_t length) {
@@ -48,6 +49,7 @@ float DACLevel;							// Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
 bool nextSample = false;
 
+volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
 USB usb;
@@ -56,12 +58,10 @@ digitalDelay DigitalDelay;
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
-// Debug code for DAC muting
-int16_t samplesOut[SAMPLE_BUFFER_LENGTH];
-int16_t samplesMeasure[SAMPLE_BUFFER_LENGTH];
-
-int32_t sampleOutCount;
-int32_t gapDuration = 0;
+// FIR data
+bool activateFilter = true;
+uint8_t activeFilter = 0;		// choose which set of coefficients to use
+float firCoeff[2][FIRTAPS];
 
 extern "C" {
 #include "interrupts.h"
@@ -71,11 +71,14 @@ int main(void) {
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
-	InitADC();
+	InitADCAudio();
+	InitADCControls();
 	InitDAC();
 	InitTempoClock();
 	InitSDRAM();
 	InitLEDs();
+
+	InitFilter(0.04);			// OmegaC: cut off divided by nyquist; ie 1000 / 24000 for 1kHz cut off at 48kHz sample rate
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);

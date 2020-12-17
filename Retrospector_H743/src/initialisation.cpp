@@ -208,14 +208,12 @@ void InitAdcPins(ADC_TypeDef* ADC_No, std::initializer_list<uint8_t> channels) {
 	}
 }
 
-void InitADC()
+void InitADCAudio()
 {
 	// Configure clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
-
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+
 	// FIXME - currently ADC clock is set to HSI - might be more accurate to use HSE
 	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -229,13 +227,10 @@ void InitADC()
 	DMA1_Stream2->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 
 	DMA1_Stream2->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
-	DMA1->LIFCR = 0x3FUL << 6;						// clear interrupts for this stream
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
 
 	DMAMUX1_Channel2->CCR |= 10; 					// DMA request MUX input 10 = adc2_dma (See p.695)
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
-
-	//NVIC_SetPriority(DMA1_Stream1_IRQn, 1);
-	//NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
 	ADC2->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
 	ADC2->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
@@ -247,7 +242,8 @@ void InitADC()
 	}
 	while ((ADC2->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
 
-	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
+	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;			// Set prescaler to ADC clock divided by 2 (if 64MHz = 32MHz)
+
 	ADC2->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
 	ADC2->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
 	ADC2->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
@@ -265,28 +261,14 @@ void InitADC()
 
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
 	ADC2->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
-
-	// For scan mode: set number of channels to be converted
-	ADC2->SQR1 |= (ADC_BUFFER_LENGTH - 1);
+	ADC2->SQR1 |= (2 - 1);							// For scan mode: set number of channels to be converted
 
 	// Start calibration
 	ADC2->CR |= ADC_CR_ADCAL;
 	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
-	/*--------------------------------------------------------------------------------------------
-	Configure ADC Channels to be converted:
-		0	PA2 ADC12_INP14		AUDIO_IN_L
-		1	PA3 ADC12_INP15 	AUDIO_IN_R
-		2	PC5 ADC12_INP8		WET_DRY_MIX
-		3	PB1 ADC12_INP5		DELAY_POT_L
-		4	PA1 ADC1_INP17		DELAY_POT_R
-		5	PA0 ADC1_INP16		DELAY_CV_SCALED_L
-		6	PA6 ADC12_INP3 		DELAY_CV_SCALED_R
-		7	PB0 ADC12_INP9		FEEDBACK_POT
-		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
-		9	PC1 ADC123_INP11 	TONE_POT
-	*/
-	InitAdcPins(ADC2, {14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
+	// Configure ADC Channels to be converted: PA2 ADC12_INP14 (AUDIO_IN_L), PA3 ADC12_INP15 (AUDIO_IN_R)
+	InitAdcPins(ADC2, {14, 15});
 
 	// Enable ADC
 	ADC2->CR |= ADC_CR_ADEN;
@@ -298,9 +280,9 @@ void InitADC()
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
 	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
 
-	DMA1_Stream2->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream2->NDTR |= 2;						// Number of data items to transfer (ie size of ADC buffer)
 	DMA1_Stream2->PAR = (uint32_t)(&(ADC2->DR));	// Configure the peripheral data register address 0x40022040
-	DMA1_Stream2->M0AR = (uint32_t)(ADC_array);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
+	DMA1_Stream2->M0AR = (uint32_t)(ADC_audio);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
 
 	DMA1_Stream2->CR |= DMA_SxCR_EN;				// Enable DMA and wait
 	wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
@@ -311,7 +293,7 @@ void InitADC()
 	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
 }
 
-void InitADCbu()
+void InitADCControls()
 {
 	// Configure clocks
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
@@ -323,8 +305,6 @@ void InitADCbu()
 	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
-	//ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
-
 	// Initialize ADC peripheral
 	DMA1_Stream1->CR &= ~DMA_SxCR_EN;
 	DMA1_Stream1->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
@@ -334,13 +314,10 @@ void InitADCbu()
 	DMA1_Stream1->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 
 	DMA1_Stream1->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
-	DMA1->LIFCR = 0x3FUL << 6;						// clear interrupts for this stream
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF1_Pos;		// clear all five interrupts for this stream
 
 	DMAMUX1_Channel1->CCR |= 9; 					// DMA request MUX input 9 = adc1_dma (See p.695)
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
-
-	//NVIC_SetPriority(DMA1_Stream1_IRQn, 1);
-	//NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
 	ADC1->CR &= ~ADC_CR_DEEPPWD;					// Deep powDMA1_Stream2own: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
 	ADC1->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
@@ -352,21 +329,10 @@ void InitADCbu()
 	}
 	while ((ADC1->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
 
-	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
+//	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
 	ADC1->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
 	ADC1->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
 	ADC1->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
-
-	// Initialise 8x oversampling
-//	ADC1->CFGR2 |= (8-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 8
-//	ADC1->CFGR2 |= 3 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 3 - ie divide by 8
-//	ADC1->CFGR2 |= ADC_CFGR2_ROVSE;
-
-	// Oversampling 2x (Smoother with no oversampling)
-//	ADC1->CFGR2 |= (2-1) << ADC_CFGR2_OVSR_Pos;		// Number of oversamples = 2
-//	ADC1->CFGR2 |= 1 << ADC_CFGR2_OVSS_Pos;			// Divide oversampled total via bit shift of 1 - ie divide by 2
-//	ADC1->CFGR2 |= ADC_CFGR2_ROVSE;
-
 
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
 	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
@@ -391,7 +357,7 @@ void InitADCbu()
 		8	PC4 ADC12_INP4		FEEDBACK_CV_SCALED
 		9	PC1 ADC123_INP11 	TONE_POT
 	*/
-	InitAdcPins(ADC1, {14, 15, 8, 5, 17, 16, 3, 9, 4, 11});
+	InitAdcPins(ADC1, {8, 5, 17, 16, 3, 9, 4, 11});
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
@@ -401,7 +367,7 @@ void InitADCbu()
 	//ADC1->IER |= ADC_IER_OVRIE;
 
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
-	DMA1->LIFCR = 0x3FUL << 6;		// clear interrupts for this stream
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF1_Pos;		// clear all five interrupts for this stream
 
 	DMA1_Stream1->NDTR |= ADC_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
 	DMA1_Stream1->PAR = (uint32_t)(&(ADC1->DR));	// Configure the peripheral data register address 0x40022040
