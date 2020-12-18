@@ -55,13 +55,17 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 USB usb;
 digitalDelay DigitalDelay;
 
-int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
-//int16_t samples[2][SAMPLE_BUFFER_LENGTH];
+//int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
+int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 // FIR data
 bool activateFilter = true;
 uint8_t activeFilter = 0;		// choose which set of coefficients to use
 float firCoeff[2][FIRTAPS];
+uint16_t currentTone = 0;
+int32_t dampedTone = 0;
+uint16_t toneHysteresis = 50;
+float currentCutoff;
 
 extern "C" {
 #include "interrupts.h"
@@ -78,7 +82,9 @@ int main(void) {
 	InitSDRAM();
 	InitLEDs();
 
-	InitFilter(0.04);			// OmegaC: cut off divided by nyquist; ie 1000 / 24000 for 1kHz cut off at 48kHz sample rate
+	currentTone = ADC_array[ADC_Tone];
+	InitFilter(1.0f / (currentTone >> 3));
+	//InitFilter(0.04);			// OmegaC: cut off divided by nyquist; ie 1000 / 24000 for 1kHz cut off at 48kHz sample rate
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -93,14 +99,6 @@ int main(void) {
 	while (1) {
 		//MemoryTest();
 
-		// DAC signals that it is ready for the next sample
-		/*
-		if (nextSample) {
-			nextSample = false;
-			if (!sampleClock) {
-				playSample = DigitalDelay.calcSample();
-			}
-		}*/
 		if (newClock) {
 			if (SysTickVal - lastClock < 10)
 				GPIOC->ODR |= GPIO_ODR_OD10;
@@ -116,6 +114,17 @@ int main(void) {
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
 		DAC1->DHR12R2 = DACLevel * 4096;
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;
+
+		// Check if filter coefficients need to be updated
+		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
+
+		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
+			currentTone = dampedTone;
+			float expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
+			//float expTone = 1.0f - (float)currentTone / 65536.0f;
+			//InitFilter(1.0f / std::max((currentTone >> 6), 1));
+			InitFilter(expTone);
+		}
 
 		// Check for incoming CDC commands
 		if (CmdPending) {

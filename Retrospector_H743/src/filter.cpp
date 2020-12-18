@@ -12,6 +12,7 @@ void InitFilter(float omegaC)
 		firCoeff[inactiveFilter][j] = omegaC * Sinc(omegaC * arg * M_PI);
 	}
 	activeFilter = inactiveFilter;
+	currentCutoff = omegaC;
 }
 
 float Sinc(float x)

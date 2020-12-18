@@ -34,8 +34,13 @@ bool CDCCommand(const std::string ComCmd) {
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 		extern bool activateFilter;
 		activateFilter = !activateFilter;
+
+		char buf[50];
+		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
+
+
 		if (activateFilter)
-			usb.SendString(std::string("Filter on\n").c_str());
+			usb.SendString(std::string("Filter on: ").append(std::string(buf)).append("\n").c_str());
 		else
 			usb.SendString(std::string("Filter off\n").c_str());
 
