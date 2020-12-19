@@ -3,7 +3,7 @@
 #include "initialisation.h"
 #include <cmath>
 
-#define FIRTAPS 40
+#define FIRTAPS 41
 #define M_PI           3.14159265358979323846
 
 extern bool activateFilter;
@@ -13,3 +13,6 @@ extern float currentCutoff;
 
 void InitFilter(float omegaC);
 float Sinc(float x);
+
+enum FilterType {LowPass, HighPass};
+extern FilterType filterType;

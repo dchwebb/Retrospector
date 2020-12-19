@@ -66,6 +66,7 @@ uint16_t currentTone = 0;
 int32_t dampedTone = 0;
 uint16_t toneHysteresis = 50;
 float currentCutoff;
+FilterType filterType = HighPass;
 
 extern "C" {
 #include "interrupts.h"
@@ -120,9 +121,11 @@ int main(void) {
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			currentTone = dampedTone;
-			float expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
-			//float expTone = 1.0f - (float)currentTone / 65536.0f;
-			//InitFilter(1.0f / std::max((currentTone >> 6), 1));
+			float expTone;
+			if (filterType == LowPass)
+				expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
+			else
+				expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 5.0f);
 			InitFilter(expTone);
 		}
 

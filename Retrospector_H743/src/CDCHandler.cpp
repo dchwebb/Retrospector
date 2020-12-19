@@ -31,6 +31,14 @@ bool CDCCommand(const std::string ComCmd) {
 
 		SPI2->CR1 |= SPI_CR1_CSTART;
 
+	} else if (ComCmd.compare("lp\n") == 0) {		// Low Pass
+		filterType = LowPass;
+		usb.SendString(std::string("Low Pass\n").c_str());
+
+	} else if (ComCmd.compare("hp\n") == 0) {		// Low Pass
+		filterType = HighPass;
+		usb.SendString(std::string("High Pass\n").c_str());
+
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 		extern bool activateFilter;
 		activateFilter = !activateFilter;
