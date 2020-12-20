@@ -3,7 +3,7 @@
 #include "initialisation.h"
 #include <cmath>
 
-#define FIRTAPS 61
+#define FIRTAPS 81
 #define M_PI           3.14159265358979323846
 
 extern bool activateFilter;

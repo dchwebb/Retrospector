@@ -64,10 +64,10 @@ uint8_t activeFilter = 0;		// choose which set of coefficients to use
 float firCoeff[2][FIRTAPS];
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
-uint16_t toneHysteresis = 50;
+uint16_t toneHysteresis = 40;
 float currentCutoff;
 FilterType filterType = LowPass;
-bool calcCoeff = false;
+
 
 extern "C" {
 #include "interrupts.h"
@@ -109,7 +109,7 @@ int main(void) {
 		//MemoryTest();
 
 		// Hacky delay before activating filter as this can hang the I2S interrupt with longer filter taps and low compiler optimisation
-		if (SysTickVal > 1000 && SysTickVal < 2000) {
+		if (SysTickVal > 500 && SysTickVal < 600) {
 			activateFilter = true;
 		}
 
@@ -130,19 +130,20 @@ int main(void) {
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;
 
 		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Feedback_CV]) >> 5, 0L);
+		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
-			calcCoeff = true;
-
 			currentTone = dampedTone;
 			float expTone;
-			if (filterType == LowPass)
-				expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
-			else
-				expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 5.0f);
+
+			if (currentTone < 32768) {		// Low Pass
+				filterType = LowPass;
+				expTone = 1.0f - std::pow((32768.0f - currentTone) / 33000.0f, 0.2f);
+			} else {
+				filterType = HighPass;
+				expTone = 1.0f - std::pow(((float)currentTone - 32768.0f)  / 40000.0f, 7.0f);
+			}
 			InitFilter(expTone);
-			calcCoeff = false;
 		}
 
 		// Check for incoming CDC commands
