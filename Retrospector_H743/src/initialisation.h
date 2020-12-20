@@ -20,7 +20,7 @@ extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 enum ADC_Audio { ADC_Audio_L = 0, ADC_Audio_R = 1 };
 enum ADC_Controls { ADC_Mix = 0, ADC_Delay_Pot_L = 1, ADC_Delay_Pot_R = 2, ADC_Delay_CV_L = 3, ADC_Delay_CV_R = 4,
-	ADC_Feedback_Pot_L = 5, ADC_Feedback_CV_L = 6, ADC_Tone = 7};
+	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Tone = 7};
 
 
 void SystemClock_Config();

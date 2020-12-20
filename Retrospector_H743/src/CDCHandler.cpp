@@ -47,10 +47,13 @@ bool CDCCommand(const std::string ComCmd) {
 		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
 
 
-		if (activateFilter)
+		if (activateFilter) {
+			//GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
 			usb.SendString(std::string("Filter on: ").append(std::string(buf)).append("\n").c_str());
-		else
+		} else {
 			usb.SendString(std::string("Filter off\n").c_str());
+			//GPIOC->ODR &= ~GPIO_ODR_OD11;			// Toggle LED for testing
+		}
 
 	} else if (ComCmd.compare("fd\n") == 0) {		// Dump filter coefficients
 		// Suspend I2S
@@ -88,3 +91,6 @@ bool CDCCommand(const std::string ComCmd) {
 
 	return true;
 }
+
+
+

@@ -59,14 +59,15 @@ digitalDelay DigitalDelay;
 int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 // FIR data
-bool activateFilter = true;
+bool activateFilter = false;
 uint8_t activeFilter = 0;		// choose which set of coefficients to use
 float firCoeff[2][FIRTAPS];
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
 uint16_t toneHysteresis = 50;
 float currentCutoff;
-FilterType filterType = HighPass;
+FilterType filterType = LowPass;
+bool calcCoeff = false;
 
 extern "C" {
 #include "interrupts.h"
@@ -84,7 +85,14 @@ int main(void) {
 	InitLEDs();
 
 	currentTone = ADC_array[ADC_Tone];
-	InitFilter(1.0f / (currentTone >> 3));
+	dampedTone = currentTone;
+	float expTone;
+	if (filterType == LowPass)
+		expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
+	else
+		expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 5.0f);
+	InitFilter(expTone);
+
 	//InitFilter(0.04);			// OmegaC: cut off divided by nyquist; ie 1000 / 24000 for 1kHz cut off at 48kHz sample rate
 
 	usb.InitUSB();
@@ -99,6 +107,11 @@ int main(void) {
 
 	while (1) {
 		//MemoryTest();
+
+		// Hacky delay before activating filter as this can hang the I2S interrupt with longer filter taps and low compiler optimisation
+		if (SysTickVal > 1000 && SysTickVal < 2000) {
+			activateFilter = true;
+		}
 
 		if (newClock) {
 			if (SysTickVal - lastClock < 10)
@@ -117,9 +130,11 @@ int main(void) {
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;
 
 		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
+		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Feedback_CV]) >> 5, 0L);
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
+			calcCoeff = true;
+
 			currentTone = dampedTone;
 			float expTone;
 			if (filterType == LowPass)
@@ -127,6 +142,7 @@ int main(void) {
 			else
 				expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 5.0f);
 			InitFilter(expTone);
+			calcCoeff = false;
 		}
 
 		// Check for incoming CDC commands

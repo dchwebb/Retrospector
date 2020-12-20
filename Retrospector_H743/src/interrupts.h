@@ -29,7 +29,9 @@ void SPI2_IRQHandler() {
 	 * Opt -O0: sdram, constant DR: 1.64uS; variable DR: 2.35uS
 	 *
 	 */
-	GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
+	if (calcCoeff)
+		GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
+
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
