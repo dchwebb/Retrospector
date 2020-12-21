@@ -37,7 +37,7 @@ void SPI2_IRQHandler() {
 		samples[digitalDelay::channelL][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_audio[ADC_Audio_L] - adcZeroOffset;
 		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelL);		// Left Channel
 	} else {
-		samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_audio[ADC_Audio_L] - adcZeroOffset;
+		samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_R]] = (int16_t)ADC_audio[ADC_Audio_R] - adcZeroOffset;
 		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
 	}
 

@@ -6,20 +6,23 @@ bool CDCCommand(const std::string ComCmd) {
 	if (ComCmd.compare("help\n") == 0) {
 		usb.SendString("Mountjoy Retrospector - supported commands:\n\n"
 				"help      -  Shows this information\n"
-				"d1        -  Dump samples for channel 1\n"
+				"dl        -  Dump samples for left channel\n"
+				"dr        -  Dump samples for right channel\n"
 				"fd        -  Dump filter coefficients\n"
 				"f1k       -  Filter at 1kHz\n"
 				"f2k       -  Filter at 2kHz\n"
 		);
-	} else if (ComCmd.compare("d1\n") == 0) {		// Dump sample buffer for L output
+	} else if (ComCmd.compare("dl\n") == 0 || ComCmd.compare("dr\n") == 0) {		// Dump sample buffer for L or R output
 		// Suspend I2S
 		SPI2->CR1 |= SPI_CR1_CSUSP;
 		while ((SPI2->SR & SPI_SR_SUSP) == 0);
-		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[0]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[0]) + "\n");
+
+		digitalDelay::sampleLR LOrR = ComCmd.compare("dl\n") == 0 ? digitalDelay::channelL : digitalDelay::channelR;
+
+		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\n");
 
 		for (int s = 0; s < SAMPLE_BUFFER_LENGTH; ++s) {
-
-			usb.SendString(std::to_string(samples[0][s]).append("\n").c_str());
+			usb.SendString(std::to_string(samples[LOrR][s]).append("\n").c_str());
 		}
 
 		// Resume I2S
@@ -30,14 +33,6 @@ bool CDCCommand(const std::string ComCmd) {
 		while ((SPI2->SR & SPI_SR_SUSP) != 0);
 
 		SPI2->CR1 |= SPI_CR1_CSTART;
-
-	} else if (ComCmd.compare("lp\n") == 0) {		// Low Pass
-		filterType = LowPass;
-		usb.SendString(std::string("Low Pass\n").c_str());
-
-	} else if (ComCmd.compare("hp\n") == 0) {		// Low Pass
-		filterType = HighPass;
-		usb.SendString(std::string("High Pass\n").c_str());
 
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 		extern bool activateFilter;

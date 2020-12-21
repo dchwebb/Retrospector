@@ -6,6 +6,7 @@ void InitFilter(float omegaC)
 	float arg;
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other
+	//uint8_t inactiveFilter = activeFilter;
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
 	if (filterType == LowPass) {

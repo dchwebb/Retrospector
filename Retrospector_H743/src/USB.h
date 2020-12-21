@@ -135,7 +135,7 @@ private:
 	uint32_t ep0_state;
 	uint8_t dev_state;
 	uint8_t CmdOpCode;				// stores class specific operation codes (eg CDC set line config)
-	bool transmitting;
+	volatile bool transmitting;
 
 	struct usbRequest {
 		uint8_t mRequest;
