@@ -1,9 +1,18 @@
 #include "filter.h"
 
 // Rectangular FIR
-void InitFilter(float omegaC)
+void InitFilter(uint16_t tone)
 {
-	float arg;
+	float arg, omegaC;
+
+	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
+	if (tone < 32768) {		// Low Pass
+		filterType = LowPass;
+		omegaC = 1.0f - std::pow((32768.0f - tone) / 33000.0f, 0.2f);
+	} else {
+		filterType = HighPass;
+		omegaC = 1.0f - std::pow(((float)tone - 32768.0f)  / 40000.0f, 7.0f);
+	}
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other
 	//uint8_t inactiveFilter = activeFilter;
@@ -22,15 +31,6 @@ void InitFilter(float omegaC)
 			firCoeff[inactiveFilter][j] = sign * omegaC * Sinc(omegaC * arg * M_PI);
 			sign = sign * -1;
 		}
-
-
-//		for (int8_t j = 0; j < FIRTAPS; ++j) {
-//		arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-//		if (arg == 0.0)
-//			firCoeff[inactiveFilter][j] = 0.0;
-//		else
-//			firCoeff[inactiveFilter][j] = std::cos(omegaC * arg * M_PI) / M_PI / arg  + std::cos(arg * M_PI);
-//		}
 	}
 	activeFilter = inactiveFilter;
 	currentCutoff = omegaC;

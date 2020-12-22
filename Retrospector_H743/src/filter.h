@@ -12,7 +12,7 @@ extern float firCoeff[2][FIRTAPS];
 extern float currentCutoff;
 extern int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 
-void InitFilter(float omegaC);
+void InitFilter(uint16_t tone);
 float Sinc(float x);
 
 enum FilterType {LowPass, HighPass};

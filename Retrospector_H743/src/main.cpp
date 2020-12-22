@@ -60,8 +60,8 @@ int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENG
 
 // FIR data
 int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
-bool activateFilter = false;
-uint8_t activeFilter = 0;		// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
+bool activateFilter = true;
+uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 float firCoeff[2][FIRTAPS];
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
@@ -87,14 +87,7 @@ int main(void) {
 
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
-	float expTone;
-	if (filterType == LowPass)
-		expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 0.2f);
-	else
-		expTone = 1.0f - std::pow((float)currentTone / 65536.0f, 5.0f);
-	InitFilter(expTone);
-
-	//InitFilter(0.04);			// OmegaC: cut off divided by nyquist; ie 1000 / 24000 for 1kHz cut off at 48kHz sample rate
+	InitFilter(currentTone);
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -110,9 +103,9 @@ int main(void) {
 		//MemoryTest();
 
 		// Hacky delay before activating filter as this can hang the I2S interrupt with longer filter taps and low compiler optimisation
-		if (SysTickVal > 500 && SysTickVal < 600) {
-			activateFilter = true;
-		}
+//		if (SysTickVal > 500 && SysTickVal < 600) {
+//			activateFilter = true;
+//		}
 
 		if (newClock) {
 			if (SysTickVal - lastClock < 10)
@@ -135,16 +128,8 @@ int main(void) {
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			currentTone = dampedTone;
-			float expTone;
 
-			if (currentTone < 32768) {		// Low Pass
-				filterType = LowPass;
-				expTone = 1.0f - std::pow((32768.0f - currentTone) / 33000.0f, 0.2f);
-			} else {
-				filterType = HighPass;
-				expTone = 1.0f - std::pow(((float)currentTone - 32768.0f)  / 40000.0f, 7.0f);
-			}
-			InitFilter(expTone);
+			InitFilter(currentTone);
 		}
 
 		// Check for incoming CDC commands
