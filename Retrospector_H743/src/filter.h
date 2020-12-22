@@ -10,6 +10,7 @@ extern bool activateFilter;
 extern uint8_t activeFilter;		// choose which set of coefficients to use
 extern float firCoeff[2][FIRTAPS];
 extern float currentCutoff;
+extern int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 
 void InitFilter(float omegaC);
 float Sinc(float x);

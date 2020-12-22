@@ -4,7 +4,7 @@
 extern uint32_t clockInterval;
 extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
-
+extern int16_t filterBuffer[2][FIRTAPS];
 
 int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	int32_t nextSample;
@@ -17,25 +17,25 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	} else {
 		nextSample = samples[LOrR][readPos[LOrR]];
 	}
-	lastSample[LOrR] = nextSample;
 
-	// Filter output - for now ignore crossfade
+	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
+	filterBuffer[LOrR][filterBuffPos[LOrR]] = nextSample;
 	if (activateFilter) {
 		float outputSample = 0.0;
-		int32_t samplePos = readPos[LOrR];
+		int16_t pos = filterBuffPos[LOrR];
 		for (uint16_t i = 0; i < FIRTAPS; ++i) {
-
-			if (--samplePos < 0)
-				samplePos = SAMPLE_BUFFER_LENGTH - 1;
-			outputSample += firCoeff[activeFilter][i] * samples[LOrR][samplePos];
+			if (++pos == FIRTAPS) pos = 0;
+			outputSample += firCoeff[activeFilter][i] * filterBuffer[LOrR][pos];
 		}
 		nextSample = static_cast<int32_t>(outputSample);
 	}
+
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
 	if (++readPos[LOrR] == SAMPLE_BUFFER_LENGTH)		readPos[LOrR] = 0;
 	if (++oldReadPos[LOrR] == SAMPLE_BUFFER_LENGTH)		oldReadPos[LOrR] = 0;
+	if (++filterBuffPos[LOrR] == FIRTAPS) 				filterBuffPos[LOrR] = 0;
 
 	// Get delay time from ADC and average over 32 readings to smooth
 	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[LOrR == digitalDelay::channelL ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);

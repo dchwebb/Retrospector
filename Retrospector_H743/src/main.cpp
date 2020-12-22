@@ -55,12 +55,13 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 USB usb;
 digitalDelay DigitalDelay;
 
-//int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
-int16_t samples[2][SAMPLE_BUFFER_LENGTH];
+int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
+//int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 // FIR data
+int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 bool activateFilter = false;
-uint8_t activeFilter = 0;		// choose which set of coefficients to use
+uint8_t activeFilter = 0;		// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 float firCoeff[2][FIRTAPS];
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
