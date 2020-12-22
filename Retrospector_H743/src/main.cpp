@@ -126,8 +126,8 @@ int main(void) {
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
-		DAC1->DHR12R2 = DACLevel * 4096;
-		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;
+		DAC1->DHR12R2 = DACLevel * 4095.0f;					// Wet level
+		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;		// Dry level
 
 		// Check if filter coefficients need to be updated
 		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
