@@ -3,20 +3,10 @@
 #include "initialisation.h"
 #include "filter.h"
 
-extern int32_t readPos;
-extern int32_t oldReadPos;
-extern int32_t writePos;
-extern int16_t delayChanged;
-extern uint16_t delayCrossfade;
-extern int32_t currentDelay;
-extern int32_t dampedDelay;
-extern int32_t ns, s_n, ls, rp, nrp;
-
 extern uint16_t adcZeroOffset;
 
 struct digitalDelay {
 public:
-//	int16_t samples[SAMPLE_BUFFER_LENGTH];
 	int32_t readPos[2];
 	int32_t writePos[2];
 	int16_t delayChanged[2];		// To implement a pause between changing delay times
@@ -28,9 +18,8 @@ public:
 
 	enum sampleLR {channelL = 0, channelR = 1};
 
-	//bool sampleClock = false;
-	const int16_t delayHysteresis = 100;
-	const int16_t crossFade = 1000;
+	const int16_t delayHysteresis = 40;
+	const int16_t crossFade = 6000;
 
-	int32_t calcSample(digitalDelay::sampleLR LOrR);
+	int32_t calcSample(digitalDelay::sampleLR LOrR, int16_t adcSample);
 };

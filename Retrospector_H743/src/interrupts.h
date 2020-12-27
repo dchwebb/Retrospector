@@ -34,11 +34,11 @@ void SPI2_IRQHandler() {
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		samples[digitalDelay::channelL][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_audio[ADC_Audio_L] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelL);		// Left Channel
+		//samples[digitalDelay::channelL][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_audio[ADC_Audio_L] - adcZeroOffset;
+		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelL, ADC_audio[ADC_Audio_L]);		// Left Channel
 	} else {
-		samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_R]] = (int16_t)ADC_audio[ADC_Audio_R] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
+		//samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_R]] = (int16_t)ADC_audio[ADC_Audio_R] - adcZeroOffset;
+		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR, ADC_audio[ADC_Audio_R]);		// Left Channel
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
