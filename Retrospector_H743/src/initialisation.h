@@ -22,6 +22,11 @@ enum ADC_Audio { ADC_Audio_L = 0, ADC_Audio_R = 1 };
 enum ADC_Controls { ADC_Mix = 0, ADC_Delay_Pot_L = 1, ADC_Delay_Pot_R = 2, ADC_Delay_CV_L = 3, ADC_Delay_CV_R = 4,
 	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Tone = 7};
 
+template<class T>
+constexpr const T& clamp( const T& v, const T& lo, const T& hi )
+{
+	return (v < lo) ? lo : (hi < v) ? hi : v;
+}
 
 void SystemClock_Config();
 void InitCache();
@@ -34,4 +39,5 @@ void InitADCControls();
 void InitDAC();
 void InitI2S();
 void InitTempoClock();
-void InitLEDs();
+void InitIO();
+bool Mode(uint8_t mode);

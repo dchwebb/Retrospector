@@ -6,13 +6,15 @@ extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
-int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR, int16_t adcSample) {
+int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	int32_t nextSample;
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LOrR] > 0) {
 		float scale = static_cast<float>(delayCrossfade[LOrR]) / static_cast<float>(crossFade);
 		nextSample = static_cast<float>(samples[LOrR][readPos[LOrR]]) * (1.0f - scale) + static_cast<float>(samples[LOrR][oldReadPos[LOrR]]) * (scale);
+		nextSample = clamp(nextSample, -32000L, 32000L);
+
 		--delayCrossfade[LOrR];
 	} else {
 		nextSample = samples[LOrR][readPos[LOrR]];
@@ -30,10 +32,11 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR, int16_t adcSample)
 		nextSample = static_cast<int32_t>(outputSample);
 	}
 
-	int32_t temp = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset) +
+	// Add the current sample and the delayed sample scaled by the feedback control
+	int32_t feedbackSample = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
 
-	samples[LOrR][writePos[LOrR]] = std::max(std::min(temp, 23000L), -23000L);
+	samples[LOrR][writePos[LOrR]] = clamp(feedbackSample, -25000L, 25000L);		// Digital distortion when setting these limits much higher with high feeback (theoretically should limit to 32,767)
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
@@ -43,28 +46,26 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR, int16_t adcSample)
 
 
 	// Get delay time from ADC and average over 32 readings to smooth
-	volatile uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[LOrR == digitalDelay::channelL ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[LOrR == digitalDelay::channelL ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
 	dampedDelay[LOrR] = std::max((31 * dampedDelay[LOrR] + delayClkCV) >> 5, 0UL);
 
-	// Change delay times after a pause to avoid pitched artifacts
-	if (std::abs(dampedDelay[LOrR] - currentDelay[LOrR]) > delayHysteresis) {
-		if (delayChanged[LOrR] == 0)
-			delayChanged[LOrR] = 1;
+	// If delay time has changed trigger crossfade from old to new read position
+	if (delayCrossfade[LOrR] == 0 && std::abs(dampedDelay[LOrR] - currentDelay[LOrR]) > delayHysteresis) {
+		oldReadPos[LOrR] = readPos[LOrR];
+		readPos[LOrR] = writePos[LOrR] - dampedDelay[LOrR] - 1;
+		while (readPos[LOrR] < 0) 		readPos[LOrR] += SAMPLE_BUFFER_LENGTH;
+		delayCrossfade[LOrR] = crossFade;
 		currentDelay[LOrR] = dampedDelay[LOrR];
 	}
 
-	if (delayChanged[LOrR] > 0 && delayCrossfade[LOrR] == 0) {
-		if (delayChanged[LOrR] == 1) {
-			oldReadPos[LOrR] = readPos[LOrR];
-			readPos[LOrR] = writePos[LOrR] - dampedDelay[LOrR] - 1;
-			while (readPos[LOrR] < 0) 		readPos[LOrR] += SAMPLE_BUFFER_LENGTH;
-			delayCrossfade[LOrR] = crossFade;
-		}
-		--delayChanged[LOrR];
-	}
-
-
-
-
 	return nextSample;
+}
+
+void digitalDelay::init() {
+	dampedDelay[digitalDelay::channelL] = ADC_array[ADC_Delay_Pot_L];
+	dampedDelay[digitalDelay::channelR] = ADC_array[ADC_Delay_Pot_R];
+	calcSample(digitalDelay::channelL);
+	calcSample(digitalDelay::channelR);
+	delayCrossfade[digitalDelay::channelL] = 0;
+	delayCrossfade[digitalDelay::channelR] = 0;
 }

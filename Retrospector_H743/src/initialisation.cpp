@@ -531,10 +531,25 @@ void InitClockTimer()
 }
 
 
-void InitLEDs()
+void InitIO()
 {
 	// Initialise timing LEDs on PC10 and PC11
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
 	GPIOC->MODER &= ~GPIO_MODER_MODE10_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
 	GPIOC->MODER &= ~GPIO_MODER_MODE11_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+
+	// Init mode switches on PE2 and PE3
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// GPIO port clock
+	GPIOE->MODER &= ~GPIO_MODER_MODE2;				// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	GPIOE->MODER &= ~GPIO_MODER_MODE3;				// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	GPIOE->PUPDR |= GPIO_PUPDR_PUPD2_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+}
+
+bool Mode(uint8_t mode) {
+	if (mode == 2 && (GPIOE->IDR & GPIO_IDR_ID2) == 0)
+		return true;
+	if (mode == 1 && (GPIOE->IDR & GPIO_IDR_ID3) == 0)
+		return true;
+	return false;
 }

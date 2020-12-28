@@ -12,15 +12,6 @@ extern uint32_t SystemCoreClock;
 
 bool USBDebug;
 
-// As this is called from an interrupt assign the command to a variable so it can be handled in the main loop
-volatile bool CmdPending = false;
-std::string ComCmd;
-
-void CDCHandler(uint8_t* data, uint32_t length) {
-	ComCmd = std::string((char*)data, length);
-	CmdPending = true;
-}
-
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 void BootDFU() {
 	//SCB_DisableDCache();
@@ -32,14 +23,6 @@ void BootDFU() {
 
 uint16_t adcZeroOffset = 33800;		// 0V ADC reading
 
-//int32_t readPos;
-//int32_t oldReadPos;
-//int32_t writePos;
-//int16_t delayChanged;
-//uint16_t delayCrossfade;
-//int32_t currentDelay;
-//int32_t dampedDelay;
-
 uint32_t lastClock = 0;
 uint32_t clockInterval = 0;
 bool ledL, ledR;
@@ -47,7 +30,6 @@ bool newClock, clockValid;
 int16_t testOutput = 0;
 float DACLevel;							// Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
-bool nextSample = false;
 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
@@ -61,14 +43,17 @@ int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENG
 // FIR data
 int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 bool activateFilter = true;
+bool activateWindow = true;
 uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 float firCoeff[2][FIRTAPS];
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
-uint16_t toneHysteresis = 40;
+uint16_t toneHysteresis = 300;
 float currentCutoff;
 FilterType filterType = LowPass;
 
+char usbBuf[8 * FIRTAPS + 1];
+bool sendVals = false;
 
 extern "C" {
 #include "interrupts.h"
@@ -83,8 +68,9 @@ int main(void) {
 	InitDAC();
 	InitTempoClock();
 	InitSDRAM();
-	InitLEDs();
+	InitIO();
 
+	FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
 	InitFilter(currentTone);
@@ -92,12 +78,14 @@ int main(void) {
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	InitI2S();
-
 	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
 
 	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
+
+	DigitalDelay.init();
+	InitI2S();
+
 
 	while (1) {
 		//MemoryTest();
@@ -107,6 +95,7 @@ int main(void) {
 //			activateFilter = true;
 //		}
 
+		/*
 		if (newClock) {
 			if (SysTickVal - lastClock < 10)
 				GPIOC->ODR |= GPIO_ODR_OD10;
@@ -115,6 +104,16 @@ int main(void) {
 				newClock = false;
 			}
 		}
+		*/
+
+		if (Mode(2)) {
+			sendVals = true;
+			GPIOC->ODR |= GPIO_ODR_OD10;
+		} else {
+			sendVals = false;
+			GPIOC->ODR &= ~GPIO_ODR_OD10;
+		}
+
 
 		clockValid = (SysTickVal - lastClock < 1000);		// Valid clock interval is within a second
 
@@ -130,6 +129,18 @@ int main(void) {
 			currentTone = dampedTone;
 
 			InitFilter(currentTone);
+			if (sendVals) {
+				char* bp = &usbBuf[0];
+
+				for (int f = 0; f < FIRTAPS; ++f) {
+					sprintf(bp, "%0.10f", firCoeff[activeFilter][f] * 1000.0f);		// 10dp
+					bp += 7;
+					sprintf(bp++, "\r");
+				}
+				//sprintf(--bp, "\r");
+
+				usb.SendString(usbBuf);
+			}
 		}
 
 		// Check for incoming CDC commands
