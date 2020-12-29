@@ -5,7 +5,6 @@
 #include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
 #include "sdram.h"
 #include "filter.h"
-#include <cmath>
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -21,16 +20,23 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-uint16_t adcZeroOffset = 33800;		// 0V ADC reading
+uint16_t adcZeroOffset = 33800;			// 0V ADC reading
 
+// Settings for tempo clock input
 uint32_t lastClock = 0;
 uint32_t clockInterval = 0;
-bool ledL, ledR;
 bool newClock, clockValid;
-int16_t testOutput = 0;
-float DACLevel;							// Cross fade value
-volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
 
+// Tone settings to control filter
+uint16_t currentTone = 0;
+int32_t dampedTone = 0;
+uint16_t toneHysteresis = 300;
+
+float DACLevel;							// Wet/Dry Cross fade value
+volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
+//bool ledL, ledR;
+
+// ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
@@ -40,18 +46,7 @@ digitalDelay DigitalDelay;
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
-// FIR data
-int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
-bool activateFilter = true;
-bool activateWindow = true;
-uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
-float firCoeff[2][FIRTAPS];
-uint16_t currentTone = 0;
-int32_t dampedTone = 0;
-uint16_t toneHysteresis = 300;
-float currentCutoff;
-FilterType filterType = LowPass;
-
+// Debug
 char usbBuf[8 * FIRTAPS + 1];
 bool sendVals = false;
 
@@ -70,6 +65,7 @@ int main(void) {
 	InitSDRAM();
 	InitIO();
 
+	// Initialise filter
 	FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
@@ -78,10 +74,10 @@ int main(void) {
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
-	InitCache();		// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides NB - not currently working
+	InitCache();				// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
 
-	DAC1->DHR12R2 = 2048; //Pins 3 & 6 on VCA (MIX_WET_CTL)
-	DAC1->DHR12R1 = 2048; //Pins 11 & 14 on VCA (MIX_DRY_CTL)
+	DAC1->DHR12R2 = 2048;		// Pins 3 & 6 on VCA (MIX_WET_CTL)
+	DAC1->DHR12R1 = 2048; 		// Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
 	DigitalDelay.init();
 	InitI2S();
@@ -106,6 +102,7 @@ int main(void) {
 		}
 		*/
 
+		// Debug: use mode switch to trigger sending of filter coefficients
 		if (Mode(2)) {
 			sendVals = true;
 			GPIOC->ODR |= GPIO_ODR_OD10;
@@ -127,8 +124,9 @@ int main(void) {
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			currentTone = dampedTone;
-
 			InitFilter(currentTone);
+
+			// Debug
 			if (sendVals) {
 				char* bp = &usbBuf[0];
 
@@ -137,8 +135,6 @@ int main(void) {
 					bp += 7;
 					sprintf(bp++, "\r");
 				}
-				//sprintf(--bp, "\r");
-
 				usb.SendString(usbBuf);
 			}
 		}

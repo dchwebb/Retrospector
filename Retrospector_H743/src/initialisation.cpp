@@ -140,7 +140,7 @@ void InitCache()
 {
 	// Use the Memory Protection Unit (MPU) to set up a region of memory with data caching disabled for use with DMA buffers
 	MPU->RNR = 0;									// Memory region number
-	MPU->RBAR = reinterpret_cast<uint32_t>(&ADC_array);	// Store the address of the ADC_array into the region base address register
+	MPU->RBAR = reinterpret_cast<uint32_t>(&ADC_audio);	// Store the address of the ADC_array into the region base address register
 
 	MPU->RASR = (0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
 				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of CortexM7 programming manual
@@ -547,6 +547,7 @@ void InitIO()
 }
 
 bool Mode(uint8_t mode) {
+	// Return setting of mode switch
 	if (mode == 2 && (GPIOE->IDR & GPIO_IDR_ID2) == 0)
 		return true;
 	if (mode == 1 && (GPIOE->IDR & GPIO_IDR_ID3) == 0)

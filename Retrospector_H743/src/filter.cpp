@@ -1,11 +1,22 @@
 #include "filter.h"
 
+// FIR data
+float firCoeff[2][FIRTAPS];
+float winCoeff[FIRTAPS];
+int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
+uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
+
+// Debug
 bool calculatingFilter = false;
+bool activateFilter = true;
+bool activateWindow = true;
+float currentCutoff;
 
 // Rectangular FIR
 void InitFilter(uint16_t tone)
 {
 	float arg, omegaC;
+	FilterType filterType;
 
 	calculatingFilter = true;
 
@@ -42,27 +53,16 @@ void InitFilter(uint16_t tone)
 	calculatingFilter = false;
 }
 
-float winCoeff[FIRTAPS];
 
 void FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {
-	float dN, arg;
+	float arg;
 
-	// Calculate the window for N/2 points, then fold the window over (at the bottom).
-	dN = FIRTAPS + 1; // a double
-
-	// Kaiser
+	// Kaiser window
 	for (uint8_t j = 0; j < FIRTAPS; j++) {
-		arg = beta * sqrt(1.0 - pow( ((double)(2 * j + 2) - dN) / dN, 2.0) );
+		arg = beta * sqrt(1.0 - pow( ((float)(2 * j) + 1 - FIRTAPS) / (FIRTAPS + 1), 2.0) );
 		winCoeff[j] = Bessel(arg) / Bessel(beta);
 	}
-
-	// Fold the coefficients over
-	for (uint8_t j = 0; j < FIRTAPS / 2; j++)
-		winCoeff[FIRTAPS - j - 1] = winCoeff[j];
-
-	// Apply the window to the FIR coefficients.
-	//for(j=0; j<N; j++)FIRCoeff[j] *= WinCoeff[j];
 
 }
 
@@ -73,7 +73,7 @@ float Sinc(float x)
 	return (std::sin(x) / x);
 }
 
-// This gets used with the Kaiser window.
+// Used for Kaiser window calculations
 float Bessel(float x)
 {
 	float Sum = 0.0, XtoIpower;

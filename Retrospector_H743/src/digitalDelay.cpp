@@ -1,5 +1,4 @@
 #include "digitaldelay.h"
-#include <limits>
 
 extern uint32_t clockInterval;
 extern bool clockValid;
@@ -13,7 +12,6 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	if (delayCrossfade[LOrR] > 0) {
 		float scale = static_cast<float>(delayCrossfade[LOrR]) / static_cast<float>(crossFade);
 		nextSample = static_cast<float>(samples[LOrR][readPos[LOrR]]) * (1.0f - scale) + static_cast<float>(samples[LOrR][oldReadPos[LOrR]]) * (scale);
-		nextSample = clamp(nextSample, -32000L, 32000L);
 
 		--delayCrossfade[LOrR];
 	} else {
@@ -36,7 +34,7 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	int32_t feedbackSample = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
 
-	samples[LOrR][writePos[LOrR]] = clamp(feedbackSample, -25000L, 25000L);		// Digital distortion when setting these limits much higher with high feeback (theoretically should limit to 32,767)
+	samples[LOrR][writePos[LOrR]] = clamp(feedbackSample, -32767L, 32767L);		// Digital distortion when setting these limits much higher with high feeback (theoretically should limit to 32,767)
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
@@ -57,7 +55,7 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 		delayCrossfade[LOrR] = crossFade;
 		currentDelay[LOrR] = dampedDelay[LOrR];
 	}
-
+	nextSample = clamp(nextSample, -32767L, 32767L);
 	return nextSample;
 }
 
