@@ -5,8 +5,9 @@ extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
-int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
-	int32_t nextSample;
+
+int32_t digitalDelay::calcSample(channel LOrR) {
+	int32_t nextSample, delayClkCV;
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LOrR] > 0) {
@@ -31,7 +32,7 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	}
 
 	// Add the current sample and the delayed sample scaled by the feedback control
-	int32_t feedbackSample = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset) +
+	int32_t feedbackSample = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset[LOrR]) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
 
 	samples[LOrR][writePos[LOrR]] = clamp(feedbackSample, -32767L, 32767L);		// Digital distortion when setting these limits much higher with high feeback (theoretically should limit to 32,767)
@@ -43,9 +44,13 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 	if (++filterBuffPos[LOrR] == FIRTAPS) 				filterBuffPos[LOrR] = 0;
 
 
-	// Get delay time from ADC and average over 32 readings to smooth
-	uint32_t delayClkCV = clockValid ? (clockInterval * 48) : static_cast<uint32_t>(ADC_array[LOrR == digitalDelay::channelL ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	dampedDelay[LOrR] = std::max((31 * dampedDelay[LOrR] + delayClkCV) >> 5, 0UL);
+	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
+	if (clockValid) {
+		delayClkCV = clockInterval * 48;
+	} else {
+		delayClkCV = static_cast<int32_t>(ADC_array[(LOrR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]) * ((delayMode == 1) ? 1 : SAMPLE_BUFFER_LENGTH / 65356);
+	}
+	dampedDelay[LOrR] = std::max((31 * dampedDelay[LOrR] + delayClkCV) >> 5, 0L);
 
 	// If delay time has changed trigger crossfade from old to new read position
 	if (delayCrossfade[LOrR] == 0 && std::abs(dampedDelay[LOrR] - currentDelay[LOrR]) > delayHysteresis) {
@@ -60,10 +65,10 @@ int32_t digitalDelay::calcSample(digitalDelay::sampleLR LOrR) {
 }
 
 void digitalDelay::init() {
-	dampedDelay[digitalDelay::channelL] = ADC_array[ADC_Delay_Pot_L];
-	dampedDelay[digitalDelay::channelR] = ADC_array[ADC_Delay_Pot_R];
-	calcSample(digitalDelay::channelL);
-	calcSample(digitalDelay::channelR);
-	delayCrossfade[digitalDelay::channelL] = 0;
-	delayCrossfade[digitalDelay::channelR] = 0;
+	dampedDelay[left] = ADC_array[ADC_Delay_Pot_L];
+	dampedDelay[right] = ADC_array[ADC_Delay_Pot_R];
+	calcSample(left);
+	calcSample(right);
+	delayCrossfade[left] = 0;
+	delayCrossfade[right] = 0;
 }

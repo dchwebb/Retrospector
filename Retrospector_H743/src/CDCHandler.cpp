@@ -24,7 +24,7 @@ bool CDCCommand(const std::string ComCmd) {
 		SPI2->CR1 |= SPI_CR1_CSUSP;
 		while ((SPI2->SR & SPI_SR_SUSP) == 0);
 
-		digitalDelay::sampleLR LOrR = ComCmd.compare("dl\n") == 0 ? digitalDelay::channelL : digitalDelay::channelR;
+		channel LOrR = ComCmd.compare("dl\n") == 0 ? left : right;
 
 		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\n");
 

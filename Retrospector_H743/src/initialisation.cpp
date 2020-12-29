@@ -546,11 +546,11 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-bool Mode(uint8_t mode) {
+uint8_t Mode() {
 	// Return setting of mode switch
-	if (mode == 2 && (GPIOE->IDR & GPIO_IDR_ID2) == 0)
-		return true;
-	if (mode == 1 && (GPIOE->IDR & GPIO_IDR_ID3) == 0)
-		return true;
-	return false;
+	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
+		return 2;
+	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
+		return 1;
+	return 0;
 }

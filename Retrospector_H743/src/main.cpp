@@ -20,7 +20,9 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-uint16_t adcZeroOffset = 33800;			// 0V ADC reading
+uint16_t adcZeroOffset[2] = {33800, 33800};			// 0V ADC reading
+uint32_t newOffset[2] = {33800, 33800};
+uint32_t offsetCounter[2];
 
 // Settings for tempo clock input
 uint32_t lastClock = 0;
@@ -102,15 +104,23 @@ int main(void) {
 		}
 		*/
 
-		// Debug: use mode switch to trigger sending of filter coefficients
-		if (Mode(2)) {
-			sendVals = true;
-			GPIOC->ODR |= GPIO_ODR_OD10;
-		} else {
-			sendVals = false;
-			GPIOC->ODR &= ~GPIO_ODR_OD10;
+
+		// When silence is detected for a long enough time recalculate ADC offset
+		for (channel lr : {left, right}) {
+			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
+				newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
+				if (offsetCounter[lr] == 3000000) {
+					adcZeroOffset[lr] = newOffset[lr];
+					offsetCounter[lr] = 0;
+				}
+				offsetCounter[lr]++;
+
+			} else {
+				offsetCounter[lr] = 0;
+			}
 		}
 
+		DigitalDelay.delayMode = Mode();
 
 		clockValid = (SysTickVal - lastClock < 1000);		// Valid clock interval is within a second
 

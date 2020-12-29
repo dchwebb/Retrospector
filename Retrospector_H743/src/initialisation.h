@@ -8,17 +8,14 @@
 extern volatile uint32_t SysTickVal;
 
 #define ADC_BUFFER_LENGTH 8
-#define SAMPLE_BUFFER_LENGTH 65536
+//#define SAMPLE_BUFFER_LENGTH 262,144
+#define SAMPLE_BUFFER_LENGTH 1048576		// Currently 2^20 - only quarter full
 #define CPUCLOCK 400
 
 extern volatile uint16_t ADC_audio[2];
 extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 // Define ADC array positions of various controls
-//enum ADC_Controls { ADC_Audio_L = 0, ADC_Audio_R = 1, ADC_Mix = 2, ADC_Delay_Pot_L = 3, ADC_Delay_Pot_R = 4, ADC_Delay_CV_L = 5, ADC_Delay_CV_R = 6,
-//	ADC_Feedback_Pot_L = 7, ADC_Feedback_CV_L = 8, ADC_Tone = 9};
-
-enum ADC_Audio { ADC_Audio_L = 0, ADC_Audio_R = 1 };
 enum ADC_Controls { ADC_Mix = 0, ADC_Delay_Pot_L = 1, ADC_Delay_Pot_R = 2, ADC_Delay_CV_L = 3, ADC_Delay_CV_R = 4,
 	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Tone = 7};
 
@@ -41,4 +38,4 @@ void InitDAC();
 void InitI2S();
 void InitTempoClock();
 void InitIO();
-bool Mode(uint8_t mode);
+uint8_t Mode();

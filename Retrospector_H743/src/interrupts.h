@@ -22,33 +22,22 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 }
 // I2S Interrupt
 void SPI2_IRQHandler() {
-	/*
-	 * 1.4uS constant delay rate; 1.77uS longest with crossfade
-	 * 1.47uS constant sdram; 2.14uS crossfade sdram
-	 * Opt -O1; sdram, constant DR: 1.06uS; variable DR: 1.53uS
-	 * Opt -O0: sdram, constant DR: 1.64uS; variable DR: 2.35uS
-	 *
-	 */
+	// Debug
 	if (calculatingFilter)
 		GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
 
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		//samples[digitalDelay::channelL][DigitalDelay.writePos[ADC_Audio_L]] = (int16_t)ADC_audio[ADC_Audio_L] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelL);		// Left Channel
+		SPI2->TXDR = DigitalDelay.calcSample(left);			// Left Channel
 	} else {
-		//samples[digitalDelay::channelR][DigitalDelay.writePos[ADC_Audio_R]] = (int16_t)ADC_audio[ADC_Audio_R] - adcZeroOffset;
-		SPI2->TXDR = DigitalDelay.calcSample(digitalDelay::channelR);		// Left Channel
+		SPI2->TXDR = DigitalDelay.calcSample(right);		// Right Channel
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-	//nextSample = true;		// request next sample be prepared
-
 	GPIOC->ODR &= ~GPIO_ODR_OD11;
-
 }
 
 
