@@ -546,11 +546,13 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-uint8_t Mode() {
-	// Return setting of mode switch
-	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
-		return 2;
-	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
-		return 1;
-	return 0;
+void LED(channel c, bool on) {
+	if (c == left) {
+		if (on)	GPIOC->ODR |= GPIO_ODR_OD10;
+		else	GPIOC->ODR &= ~GPIO_ODR_OD10;
+	}
+	if (c == right) {
+		if (on)	GPIOC->ODR |= GPIO_ODR_OD11;
+		else	GPIOC->ODR &= ~GPIO_ODR_OD11;
+	}
 }
