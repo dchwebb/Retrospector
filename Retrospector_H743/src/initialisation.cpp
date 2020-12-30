@@ -535,8 +535,9 @@ void InitIO()
 {
 	// Initialise timing LEDs on PC10 and PC11
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
-	GPIOC->MODER &= ~GPIO_MODER_MODE10_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
-	GPIOC->MODER &= ~GPIO_MODER_MODE11_1;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
+	GPIOC->MODER &= ~GPIO_MODER_MODE10_1;			// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	GPIOC->MODER &= ~GPIO_MODER_MODE11_1;			// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	GPIOC->MODER &= ~GPIO_MODER_MODE12_1;			// Debug - will be input switch later
 
 	// Init mode switches on PE2 and PE3
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// GPIO port clock

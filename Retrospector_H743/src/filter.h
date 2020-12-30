@@ -15,7 +15,7 @@ extern int16_t filterBuffer[2][FIRTAPS];	// Ring buffer containing most recent p
 
 extern bool calculatingFilter;				// For debugging
 
-enum FilterType {LowPass, HighPass};
+enum FilterType {FilterOff, LowPass, HighPass};
 extern FilterType filterType;
 
 

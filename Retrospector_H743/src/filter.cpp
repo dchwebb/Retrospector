@@ -11,6 +11,7 @@ bool calculatingFilter = false;
 bool activateFilter = true;
 bool activateWindow = true;
 float currentCutoff;
+uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
 
 // Rectangular FIR
 void InitFilter(uint16_t tone)
@@ -21,12 +22,15 @@ void InitFilter(uint16_t tone)
 	calculatingFilter = true;
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
-	if (tone < 32768) {		// Low Pass
+	if (tone < filterPotCentre - 100) {		// Low Pass
 		filterType = LowPass;
-		omegaC = 1.0f - std::pow((32768.0f - tone) / 34000.0f, 0.2f);
-	} else {
+		omegaC = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
+	} else if (tone > filterPotCentre + 100) {
 		filterType = HighPass;
-		omegaC = 1.0f - std::pow(((float)tone - 32768.0f)  / 55000.0f, 3.0f);
+		omegaC = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
+	} else {
+		filterType = FilterOff;
+		omegaC = 1.0f;
 	}
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other

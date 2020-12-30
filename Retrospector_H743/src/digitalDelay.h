@@ -11,8 +11,8 @@ struct digitalDelay {
 public:
 	int32_t readPos[2];
 	int32_t writePos[2] = {1, 1};
-	int16_t delayChanged[2];			// To implement a pause between changing delay times
 	uint16_t delayCrossfade[2];
+	uint32_t ledCounter[2];				// Counter to control timing of LED delay rate indicators
 	int32_t oldReadPos[2];
 	int32_t currentDelay[2];
 	volatile int32_t dampedDelay[2];	// volatile required to prevent optimiser using incorrect ADC channel
@@ -20,7 +20,7 @@ public:
 	delay_mode delayMode;
 
 	const int16_t delayHysteresis = 40;
-	const int16_t crossFade = 6000;
+	const int16_t crossfade = 6000;
 
 	int32_t calcSample(channel LOrR);
 	void init();
