@@ -161,7 +161,7 @@ void InitCache()
 
 void InitSysTick()
 {
-	SysTick_Config(SystemCoreClock / 1000UL);		// gives 1ms
+	SysTick_Config(SystemCoreClock / SYSTICK);		// gives 1ms
 	NVIC_SetPriority(SysTick_IRQn, 0);
 }
 

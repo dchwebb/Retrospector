@@ -22,10 +22,10 @@ void InitFilter(uint16_t tone)
 	calculatingFilter = true;
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
-	if (tone < filterPotCentre - 100) {		// Low Pass
+	if (tone < filterPotCentre - 1000) {		// Low Pass
 		filterType = LowPass;
 		omegaC = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
-	} else if (tone > filterPotCentre + 100) {
+	} else if (tone > filterPotCentre + 1000) {
 		filterType = HighPass;
 		omegaC = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
 	} else {
