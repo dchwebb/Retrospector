@@ -22,16 +22,16 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 }
 // I2S Interrupt
 void SPI2_IRQHandler() {
-	// Debug
+
 //	if (calculatingFilter)
 		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		SPI2->TXDR = DigitalDelay.calcSample(left);			// Left Channel
+		DigitalDelay.calcSample(left);			// Left Channel
 	} else {
-		SPI2->TXDR = DigitalDelay.calcSample(right);		// Right Channel
+		DigitalDelay.calcSample(right);			// Right Channel
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
@@ -50,8 +50,6 @@ void EXTI9_5_IRQHandler(void) {
 		newClock = true;
 		EXTI->PR1 |= EXTI_PR1_PR7;							// Clear interrupt pending
 	}
-
-
 }
 
 // System interrupts

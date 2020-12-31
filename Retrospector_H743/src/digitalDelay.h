@@ -27,10 +27,9 @@ public:
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;
 	const int16_t tempoHysteresis = 100;
-	//const std::array<std::pair<float, int16_t>, 2> tempoMap = {{0.5f, 20000}, {1.0f, 40000}};
-	const std::map<uint16_t, float> tempoMap = {{13000, 1}, {26000, 2}, {39000, 4}, {52000, 8}, {65535, 16}};
+	const std::array<float, 6> tempoMult = {0.5, 1, 2, 4, 8, 16};
 
-	int32_t calcSample(channel LOrR);
+	void calcSample(channel LOrR);
 	void init();
 	delay_mode mode();
 };

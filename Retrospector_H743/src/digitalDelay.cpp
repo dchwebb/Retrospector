@@ -8,7 +8,7 @@ extern int16_t filterBuffer[2][FIRTAPS];
 //volatile int32_t wp;
 //volatile int32_t rp;
 
-int32_t digitalDelay::calcSample(channel LR) {
+void digitalDelay::calcSample(channel LR) {
 	int32_t nextSample, delayClkCV;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
@@ -64,13 +64,8 @@ int32_t digitalDelay::calcSample(channel LR) {
 	delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
 	if (clockValid) {
 		if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
-			delayPotVal[LR] = delayClkCV;
-			for (auto map : tempoMap) {
-				if (map.first > delayClkCV) {
-					delayMult[LR] = map.second;
-					break;
-				}
-			}
+			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
+			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
 		}
 		calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
 
@@ -114,15 +109,16 @@ int32_t digitalDelay::calcSample(channel LR) {
 
 	// LED display
 	if (!reverse) {
-		if (++ledCounter[LR] > calcDelay[LR] && (!clockValid || SysTickVal - lastClock < 40)) {
+		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
+		if ((!clockValid && ++ledCounter[LR] > calcDelay[LR]) || (clockValid && ++ledCounter[LR] > calcDelay[LR] - 1000 && SysTickVal - lastClock < 10)) {
 			ledCounter[LR] = 0;
 		}
-		LED(LR, (ledCounter[LR] < crossfade));		// FIXME - might be quicker to store current value rather than force switch on and off every sample
+		LED(LR, (ledCounter[LR] < 1500));
 	}
 
 
 	nextSample = clamp(nextSample, -32767L, 32767L);
-	return nextSample;
+	SPI2->TXDR = nextSample;
 }
 
 
