@@ -27,7 +27,7 @@ uint32_t offsetCounter[2];
 // Settings for tempo clock input
 uint32_t lastClock = 0;
 uint32_t clockInterval = 0;
-bool newClock, clockValid;
+bool clockValid;
 
 // Tone settings to control filter
 uint16_t currentTone = 0;
@@ -89,23 +89,6 @@ int main(void) {
 
 	while (1) {
 		//MemoryTest();
-
-		// Hacky delay before activating filter as this can hang the I2S interrupt with longer filter taps and low compiler optimisation
-//		if (SysTickVal > 500 && SysTickVal < 600) {
-//			activateFilter = true;
-//		}
-
-		/*
-		if (newClock) {
-			if (SysTickVal - lastClock < 10)
-				GPIOC->ODR |= GPIO_ODR_OD10;
-			else {
-				GPIOC->ODR &= ~GPIO_ODR_OD10;
-				newClock = false;
-			}
-		}
-		*/
-
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {

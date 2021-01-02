@@ -15,12 +15,10 @@ void digitalDelay::calcSample(channel LR) {
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
-		if (reverse)	LED(LR, true);		// In reverse mode crossfade happens each sample loop so also indicates delay length
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
 		nextSample = static_cast<float>(samples[LR][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[LR][oldReadPos[LR]]) * (scale);
 		--delayCrossfade[LR];
 	} else {
-		if (reverse)	LED(LR, false);
 		nextSample = samples[LR][readPos[LR]];
 	}
 
@@ -41,6 +39,9 @@ void digitalDelay::calcSample(channel LR) {
 			nextSample = static_cast<int32_t>(outputSample);
 		}
 	}
+
+	// Put next output sample in I2S buffer
+	SPI2->TXDR = clamp(nextSample, -32767L, 32767L);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
@@ -90,10 +91,12 @@ void digitalDelay::calcSample(channel LR) {
 
 		// check if read position is less than write position less delay then reset read position to write position
 		if (rp < wp - calcDelay[LR] && delayCrossfade[LR] == 0) {
+			LedOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos[LR] - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 			delayCrossfade[LR] = crossfade;
+			LED(LR);
 		}
 
 	} else {
@@ -107,80 +110,29 @@ void digitalDelay::calcSample(channel LR) {
 		}
 	}
 
+
+	// Turn off delay LED after duration expired
+	if (SysTickVal > LedOffTime[LR])			LED(LR, false);
+
 	// LED display
 	if (!reverse) {
 		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
-		if ((!clockValid && ++ledCounter[LR] > calcDelay[LR]) || (clockValid && ++ledCounter[LR] > calcDelay[LR] - 1000 && SysTickVal - lastClock < 10)) {
-			ledCounter[LR] = 0;
+		++ledCounter[LR];
+		if (!clockValid) {
+			if (ledCounter[LR] > calcDelay[LR]) {
+				ledCounter[LR] = 0;
+				LED(LR);
+			}
+		} else {
+			if (SysTickVal - lastClock < 5 && ledCounter[LR] > calcDelay[LR] - 1000) {
+				ledCounter[LR] = 0;
+				LED(LR);
+			}
 		}
-		LED(LR, (ledCounter[LR] < 1500));
 	}
 
-
-	nextSample = clamp(nextSample, -32767L, 32767L);
-	SPI2->TXDR = nextSample;
 }
 
-
-#ifdef orig
-int32_t digitalDelay::calcSample(channel LOrR) {
-	int32_t nextSample, delayClkCV;
-
-	// Cross fade if moving playback position
-	if (delayCrossfade[LOrR] > 0) {
-		float scale = static_cast<float>(delayCrossfade[LOrR]) / static_cast<float>(crossfade);
-		nextSample = static_cast<float>(samples[LOrR][readPos[LOrR]]) * (1.0f - scale) + static_cast<float>(samples[LOrR][oldReadPos[LOrR]]) * (scale);
-
-		--delayCrossfade[LOrR];
-	} else {
-		nextSample = samples[LOrR][readPos[LOrR]];
-	}
-
-	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
-	filterBuffer[LOrR][filterBuffPos[LOrR]] = nextSample;
-	if (activateFilter) {
-		float outputSample = 0.0;
-		int16_t pos = filterBuffPos[LOrR];
-		for (uint16_t i = 0; i < FIRTAPS; ++i) {
-			if (++pos == FIRTAPS) pos = 0;
-			outputSample += firCoeff[activeFilter][i] * filterBuffer[LOrR][pos];
-		}
-		nextSample = static_cast<int32_t>(outputSample);
-	}
-
-	// Add the current sample and the delayed sample scaled by the feedback control
-	int32_t feedbackSample = (static_cast<int32_t>(ADC_audio[LOrR]) - adcZeroOffset[LOrR]) +
-			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
-
-	samples[LOrR][writePos[LOrR]] = clamp(feedbackSample, -32767L, 32767L);		// Digital distortion when setting these limits much higher with high feeback (theoretically should limit to 32,767)
-
-	// Move write and read heads one sample forwards
-	if (++writePos[LOrR] == SAMPLE_BUFFER_LENGTH) 		writePos[LOrR] = 0;
-	if (++readPos[LOrR] == SAMPLE_BUFFER_LENGTH)		readPos[LOrR] = 0;
-	if (++oldReadPos[LOrR] == SAMPLE_BUFFER_LENGTH)		oldReadPos[LOrR] = 0;
-	if (++filterBuffPos[LOrR] == FIRTAPS) 				filterBuffPos[LOrR] = 0;
-
-
-	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
-	if (clockValid) {
-		delayClkCV = clockInterval * 48;
-	} else {
-		delayClkCV = static_cast<int32_t>(ADC_array[(LOrR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]) * ((delayMode == 1) ? 1 : SAMPLE_BUFFER_LENGTH / 65356);
-	}
-	calcDelay[LOrR] = std::max((31 * calcDelay[LOrR] + delayClkCV) >> 5, 0L);
-
-	// If delay time has changed trigger crossfade from old to new read position
-	if (delayCrossfade[LOrR] == 0 && std::abs(calcDelay[LOrR] - currentDelay[LOrR]) > delayHysteresis) {
-		oldReadPos[LOrR] = readPos[LOrR];
-		readPos[LOrR] = writePos[LOrR] - calcDelay[LOrR] - 1;
-		while (readPos[LOrR] < 0) 		readPos[LOrR] += SAMPLE_BUFFER_LENGTH;
-		delayCrossfade[LOrR] = crossfade;
-		currentDelay[LOrR] = calcDelay[LOrR];
-	}
-	nextSample = clamp(nextSample, -32767L, 32767L);
-	return nextSample;
-}
-#endif
 
 void digitalDelay::init() {
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
@@ -198,4 +150,35 @@ delay_mode digitalDelay::mode() {
 	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
 		return modeShort;
 	return modeLong;
+}
+
+// Directly switch LED on or off
+void digitalDelay::LED(channel c, bool on) {
+	if (c == left) {
+		if (on)	GPIOC->ODR |= GPIO_ODR_OD10;
+		else {
+			GPIOC->ODR &= ~GPIO_ODR_OD10;
+			GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
+			LedOffTime[c] = 0;
+		}
+	}
+	if (c == right) {
+		if (on)	GPIOC->ODR |= GPIO_ODR_OD11;
+		else {
+			GPIOC->ODR &= ~GPIO_ODR_OD11;
+			LedOffTime[c] = 0;
+		}
+	}
+}
+
+// Switch LED on and set off time for processing in main loop
+void digitalDelay::LED(channel c) {
+	if (c == left) {
+		GPIOC->ODR |= GPIO_ODR_OD10;
+		GPIOC->ODR |= GPIO_ODR_OD12;		// Debug
+	}
+	if (c == right) {
+		GPIOC->ODR |= GPIO_ODR_OD11;
+	}
+	LedOffTime[c] = SysTickVal + 50;		// In ms
 }

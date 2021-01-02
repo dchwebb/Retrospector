@@ -547,13 +547,7 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-void LED(channel c, bool on) {
-	if (c == left) {
-		if (on)	GPIOC->ODR |= GPIO_ODR_OD10;
-		else	GPIOC->ODR &= ~GPIO_ODR_OD10;
-	}
-	if (c == right) {
-		if (on)	GPIOC->ODR |= GPIO_ODR_OD11;
-		else	GPIOC->ODR &= ~GPIO_ODR_OD11;
-	}
-}
+
+
+
+
