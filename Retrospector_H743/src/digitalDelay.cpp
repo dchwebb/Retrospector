@@ -5,8 +5,6 @@ extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
-//volatile int32_t wp;
-//volatile int32_t rp;
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t nextSample, delayClkCV;
@@ -83,20 +81,20 @@ void digitalDelay::calcSample(channel LR) {
 		int32_t wp = writePos[LR];
 		int32_t rp = readPos[LR];
 		if (rp > wp) {
-			if (wp - calcDelay[LR] < 0)
+			if (wp - (calcDelay[LR] * 2) < 0)
 				wp += (SAMPLE_BUFFER_LENGTH - 1);
 			else
 				rp -= (SAMPLE_BUFFER_LENGTH - 1);
 		}
 
 		// check if read position is less than write position less delay then reset read position to write position
-		if (rp < wp - calcDelay[LR] && delayCrossfade[LR] == 0) {
-			LedOffTime[LR] = SysTickVal + 50;
+		if (rp < wp - (calcDelay[LR] * 2) && delayCrossfade[LR] == 0) {
+			ledOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos[LR] - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 			delayCrossfade[LR] = crossfade;
-			LED(LR);
+			ledOn(LR);
 		}
 
 	} else {
@@ -108,29 +106,13 @@ void digitalDelay::calcSample(channel LR) {
 			delayCrossfade[LR] = crossfade;
 			currentDelay[LR] = calcDelay[LR];
 		}
+		updateLED(LR);
 	}
-
 
 	// Turn off delay LED after duration expired
-	if (SysTickVal > LedOffTime[LR])			LED(LR, false);
-
-	// LED display
-	if (!reverse) {
-		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
-		++ledCounter[LR];
-		if (!clockValid) {
-			if (ledCounter[LR] > calcDelay[LR]) {
-				ledCounter[LR] = 0;
-				LED(LR);
-			}
-		} else {
-			if (SysTickVal - lastClock < 5 && ledCounter[LR] > calcDelay[LR] - 1000) {
-				ledCounter[LR] = 0;
-				LED(LR);
-			}
-		}
+	if (SysTickVal > ledOffTime[LR]) {
+		ledOff(LR);
 	}
-
 }
 
 
@@ -143,36 +125,31 @@ void digitalDelay::init() {
 	delayCrossfade[right] = 0;
 }
 
-delay_mode digitalDelay::mode() {
-	// Return setting of mode switch
-	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
-		return modeReverse;
-	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
-		return modeShort;
-	return modeLong;
-}
-
-// Directly switch LED on or off
-void digitalDelay::LED(channel c, bool on) {
-	if (c == left) {
-		if (on)	GPIOC->ODR |= GPIO_ODR_OD10;
-		else {
-			GPIOC->ODR &= ~GPIO_ODR_OD10;
-			GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
-			LedOffTime[c] = 0;
+void digitalDelay::updateLED(channel c) {
+	// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
+	++ledCounter[c];
+	if (clockValid) {
+		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
+		if (delayMult[c] < 1.0f) {
+			if (SysTickVal - lastClock < 1 && ledOffTime[c] < SysTickVal) {		// Always trigger on the clock, unless LED already on
+				ledFraction[c] = 0;
+				ledOn(c);
+			} else if (delayMult[c] * ledFraction[c] < 1 && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
+				ledFraction[c]++;
+				ledOn(c);
+			}
+		} else if (SysTickVal - lastClock < 5 && ledCounter[c] > calcDelay[c] - 1000) { 		// 1000 ~= 20.8ms: handle tempos slower than 1
+			ledOn(c);
 		}
-	}
-	if (c == right) {
-		if (on)	GPIOC->ODR |= GPIO_ODR_OD11;
-		else {
-			GPIOC->ODR &= ~GPIO_ODR_OD11;
-			LedOffTime[c] = 0;
+	} else {
+		if (ledCounter[c] > calcDelay[c]) {
+			ledOn(c);
 		}
 	}
 }
 
-// Switch LED on and set off time for processing in main loop
-void digitalDelay::LED(channel c) {
+// Switch LED on and set off time
+void digitalDelay::ledOn(channel c) {
 	if (c == left) {
 		GPIOC->ODR |= GPIO_ODR_OD10;
 		GPIOC->ODR |= GPIO_ODR_OD12;		// Debug
@@ -180,5 +157,27 @@ void digitalDelay::LED(channel c) {
 	if (c == right) {
 		GPIOC->ODR |= GPIO_ODR_OD11;
 	}
-	LedOffTime[c] = SysTickVal + 50;		// In ms
+	ledCounter[c] = 0;
+	ledOffTime[c] = SysTickVal + 50;		// In ms
+}
+
+// Directly switch LED on or off
+void digitalDelay::ledOff(channel c) {
+	if (c == left) {
+		GPIOC->ODR &= ~GPIO_ODR_OD10;
+		GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
+	}
+	if (c == right) {
+		GPIOC->ODR &= ~GPIO_ODR_OD11;
+	}
+	ledOffTime[c] = 0;
+}
+
+delay_mode digitalDelay::mode() {
+	// Return setting of mode switch
+	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
+		return modeReverse;
+	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
+		return modeShort;
+	return modeLong;
 }
