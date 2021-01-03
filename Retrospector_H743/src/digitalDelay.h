@@ -34,6 +34,7 @@ public:
 	void calcSample(channel LOrR);
 	void init();
 	void updateLED(channel c);
+	void reverseLED(channel c, int32_t remainingDelay);
 	void ledOn(channel c);
 	void ledOff(channel c);
 	delay_mode mode();

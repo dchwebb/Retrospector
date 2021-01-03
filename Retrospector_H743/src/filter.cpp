@@ -175,7 +175,8 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
 	T = 2.0 * tan(IIRFilt.OmegaC * M_PI_2);
 	Q = 1.0 + IIRFilt.OmegaC;             // Q is used for band pass and notch filters.
-	if(Q > 1.95)Q = 1.95;
+	if (Q > 1.95)
+		Q = 1.95;
 	Q = 0.8 * tan(Q * M_PI_4);            // This is a correction factor for Q.
 	Q = IIRFilt.OmegaC / IIRFilt.BW / Q;  // This is the corrected Q.
 
@@ -193,9 +194,9 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 		F = SPlaneCoeff.N0[j];
 
 		// b's are the numerator  a's are the denominator
-		if(IIRFilt.IIRPassType == iirLPF || IIRFilt.IIRPassType == iirALLPASS) // Low Pass and All Pass
+		if (IIRFilt.IIRPassType == iirLPF || IIRFilt.IIRPassType == iirALLPASS) // Low Pass and All Pass
 		{
-			if(A == 0.0 && D == 0.0) // 1 pole case
+			if (A == 0.0 && D == 0.0) // 1 pole case
 			{
 				Arg = (2.0*B + C*T);
 				IIR.a2[j] = 0.0;
@@ -205,8 +206,7 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 				IIR.b2[j] = 0.0;
 				IIR.b1[j] = (-2.0*E + F*T) / Arg * C/F;
 				IIR.b0[j] = ( 2.0*E + F*T) / Arg * C/F;
-			}
-			else // 2 poles
+			} else // 2 poles
 			{
 				Arg = (4.0*A + 2.0*B*T + C*T*T);
 				IIR.a2[j] = (4.0*A - 2.0*B*T + C*T*T) / Arg;
@@ -220,9 +220,9 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 			}
 		}
 
-		if(IIRFilt.IIRPassType == iirHPF) // High Pass
+		if (IIRFilt.IIRPassType == iirHPF) // High Pass
 		{
-			if(A == 0.0 && D == 0.0) // 1 pole
+			if (A == 0.0 && D == 0.0) // 1 pole
 			{
 				Arg = 2.0*C + B*T;
 				IIR.a2[j] = 0.0;
@@ -232,8 +232,7 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 				IIR.b2[j] = 0.0;
 				IIR.b1[j] = (E*T - 2.0*F) / Arg * C/F;
 				IIR.b0[j] = (E*T + 2.0*F) / Arg * C/F;
-			}
-			else  // 2 poles
+			} else  // 2 poles
 			{
 				Arg = A*T*T + 4.0*C + 2.0*B*T;
 				IIR.a2[j] = (A*T*T + 4.0*C - 2.0*B*T) / Arg;
@@ -252,8 +251,7 @@ TIIRCoeff CalcIIRFilterCoeff(TIIRFilterParams IIRFilt)
 	// Adjust the b's or a0 for the desired Gain.
 	SectionGain = pow(10.0, IIRFilt.dBGain/20.0);
 	SectionGain = pow(SectionGain, 1.0/(double)IIR.NumSections);
-	for(j=0; j<IIR.NumSections; j++)
-	{
+	for (j=0; j<IIR.NumSections; j++) {
 		IIR.b0[j] *= SectionGain;
 		IIR.b1[j] *= SectionGain;
 		IIR.b2[j] *= SectionGain;

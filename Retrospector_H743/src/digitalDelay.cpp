@@ -86,15 +86,18 @@ void digitalDelay::calcSample(channel LR) {
 			else
 				rp -= (SAMPLE_BUFFER_LENGTH - 1);
 		}
+		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
+
+		// Scale the LED so it fades in with the timing of the reverse delay
+		reverseLED(LR, remainingDelay);
 
 		// check if read position is less than write position less delay then reset read position to write position
-		if (rp < wp - (calcDelay[LR] * 2) && delayCrossfade[LR] == 0) {
+		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
 			ledOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos[LR] - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 			delayCrossfade[LR] = crossfade;
-			ledOn(LR);
 		}
 
 	} else {
@@ -109,10 +112,7 @@ void digitalDelay::calcSample(channel LR) {
 		updateLED(LR);
 	}
 
-	// Turn off delay LED after duration expired
-	if (SysTickVal > ledOffTime[LR]) {
-		ledOff(LR);
-	}
+
 }
 
 
@@ -146,13 +146,30 @@ void digitalDelay::updateLED(channel c) {
 			ledOn(c);
 		}
 	}
+
+	// Turn off delay LED after duration expired
+	if (SysTickVal > ledOffTime[c]) {
+		ledOff(c);
+	}
+}
+
+// Scale the LED so it fades in with the timing of the reverse delay
+void digitalDelay::reverseLED(channel c, int32_t remainingDelay)
+{
+	float rc = (float)remainingDelay / (calcDelay[c] * 2);
+	ledCounter[c]++;
+	if (ledCounter[c] >= pow(rc, 2.0f) * 120) {
+		ledOn(c);
+	} else {
+		ledOff(c);
+	}
 }
 
 // Switch LED on and set off time
 void digitalDelay::ledOn(channel c) {
 	if (c == left) {
 		GPIOC->ODR |= GPIO_ODR_OD10;
-		GPIOC->ODR |= GPIO_ODR_OD12;		// Debug
+//		GPIOC->ODR |= GPIO_ODR_OD12;		// Debug
 	}
 	if (c == right) {
 		GPIOC->ODR |= GPIO_ODR_OD11;
@@ -165,7 +182,7 @@ void digitalDelay::ledOn(channel c) {
 void digitalDelay::ledOff(channel c) {
 	if (c == left) {
 		GPIOC->ODR &= ~GPIO_ODR_OD10;
-		GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
+//		GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
 	}
 	if (c == right) {
 		GPIOC->ODR &= ~GPIO_ODR_OD11;
