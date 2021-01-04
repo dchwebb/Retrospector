@@ -7,6 +7,18 @@ extern bool activateFilter;
 volatile bool CmdPending = false;
 std::string ComCmd;
 
+void suspendI2S() {
+	SPI2->CR1 |= SPI_CR1_CSUSP;
+	while ((SPI2->SR & SPI_SR_SUSP) == 0);
+}
+
+void resumeI2S() {
+	sampleClock = true;
+	SPI2->IFCR |= SPI_IFCR_SUSPC;
+	while ((SPI2->SR & SPI_SR_SUSP) != 0);
+	SPI2->CR1 |= SPI_CR1_CSTART;
+}
+
 bool CDCCommand(const std::string ComCmd) {
 
 	if (ComCmd.compare("help\n") == 0) {
@@ -18,7 +30,70 @@ bool CDCCommand(const std::string ComCmd) {
 				"fd        -  Dump filter coefficients\n"
 				"fdl       -  Dump left filter buffer\n"
 				"wd        -  Dump filter window coefficients\n"
+				"imp       -  IIR impulse response\n"
+				"iirs      -  IIR square wave\n"
+				"iir       -  IIR Filter test"
 		);
+	} else if (ComCmd.compare("iir\n") == 0) {		// IIR coefficients
+		suspendI2S();
+		iirFilter = !iirFilter;
+
+		// Output coefficients
+		if (iirFilter) {
+			for (int i = 0; i < IIRCoeff.NumSections; ++i) {
+				usb.SendString(std::to_string(i) + ": b0=" + std::to_string(IIRCoeff.b0[i]) + " b1=" + std::to_string(IIRCoeff.b1[i]) + " b2=" + std::to_string(IIRCoeff.b2[i]).append("\n").c_str());
+				usb.SendString(std::to_string(i) + ": a0=" + std::to_string(IIRCoeff.a0[i]) + " a1=" + std::to_string(IIRCoeff.a1[i]) + " a2=" + std::to_string(IIRCoeff.a2[i]).append("\n").c_str());
+			}
+		}
+
+		resumeI2S();
+
+	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter test
+		suspendI2S();
+
+		float out;
+		int i;
+
+		out = IIRFilter(IIRSAMPLECOUNT, left);		// Impulse
+		usb.SendString(std::to_string(out).append("\n").c_str());
+
+		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
+			out = IIRFilter(0, left);
+			usb.SendString(std::to_string(out).append("\n").c_str());
+		}
+
+		resumeI2S();
+
+	} else if (ComCmd.compare("iirs\n") == 0) {		// IIR Filter test on square wave
+		suspendI2S();
+
+		float out;
+		int i;
+
+		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
+			if (i < 50) {
+				out = IIRFilter(0, left);
+			} else if (i < 100) {
+				out = IIRFilter(-30000, left);
+			} else if (i < 150) {
+				out = IIRFilter(30000, left);
+			} else if (i < 200) {
+				out = IIRFilter(-30000, left);
+			} else if (i < 250) {
+				out = IIRFilter(30000, left);
+			} else if (i < 300) {
+				out = IIRFilter(-30000, left);
+			} else if (i < 350) {
+				out = IIRFilter(30000, left);
+			} else {
+				out = IIRFilter(0, left);
+			}
+
+			usb.SendString(std::to_string(out).append("\n").c_str());
+		}
+
+		resumeI2S();
+
 	} else if (ComCmd.compare("dl\n") == 0 || ComCmd.compare("dr\n") == 0) {		// Dump sample buffer for L or R output
 		// Suspend I2S
 		SPI2->CR1 |= SPI_CR1_CSUSP;

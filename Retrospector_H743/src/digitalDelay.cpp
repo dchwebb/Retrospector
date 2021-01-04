@@ -23,18 +23,23 @@ void digitalDelay::calcSample(channel LR) {
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
 	filterBuffer[LR][filterBuffPos[LR]] = nextSample;
 	if (activateFilter) {			// For debug
-		if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-			int16_t pos = filterBuffPos[LR] - (FIRTAPS / 2);
-			if (pos < 0) pos += FIRTAPS;
-			nextSample = filterBuffer[LR][pos];
+		if (iirFilter) {
+			float filteredSample = IIRFilter(static_cast<float>(nextSample), LR);
+			nextSample = static_cast<int32_t>(filteredSample);
 		} else {
-			float outputSample = 0.0;
-			int16_t pos = filterBuffPos[LR];
-			for (uint16_t i = 0; i < FIRTAPS; ++i) {
-				if (++pos == FIRTAPS) pos = 0;
-				outputSample += firCoeff[activeFilter][i] * filterBuffer[LR][pos];
+			if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
+				int16_t pos = filterBuffPos[LR] - (FIRTAPS / 2);
+				if (pos < 0) pos += FIRTAPS;
+				nextSample = filterBuffer[LR][pos];
+			} else {
+				float outputSample = 0.0;
+				int16_t pos = filterBuffPos[LR];
+				for (uint16_t i = 0; i < FIRTAPS; ++i) {
+					if (++pos == FIRTAPS) pos = 0;
+					outputSample += firCoeff[activeFilter][i] * filterBuffer[LR][pos];
+				}
+				nextSample = static_cast<int32_t>(outputSample);
 			}
-			nextSample = static_cast<int32_t>(outputSample);
 		}
 	}
 

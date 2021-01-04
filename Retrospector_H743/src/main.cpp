@@ -72,6 +72,7 @@ int main(void) {
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
 	InitFilter(currentTone);
+	InitIIRFilter(currentTone);
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -118,19 +119,12 @@ int main(void) {
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			currentTone = dampedTone;
-			InitFilter(currentTone);
-
-			// Debug
-			if (sendVals) {
-				char* bp = &usbBuf[0];
-
-				for (int f = 0; f < FIRTAPS; ++f) {
-					sprintf(bp, "%0.10f", firCoeff[activeFilter][f] * 1000.0f);		// 10dp
-					bp += 7;
-					sprintf(bp++, "\r");
-				}
-				usb.SendString(usbBuf);
+			if (iirFilter) {
+				InitIIRFilter(currentTone);
+			} else {
+				InitFilter(currentTone);
 			}
+
 		}
 
 		// Check for incoming CDC commands
