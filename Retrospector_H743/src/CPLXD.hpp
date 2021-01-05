@@ -1,4 +1,33 @@
 #pragma once
+
+class CplxD  // complex
+{
+public:
+	double re; // In a typical compiler math library, these are declared as private, but this requires getter and setter functions. Public access to the real and imag parts is much faster, which is important for FFT routines, for example.
+	double im;
+
+	// Constructors
+	CplxD();               // The default that gets called when vars are declared.
+	CplxD(double, double);
+};
+
+// Default Constructor. Only called when a var is declared w/o an init.
+inline CplxD::CplxD()
+{
+	//re = 0.0;  // Use these to init the vars, including arrays, to 0.
+	//im = 0.0;  // Not using these helps find the use of un set vars.
+}
+
+
+// Constructor  Used for a declaration with an init:  CplxD A = CplxD(1.0, 0.0);
+// or a simple assignment: Y = CplxD(1.0, 2.0);
+inline CplxD::CplxD(double RealPart, double ImagPart)
+{
+	re = RealPart;
+	im = ImagPart;
+}
+
+#if false
 //---------------------------------------------------------------------------
 
 // Iowa Hills Software, LLC  IowaHills.com
@@ -649,3 +678,4 @@ inline void QuadFormula(double *P, CplxD *Root0, CplxD *Root1)
 //---------------------------------------------------------------------------
 
 
+#endif

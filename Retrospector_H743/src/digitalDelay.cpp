@@ -24,7 +24,7 @@ void digitalDelay::calcSample(channel LR) {
 	filterBuffer[LR][filterBuffPos[LR]] = nextSample;
 	if (activateFilter) {			// For debug
 		if (iirFilter) {
-			float filteredSample = IIRFilter(static_cast<float>(nextSample), LR);
+			float filteredSample = Filter.IIRFilter(static_cast<float>(nextSample), LR);
 			nextSample = static_cast<int32_t>(filteredSample);
 		} else {
 			if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)

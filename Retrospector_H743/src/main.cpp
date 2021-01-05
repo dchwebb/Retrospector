@@ -44,6 +44,8 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 
 USB usb;
 digitalDelay DigitalDelay;
+filter Filter;
+
 
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
@@ -72,7 +74,7 @@ int main(void) {
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
 	InitFilter(currentTone);
-	InitIIRFilter(currentTone);
+	Filter.InitIIRFilter(currentTone);
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -118,13 +120,14 @@ int main(void) {
 		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
+			calculatingFilter = true;
 			currentTone = dampedTone;
 			if (iirFilter) {
-				InitIIRFilter(currentTone);
+				Filter.InitIIRFilter(currentTone);
 			} else {
 				InitFilter(currentTone);
 			}
-
+			calculatingFilter = false;
 		}
 
 		// Check for incoming CDC commands

@@ -4,6 +4,7 @@
 extern volatile bool sampleClock;
 extern bool activateFilter;
 
+
 volatile bool CmdPending = false;
 std::string ComCmd;
 
@@ -31,8 +32,8 @@ bool CDCCommand(const std::string ComCmd) {
 				"fdl       -  Dump left filter buffer\n"
 				"wd        -  Dump filter window coefficients\n"
 				"imp       -  IIR impulse response\n"
-				"iirs      -  IIR square wave\n"
-				"iir       -  IIR Filter test"
+				"iirs      -  IIR square wave test\n"
+				"iir       -  Switch between IIR and FIR\n"
 		);
 	} else if (ComCmd.compare("iir\n") == 0) {		// IIR coefficients
 		suspendI2S();
@@ -40,10 +41,12 @@ bool CDCCommand(const std::string ComCmd) {
 
 		// Output coefficients
 		if (iirFilter) {
-			for (int i = 0; i < IIRCoeff.NumSections; ++i) {
-				usb.SendString(std::to_string(i) + ": b0=" + std::to_string(IIRCoeff.b0[i]) + " b1=" + std::to_string(IIRCoeff.b1[i]) + " b2=" + std::to_string(IIRCoeff.b2[i]).append("\n").c_str());
-				usb.SendString(std::to_string(i) + ": a0=" + std::to_string(IIRCoeff.a0[i]) + " a1=" + std::to_string(IIRCoeff.a1[i]) + " a2=" + std::to_string(IIRCoeff.a2[i]).append("\n").c_str());
+			for (int i = 0; i < Filter.IIRCoeff[activeFilter].NumSections; ++i) {
+				usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[activeFilter].b2[i]).append("\n").c_str());
+				usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[activeFilter].a2[i]).append("\n").c_str());
 			}
+		} else {
+			usb.SendString("FIR Filter\n");
 		}
 
 		resumeI2S();
@@ -54,11 +57,11 @@ bool CDCCommand(const std::string ComCmd) {
 		float out;
 		int i;
 
-		out = IIRFilter(IIRSAMPLECOUNT, left);		// Impulse
+		out = Filter.IIRFilter(IIRSAMPLECOUNT, left);		// Impulse
 		usb.SendString(std::to_string(out).append("\n").c_str());
 
 		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
-			out = IIRFilter(0, left);
+			out = Filter.IIRFilter(0, left);
 			usb.SendString(std::to_string(out).append("\n").c_str());
 		}
 
@@ -72,21 +75,21 @@ bool CDCCommand(const std::string ComCmd) {
 
 		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
 			if (i < 50) {
-				out = IIRFilter(0, left);
+				out = Filter.IIRFilter(0, left);
 			} else if (i < 100) {
-				out = IIRFilter(-30000, left);
+				out = Filter.IIRFilter(-30000, left);
 			} else if (i < 150) {
-				out = IIRFilter(30000, left);
+				out = Filter.IIRFilter(30000, left);
 			} else if (i < 200) {
-				out = IIRFilter(-30000, left);
+				out = Filter.IIRFilter(-30000, left);
 			} else if (i < 250) {
-				out = IIRFilter(30000, left);
+				out = Filter.IIRFilter(30000, left);
 			} else if (i < 300) {
-				out = IIRFilter(-30000, left);
+				out = Filter.IIRFilter(-30000, left);
 			} else if (i < 350) {
-				out = IIRFilter(30000, left);
+				out = Filter.IIRFilter(30000, left);
 			} else {
-				out = IIRFilter(0, left);
+				out = Filter.IIRFilter(0, left);
 			}
 
 			usb.SendString(std::to_string(out).append("\n").c_str());
