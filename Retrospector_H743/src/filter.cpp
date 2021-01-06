@@ -15,10 +15,9 @@ float currentCutoff;
 uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
 
 // Rectangular FIR
-void InitFilter(uint16_t tone)
+void filter::InitFIRFilter(uint16_t tone)
 {
 	float arg, omegaC;
-	FilterType filterType;
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
 	if (tone < filterPotCentre - 1000) {		// Low Pass
@@ -90,10 +89,29 @@ float Bessel(float x)
 }
 
 
-#if true
 
 
+void filter::InitIIRFilter(uint16_t tone) {
 
+	double cutoff;
+
+	if (tone <= filterPotCentre) {		// Low Pass
+		iirSettings.NumPoles = 4;
+		filterType = LowPass;
+		cutoff = std::min(pow(((double)tone + 15000) / 37000.0, 5.0), 0.999);
+	} else if (tone > filterPotCentre) {
+		filterType = HighPass;
+		iirSettings.NumPoles = 1;
+		cutoff = pow((((double)tone - filterPotCentre) / 65536.0), 4.0);
+	}
+
+	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
+
+	CalcIIRFilterCoeff(cutoff, filterType, IIRCoeff[inactiveFilter]);
+
+	activeFilter = inactiveFilter;
+	currentCutoff = cutoff;
+}
 
 
 //---------------------------------------------------------------------------
@@ -120,7 +138,7 @@ int ButterworthPoly(int NumPoles, CplxD *Roots)
 
 
 // Remember to set the Index array to 0, 1, 2, 3, ... N-1
-bool HeapIndexSort(double *Data, int *Index, int N, TOurSortTypes SortType)
+bool HeapIndexSort(double *Data, int *Index, int N)
 {
 	int i, j, k, m, IndexTemp;
 	long long FailSafe, NSquared; // need this for big sorts
@@ -144,31 +162,17 @@ bool HeapIndexSort(double *Data, int *Index, int N, TOurSortTypes SortType)
 		i = m + 1;
 		j = 2 * i;
 
-		if (SortType == stMax)
-			while (j < k + 2) {
-				FailSafe++;
-				if (j <= k && Data[Index[j-1]] > Data[Index[j]])
-					j++;
-				if (Data[IndexTemp] > Data[Index[j-1]]) {
-					Index[i-1] = Index[j-1];
-					i = j;
-					j += i;
-				}
-				else break;
+		while (j < k + 2) {
+			FailSafe++;
+			if (j <= k && Data[Index[j-1]] < Data[Index[j]])
+				j++;
+			if (Data[IndexTemp] < Data[Index[j-1]]) {
+				Index[i-1] = Index[j-1];
+				i = j;
+				j += i;
 			}
-
-		else // SortType == stMin
-			while (j < k + 2) {
-				FailSafe++;
-				if (j <= k && Data[Index[j-1]] < Data[Index[j]])
-					j++;
-				if (Data[IndexTemp] < Data[Index[j-1]]) {
-					Index[i-1] = Index[j-1];
-					i = j;
-					j += i;
-				}
-				else break;
-			}
+			else break;
+		}
 
 		Index[i-1] = IndexTemp;
 	}
@@ -182,7 +186,7 @@ bool HeapIndexSort(double *Data, int *Index, int N, TOurSortTypes SortType)
 // This also sets an inconsequential real or imag part to zero.
 // A matched pair of z plane real roots, such as +/- 1, don't come out together.
 // Used above in GetFilterCoeff and the FIR zero plot.
-void SortRootsByZeta(CplxD *Roots, int Count, TOurSortTypes SortType)
+void SortRootsByZeta(CplxD *Roots, int Count)
 {
 	if (Count >= P51_MAXDEGREE)	{
 		//ShowMessage("Count > P51_MAXDEGREE in TPolyForm::SortRootsByZeta()");
@@ -193,12 +197,14 @@ void SortRootsByZeta(CplxD *Roots, int Count, TOurSortTypes SortType)
 	double SortValue[P51_ARRAY_SIZE];
 	CplxD TempRoots[P51_ARRAY_SIZE];
 
-	// Set an inconsequential real or imag part to zero.
+	// Set an inconsequential real or imag part to zero. FIXME - not sure this is working or necessary
 	for (j = 0; j < Count; j++)	{
-		if (fabs(Roots[j].re) * 1.0E3 < fabs(Roots[j].im) )
+		if (fabs(Roots[j].re) * 1.0E3 < fabs(Roots[j].im) ) {
 			Roots[j].re = 0.0;
-		if (fabs(Roots[j].im) * 1.0E3 < fabs(Roots[j].re) )
+		}
+		if (fabs(Roots[j].im) * 1.0E3 < fabs(Roots[j].re) ) {
 			Roots[j].im = 0.0;
+		}
 	}
 
 	// Sort the roots.
@@ -212,7 +218,7 @@ void SortRootsByZeta(CplxD *Roots, int Count, TOurSortTypes SortType)
 		for (j = 0; j < Count; j++)
 			SortValue[j] = fabs(Roots[j].im);
 	}
-	HeapIndexSort(SortValue, RootJ, Count, SortType);  // stMin gives the most negative root on top
+	HeapIndexSort(SortValue, RootJ, Count);  // most negative root on top
 
 	for (j = 0; j < Count; j++)	{
 		k = RootJ[j];   // RootJ is the sort index
@@ -239,7 +245,7 @@ int GetFilterCoeff(int RootCount, CplxD *Roots, double *A2, double *A1, double *
 {
 	int PolyCount, j, k;
 
-	SortRootsByZeta(Roots, RootCount, stMin);   // stMin places the most negative real part 1st.
+	SortRootsByZeta(Roots, RootCount);   // Places the most negative real part 1st.
 
 	// Check for duplicate roots. The Inv Cheby generates duplicate imag roots, and the
 	// Elliptic generates duplicate real roots. We set duplicates to a RHP value.
@@ -316,16 +322,6 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 		if (iirSettings.NumPoles > 15)
 			iirSettings.NumPoles = 15;
 	}
-	if (iirSettings.ProtoType == GAUSSIAN || iirSettings.ProtoType == BESSEL) {
-		if (iirSettings.NumPoles > 12)
-			iirSettings.NumPoles = 12;
-	}
-
-	// Gamma is used by the Adjustable Gauss.
-	if (iirSettings.Gamma < -1.0)
-		iirSettings.Gamma = -1.0; // -1 gives ~ Gauss response
-	if (iirSettings.Gamma > 1.0)
-		iirSettings.Gamma = 1.0;   // +1 gives ~ Butterworth response.
 
 	// Ripple is used by the Chebyshev and Elliptic
 	if (iirSettings.Ripple < 0.0001)
@@ -333,22 +329,6 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 	if (iirSettings.Ripple > 1.0)
 		iirSettings.Ripple = 1.0;
 
-	// With the Chebyshev we need to use less ripple for large pole counts to keep the poles out of the RHP.
-	if (iirSettings.ProtoType == CHEBYSHEV && iirSettings.NumPoles > 15) {
-		double MaxRipple = 1.0;
-		if (iirSettings.NumPoles == 16)
-			MaxRipple = 0.5;
-		if (iirSettings.NumPoles == 17)
-			MaxRipple = 0.4;
-		if (iirSettings.NumPoles == 18)
-			MaxRipple = 0.25;
-		if (iirSettings.NumPoles == 19)
-			MaxRipple = 0.125;
-		if (iirSettings.NumPoles >= 20)
-			MaxRipple = 0.10;
-		if (iirSettings.Ripple > MaxRipple)
-			iirSettings.Ripple = MaxRipple;
-	}
 
 	// StopBanddB is used by the Inverse Chebyshev and the Elliptic
 	// It is given in positive dB values.
@@ -405,27 +385,13 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void filter::CalcIIRFilterCoeff(double OmegaC, TIIRPassTypes PassType, TIIRCoeff &iirCoeff)
+void filter::CalcIIRFilterCoeff(double OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
 {
 	int j;
-	double SectionGain;
+
 	double A, B, C, D, E, F, T, Q, Arg;
-	//double a2[ARRAY_DIM], a1[ARRAY_DIM], a0[ARRAY_DIM];
-	//double b2[ARRAY_DIM], b1[ARRAY_DIM], b0[ARRAY_DIM];
-	//CplxD Roots[5];
 
-	//TIIRCoeff IIR;                // Gets returned by this function.
-	//TLowPassParams LowPassFilt;   // Passed to the CalcLowPassProtoCoeff() function.
 	TSPlaneCoeff SPlaneCoeff;     // Filled by the CalcLowPassProtoCoeff() function.
-
-
-	// We can set the TLowPassParams variables directly from the TIIRFilterParams variables.
-//	LowPassFilt.ProtoType = iirSettings.ProtoType;
-//	LowPassFilt.ProtoType = IIRFilt.ProtoType;
-//	LowPassFilt.NumPoles = IIRFilt.NumPoles;
-//	LowPassFilt.Ripple = IIRFilt.Ripple;
-//	LowPassFilt.Gamma = IIRFilt.Gamma;
-//	LowPassFilt.StopBanddB = IIRFilt.StopBanddB;
 
 	// Get the low pass prototype 2nd order s plane coefficients.
 	SPlaneCoeff = CalcLowPassProtoCoeff();
@@ -442,10 +408,6 @@ void filter::CalcIIRFilterCoeff(double OmegaC, TIIRPassTypes PassType, TIIRCoeff
 
 	// Set the number of IIR filter sections we will be generating.
 	iirCoeff.NumSections = (iirSettings.NumPoles + 1) / 2;
-	if (PassType == iirBPF || PassType == iirNOTCH)
-		iirCoeff.NumSections = iirSettings.NumPoles;
-
-
 
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
@@ -469,7 +431,7 @@ void filter::CalcIIRFilterCoeff(double OmegaC, TIIRPassTypes PassType, TIIRCoeff
 		F = SPlaneCoeff.N0[j];
 
 		// b's are the numerator  a's are the denominator
-		if (PassType == iirLPF || PassType == iirALLPASS) { // Low Pass and All Pass
+		if (PassType == LowPass) {
 			if (A == 0.0 && D == 0.0) {					// 1 pole case
 				Arg = (2.0 * B + C * T);
 				iirCoeff.a2[j] = 0.0;
@@ -493,7 +455,7 @@ void filter::CalcIIRFilterCoeff(double OmegaC, TIIRPassTypes PassType, TIIRCoeff
 			}
 		}
 
-		if (PassType == iirHPF) { // High Pass
+		if (PassType == HighPass) { // High Pass
 			if (A == 0.0 && D == 0.0) { // 1 pole
 				Arg = 2.0 * C + B * T;
 				iirCoeff.a2[j] = 0.0;
@@ -517,23 +479,7 @@ void filter::CalcIIRFilterCoeff(double OmegaC, TIIRPassTypes PassType, TIIRCoeff
 		}
 	}
 
-
-	// Adjust the b's or a0 for the desired Gain.
-	SectionGain = pow(10.0, iirSettings.dBGain / 20.0);
-	SectionGain = pow(SectionGain, 1.0 / (double)iirCoeff.NumSections);
-	for (j = 0; j < iirCoeff.NumSections; j++) {
-		iirCoeff.b0[j] *= SectionGain;
-		iirCoeff.b1[j] *= SectionGain;
-		iirCoeff.b2[j] *= SectionGain;
-		// This is an alternative to adjusting the b's
-		// iirCoeff.a0[j] = SectionGain;
-	}
-
-//	return(IIR);
 }
-
-
-
 
 
 
@@ -594,22 +540,6 @@ double filter::SectCalc(int k, double x, channel c)
 	return(y);
 }
 
-void filter::InitIIRFilter(uint16_t tone) {
-//	TIIRFilterParams IIRFilt; // Defined in IIRFilterCode.h
 
-	// HPF
-	double cutoff = pow((double)tone / 65355.0f * 0.5, 2.0f);
-//	if (cutoff < 5e-5)		// FIXME - HPF has problems at very low cutoff frequencies - possibly an issue with lack of precision with floats
-//		cutoff = 0;
-	//float cutoff = (float)tone / 65355.0f;
 
-	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	// This will fill the IIRCoeff struct with the 2nd order IIR coefficients.
-	CalcIIRFilterCoeff(cutoff, iirHPF, IIRCoeff[inactiveFilter]);
-
-	activeFilter = inactiveFilter;
-	currentCutoff = cutoff;
-}
-
-#endif

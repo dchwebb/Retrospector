@@ -32,7 +32,7 @@ bool clockValid;
 // Tone settings to control filter
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
-uint16_t toneHysteresis = 300;
+uint16_t toneHysteresis = 150;
 
 float DACLevel;							// Wet/Dry Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
@@ -73,7 +73,7 @@ int main(void) {
 	FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
-	InitFilter(currentTone);
+	Filter.InitFIRFilter(currentTone);
 	Filter.InitIIRFilter(currentTone);
 
 	usb.InitUSB();
@@ -125,7 +125,7 @@ int main(void) {
 			if (iirFilter) {
 				Filter.InitIIRFilter(currentTone);
 			} else {
-				InitFilter(currentTone);
+				Filter.InitFIRFilter(currentTone);
 			}
 			calculatingFilter = false;
 		}

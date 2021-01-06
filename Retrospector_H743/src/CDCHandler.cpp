@@ -3,7 +3,7 @@
 
 extern volatile bool sampleClock;
 extern bool activateFilter;
-
+extern uint16_t currentTone;
 
 volatile bool CmdPending = false;
 std::string ComCmd;
@@ -33,23 +33,28 @@ bool CDCCommand(const std::string ComCmd) {
 				"wd        -  Dump filter window coefficients\n"
 				"imp       -  IIR impulse response\n"
 				"iirs      -  IIR square wave test\n"
-				"iir       -  Switch between IIR and FIR\n"
+				"iir       -  Activate IIR filter\n"
+				"fir       -  Activate FIR filter\n"
 		);
-	} else if (ComCmd.compare("iir\n") == 0) {		// IIR coefficients
-		suspendI2S();
-		iirFilter = !iirFilter;
 
+	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
+
+		iirFilter = false;
+		currentTone = 0;
+		char buf[50];
+		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
+		usb.SendString(std::string("FIR Filter: ").append(std::string(buf)).append("\n").c_str());
+
+	} else if (ComCmd.compare("iir\n") == 0) {		// Activate IIR
+
+		iirFilter = true;
+		currentTone = 0;
+		usb.SendString("IIR Filter\n");
 		// Output coefficients
-		if (iirFilter) {
-			for (int i = 0; i < Filter.IIRCoeff[activeFilter].NumSections; ++i) {
-				usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[activeFilter].b2[i]).append("\n").c_str());
-				usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[activeFilter].a2[i]).append("\n").c_str());
-			}
-		} else {
-			usb.SendString("FIR Filter\n");
+		for (int i = 0; i < Filter.IIRCoeff[activeFilter].NumSections; ++i) {
+			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[activeFilter].b2[i]).append("\n").c_str());
+			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[activeFilter].a2[i]).append("\n").c_str());
 		}
-
-		resumeI2S();
 
 	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter test
 		suspendI2S();
@@ -98,38 +103,23 @@ bool CDCCommand(const std::string ComCmd) {
 		resumeI2S();
 
 	} else if (ComCmd.compare("dl\n") == 0 || ComCmd.compare("dr\n") == 0) {		// Dump sample buffer for L or R output
-		// Suspend I2S
-		SPI2->CR1 |= SPI_CR1_CSUSP;
-		while ((SPI2->SR & SPI_SR_SUSP) == 0);
+		suspendI2S();
 
 		channel LOrR = ComCmd.compare("dl\n") == 0 ? left : right;
-
 		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\n");
-
 		for (int s = 0; s < SAMPLE_BUFFER_LENGTH; ++s) {
 			usb.SendString(std::to_string(samples[LOrR][s]).append("\n").c_str());
 		}
 
-		// Resume I2S
-		sampleClock = true;
-		SPI2->IFCR |= SPI_IFCR_SUSPC;
-		while ((SPI2->SR & SPI_SR_SUSP) != 0);
-		SPI2->CR1 |= SPI_CR1_CSTART;
+		resumeI2S();
 
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 
 		activateFilter = !activateFilter;
-
-		char buf[50];
-		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
-
-
 		if (activateFilter) {
-			//GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
-			usb.SendString(std::string("Filter on: ").append(std::string(buf)).append("\n").c_str());
+			usb.SendString(std::string("Filter on\n").c_str());
 		} else {
 			usb.SendString(std::string("Filter off\n").c_str());
-			//GPIOC->ODR &= ~GPIO_ODR_OD11;			// Toggle LED for testing
 		}
 
 	} else if (ComCmd.compare("w\n") == 0) {		// Activate filter window
@@ -145,14 +135,10 @@ bool CDCCommand(const std::string ComCmd) {
 		}
 
 	} else if (ComCmd.compare("fd\n") == 0) {		// Dump filter coefficients
-		// Suspend I2S
-		SPI2->CR1 |= SPI_CR1_CSUSP;
-		while ((SPI2->SR & SPI_SR_SUSP) == 0);
+		suspendI2S();
 
 		/* NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		or add manually "-u _printf_float" in linker flags */
-
-
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
 			sprintf(buf, "%0.10f", firCoeff[activeFilter][f]);		// 10dp
@@ -160,21 +146,13 @@ bool CDCCommand(const std::string ComCmd) {
 			usb.SendString(ts.append("\n").c_str());
 		}
 
-		// Resume I2S
-		sampleClock = true;
-		SPI2->IFCR |= SPI_IFCR_SUSPC;
-		while ((SPI2->SR & SPI_SR_SUSP) != 0);
-
-		SPI2->CR1 |= SPI_CR1_CSTART;
+		resumeI2S();
 
 	} else if (ComCmd.compare("wd\n") == 0) {		// Dump filter window
-		// Suspend I2S
-		SPI2->CR1 |= SPI_CR1_CSUSP;
-		while ((SPI2->SR & SPI_SR_SUSP) == 0);
+		suspendI2S();
 
 		/* NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		or add manually "-u _printf_float" in linker flags */
-
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
 			sprintf(buf, "%0.10f", winCoeff[f]);		// 10dp
@@ -182,17 +160,10 @@ bool CDCCommand(const std::string ComCmd) {
 			usb.SendString(ts.append("\n").c_str());
 		}
 
-		// Resume I2S
-		sampleClock = true;
-		SPI2->IFCR |= SPI_IFCR_SUSPC;
-		while ((SPI2->SR & SPI_SR_SUSP) != 0);
-
-		SPI2->CR1 |= SPI_CR1_CSTART;
+		resumeI2S();
 
 	} else if (ComCmd.compare("fdl\n") == 0) {		// Dump left filter buffer
-		// Suspend I2S
-		SPI2->CR1 |= SPI_CR1_CSUSP;
-		while ((SPI2->SR & SPI_SR_SUSP) == 0);
+		suspendI2S();
 
 		uint16_t pos = DigitalDelay.filterBuffPos[0];
 		for (int f = 0; f < FIRTAPS; ++f) {
@@ -200,12 +171,7 @@ bool CDCCommand(const std::string ComCmd) {
 			if (++pos == FIRTAPS) pos = 0;
 		}
 
-		// Resume I2S
-		sampleClock = true;
-		SPI2->IFCR |= SPI_IFCR_SUSPC;
-		while ((SPI2->SR & SPI_SR_SUSP) != 0);
-		SPI2->CR1 |= SPI_CR1_CSTART;
-
+		resumeI2S();
 
 	} else {
 		return false;
