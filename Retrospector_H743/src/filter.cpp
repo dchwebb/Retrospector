@@ -13,6 +13,7 @@ bool iirFilter = true;
 bool activateWindow = true;
 float currentCutoff;
 uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
+bool debugSort = false;
 
 // Rectangular FIR
 void filter::InitFIRFilter(uint16_t tone)
@@ -93,16 +94,16 @@ float Bessel(float x)
 
 void filter::InitIIRFilter(uint16_t tone) {
 
-	double cutoff;
+	iirdouble cutoff;
 
 	if (tone <= filterPotCentre) {		// Low Pass
 		iirSettings.NumPoles = 4;
 		filterType = LowPass;
-		cutoff = std::min(pow(((double)tone + 15000) / 37000.0, 5.0), 0.999);
+		cutoff = std::min(pow(((iirdouble)tone + 15000) / 37000.0, 5.0), 0.999);
 	} else if (tone > filterPotCentre) {
 		filterType = HighPass;
 		iirSettings.NumPoles = 1;
-		cutoff = pow((((double)tone - filterPotCentre) / 65536.0), 4.0);
+		cutoff = pow((((iirdouble)tone - filterPotCentre) / 65536.0), 4.0);
 	}
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
@@ -120,33 +121,149 @@ void filter::InitIIRFilter(uint16_t tone) {
 // We fill the array Roots[] and return the number of roots.
 int ButterworthPoly(int NumPoles, CplxD *Roots)
 {
-	int j, n, N;
-	double Theta;
+	int j, n;
+	iirdouble Theta;
 
-	N = NumPoles;
 	n = 0;
-	for (j = 0; j < N / 2; j++) {
-		Theta = M_PI * (double)(2 * j + N + 1) / (double)(2 * N);
+	for (j = 0; j < NumPoles / 2; j++) {
+		Theta = M_PI * (iirdouble)(2 * j + NumPoles + 1) / (iirdouble)(2 * NumPoles);
 		Roots[n++] = CplxD(cos(Theta), sin(Theta));
 		Roots[n++] = CplxD(cos(Theta), -sin(Theta));
 	}
-	if (N % 2 == 1)
+	if (NumPoles % 2 == 1)
 		Roots[n++] = CplxD(-1.0, 0.0); // The real root for odd pole counts.
-	return N;
+	return NumPoles;
+}
+
+// This code was described in "Elliptic Functions for Filter Design"
+// H J Orchard and Alan N Willson  IEE Trans on Circuits and Systems April 97
+// The equation numbers in the comments are from the paper.
+// As the stop band attenuation -> infinity, the Elliptic -> Chebyshev.
+int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipPoles, CplxD *EllipZeros, int *ZeroCount)
+{
+	int j, k, n, LastK;
+	double K[ELLIPARRAYSIZE], G[ELLIPARRAYSIZE], Epsilon[ELLIPARRAYSIZE];
+	double A, D, SBdB, dBErr, RealPart, ImagPart;
+	double DeltaK, PrevErr, Deriv;
+	CplxD C;
+
+	for (j = 0; j < ELLIPARRAYSIZE; j++)
+		K[j] = G[j] = Epsilon[j] = 0.0;
+	if (Ripple < 0.001)
+		Ripple = 0.001;
+	if (Ripple > 1.0)
+		Ripple = 1.0;
+	Epsilon[0] = sqrt(pow(10.0, Ripple / 10.0) - 1.0);
+
+	// Estimate K[0] to get the algorithm started.
+	K[0] = (double)(FiltOrder-2) * 0.1605 + 0.016;
+	if (K[0] < 0.01)
+		K[0] = 0.01;
+	if (K[0] > 0.7)
+		K[0] = 0.7;
+
+	// This loop calculates K[0] for the desired stopband attenuation. It typically loops < 5 times.
+	for (j = 0; j<MAX_ELLIP_ITER; j++) {
+		// Compute K with a forward Landen Transformation.
+		for (k=1; k<10; k++) {
+			K[k] = pow(K[k-1] / (1.0 + sqrt(1.0 - K[k-1]*K[k-1]) ), 2.0);   // eq. 10
+			if (K[k] <= 1.0E-6)
+				break;
+		}
+		LastK = k;
+
+		// Compute G with a backwards Landen Transformation.
+		G[LastK] = 4.0 * pow( K[LastK] / 4.0, (double)FiltOrder);
+		for (k=LastK; k>=1; k--)
+		{
+			G[k-1] = 2.0 * sqrt(G[k]) / (1.0 + G[k]) ;  // eq. 9
+		}
+
+		if (G[0] <= 0.0)
+			G[0] = 1.0E-10;
+		SBdB = 10.0 * log10(1.0 + pow(Epsilon[0]/G[0], 2.0)); // Current stopband attenuation dB
+		dBErr = DesiredSBdB - SBdB;
+
+		if (fabs(dBErr) < 0.1)
+			break;
+		if (j == 0) { // Do this on the 1st loop so we can calc a derivative.
+			if (dBErr > 0)
+				DeltaK = 0.005;
+			else DeltaK = -0.005;
+			PrevErr = dBErr;
+		} else {
+			// Use Newtons Method to adjust K[0].
+			Deriv = (PrevErr - dBErr)/DeltaK;
+			PrevErr = dBErr;
+			if (Deriv == 0.0)
+				break; // This happens when K[0] hits one of the limits set below.
+			DeltaK = dBErr/Deriv;
+			if (DeltaK > 0.1)
+				DeltaK = 0.1;
+			if (DeltaK < -0.1)
+				DeltaK = -0.1;
+		}
+		K[0] -= DeltaK;
+		if (K[0] < 0.001)
+			K[0] = 0.001;  // must not be < 0.0
+		if (K[0] > 0.990)
+			K[0] = 0.990;  // if > 0.990 we get a pole in the RHP. This means we were unable to set the stop band atten to the desired level (the Ripple is too large for the Pole Count).
+	}
+
+
+	// Epsilon[0] was calulated above, now calculate Epsilon[LastK] from G
+	for (j = 1; j <= LastK; j++) {
+		A = (1.0 + G[j]) * Epsilon[j-1] / 2.0;  // eq. 37
+		Epsilon[j] = A + sqrt(A*A + G[j]);
+	}
+
+	// Calulate the poles and zeros.
+	ImagPart = log((1.0 + sqrt(1.0 + Epsilon[LastK]*Epsilon[LastK])) / Epsilon[LastK] ) / (double)FiltOrder;  // eq. 22
+	n = 0;
+	for (j=1; j<=FiltOrder/2; j++) {
+		RealPart = (double)(2*j - 1) * (M_PI / 2) / (double)FiltOrder;   // eq. 19
+		C = CplxD(0.0, -1.0) / cos(CplxD(-RealPart, ImagPart));      // eq. 20
+		D = 1.0 / cos(RealPart);
+		for (k=LastK; k>=1; k--) {
+			C = (C - K[k]/C) / (1.0 + K[k]);  // eq. 36
+			D = (D + K[k]/D) / (1.0 + K[k]);
+		}
+
+		EllipPoles[n] = 1.0 / C;
+		EllipPoles[n+1] = EllipPoles[n].conj();
+		EllipZeros[n] = CplxD(0.0, D/K[0]);
+		EllipZeros[n+1] = EllipZeros[n].conj();
+		n+=2;
+	}
+	*ZeroCount = n; // n is the num zeros
+
+	if (FiltOrder%2 == 1)   // The real pole for odd pole counts
+	{
+		A = 1.0 / sinh(ImagPart);
+		for (k=LastK; k>=1; k--)
+		{
+			A = (A - K[k]/A) / (1.0 + K[k]);      // eq. 38
+		}
+		EllipPoles[n] = CplxD(-1.0/A, 0.0);
+		n++;
+	}
+
+	return(n); // n is the num poles. There will be 1 more pole than zeros for odd pole counts.
+
 }
 
 
 
 // Remember to set the Index array to 0, 1, 2, 3, ... N-1
-bool HeapIndexSort(double *Data, int *Index, int N)
+void HeapIndexSort(iirdouble *Data, int *Index, int N)
 {
 	int i, j, k, m, IndexTemp;
 	long long FailSafe, NSquared; // need this for big sorts
 
 	NSquared = (long long)N * (long long)N;
-	m = N/2;
+	m = N / 2;
 	k = N - 1;
-	for (FailSafe=0; FailSafe < NSquared; FailSafe++) { // typical FailSafe value on return is N*log2(N)
+	for (FailSafe = 0; FailSafe < NSquared; FailSafe++) { // typical FailSafe value on return is N*log2(N)
 
 		if (m > 0)
 			IndexTemp = Index[--m];
@@ -155,7 +272,7 @@ bool HeapIndexSort(double *Data, int *Index, int N)
 			Index[k] = Index[0];
 			if (--k == 0) {
 				Index[0] = IndexTemp;
-				return true;
+				return;
 			}
 		}
 
@@ -176,7 +293,6 @@ bool HeapIndexSort(double *Data, int *Index, int N)
 
 		Index[i-1] = IndexTemp;
 	}
-	return false;
 }
 
 //---------------------------------------------------------------------------
@@ -188,13 +304,8 @@ bool HeapIndexSort(double *Data, int *Index, int N)
 // Used above in GetFilterCoeff and the FIR zero plot.
 void SortRootsByZeta(CplxD *Roots, int Count)
 {
-	if (Count >= P51_MAXDEGREE)	{
-		//ShowMessage("Count > P51_MAXDEGREE in TPolyForm::SortRootsByZeta()");
-		return;
-	}
-
 	int j, k, RootJ[P51_ARRAY_SIZE];
-	double SortValue[P51_ARRAY_SIZE];
+	iirdouble SortValue[P51_ARRAY_SIZE];
 	CplxD TempRoots[P51_ARRAY_SIZE];
 
 	// Set an inconsequential real or imag part to zero. FIXME - not sure this is working or necessary
@@ -211,10 +322,10 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 	for (j = 0; j < Count; j++)
 		RootJ[j] = j;  // Needed for HeapIndexSort
 
-	if (Roots[0].re != 0.0 ) { // Cplx roots
+	if (Roots[0].re != 0.0 ) {				// Sort on Real part
 		for (j = 0; j < Count; j++)
 			SortValue[j] = Roots[j].re;
-	} else {  // Imag roots, so we sort on imag part.
+	} else {  								// Sort on Imag part
 		for (j = 0; j < Count; j++)
 			SortValue[j] = fabs(Roots[j].im);
 	}
@@ -241,7 +352,7 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 // hand plane roots are grouped and in the correct order for IIR and Opamp filters.
 // We then check for duplicate roots, and set an inconsequential real or imag part to zero.
 // Then the 2nd order coefficients are calculated.
-int GetFilterCoeff(int RootCount, CplxD *Roots, double *A2, double *A1, double *A0)
+int GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
 {
 	int PolyCount, j, k;
 
@@ -252,7 +363,7 @@ int GetFilterCoeff(int RootCount, CplxD *Roots, double *A2, double *A1, double *
 	for (j = 0; j < RootCount-1; j++) {
 		for (k = j + 1; k < RootCount; k++) {
 			if (fabs(Roots[j].re - Roots[k].re) < 1.0E-3 && fabs(Roots[j].im - Roots[k].im) < 1.0E-3) {
-				Roots[k] = CplxD((double)k, 0.0); // RHP roots are ignored below, Use k is to prevent duplicate checks for matches.
+				Roots[k] = CplxD((iirdouble)k, 0.0); // RHP roots are ignored below, Use k is to prevent duplicate checks for matches.
 			}
 		}
 	}
@@ -347,6 +458,13 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 		DenomCount = 1;    // DenomCount is the number of denominator factors (1st or 2nd order).
 	} else if (iirSettings.ProtoType == BUTTERWORTH) {
 		NumRoots   = ButterworthPoly(iirSettings.NumPoles, Poles);
+
+		if (debugSort) {
+			for (int i = 0; i < NumRoots; ++i) {
+				usb.SendString(std::to_string(i) + ": re=" + std::to_string(Poles[i].re) + " im=" + std::to_string(Poles[i].im).append("\n").c_str());
+			}
+		}
+
 		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
 		// A Butterworth doesn't require frequncy scaling with SetCornerFreq().
 	}  else if (iirSettings.ProtoType == ELLIPTIC) {
@@ -385,11 +503,11 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void filter::CalcIIRFilterCoeff(double OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
+void filter::CalcIIRFilterCoeff(iirdouble OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
 {
 	int j;
 
-	double A, B, C, D, E, F, T, Q, Arg;
+	iirdouble A, B, C, D, E, F, T, Q, Arg;
 
 	TSPlaneCoeff SPlaneCoeff;     // Filled by the CalcLowPassProtoCoeff() function.
 
@@ -484,9 +602,9 @@ void filter::CalcIIRFilterCoeff(double OmegaC, FilterType PassType, TIIRCoeff &i
 
 
 //	Take a new sample and return filtered value
-double filter::IIRFilter(double sample, channel c)
+iirdouble filter::IIRFilter(iirdouble sample, channel c)
 {
-	double y;
+	iirdouble y;
 	int k = 0;
 
 	y = SectCalc(0, sample, c);
@@ -498,15 +616,15 @@ double filter::IIRFilter(double sample, channel c)
 
 
 // This gets used with the function above, FilterWithIIR()
-double filter::SectCalc(int k, double x, channel c)
+iirdouble filter::SectCalc(int k, iirdouble x, channel c)
 {
-	double y, CenterTap;
-	static double RegX1[2][ARRAY_DIM], RegX2[2][ARRAY_DIM], RegY1[2][ARRAY_DIM], RegY2[2][ARRAY_DIM];
-	static double MaxRegVal = 1.0E-12;
+	iirdouble y, CenterTap;
+	static iirdouble RegX1[2][ARRAY_DIM], RegX2[2][ARRAY_DIM], RegY1[2][ARRAY_DIM], RegY2[2][ARRAY_DIM];
+	static iirdouble MaxRegVal = 1.0E-12;
 	static bool MessageShown = false;
 
 	// Zero the registers on the 1st call or on an overflow condition. The overflow limit used
-	// here is small for double variables, but a filter that reaches this threshold is broken.
+	// here is small for iirdouble variables, but a filter that reaches this threshold is broken.
 	int j = 1;
 	if ((j == 0 && k == 0) || MaxRegVal > OVERFLOW_LIMIT) {
 		if (MaxRegVal > OVERFLOW_LIMIT && !MessageShown) {

@@ -132,7 +132,8 @@ SECTIONS
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
-  /* Initialized data sections into "RAM_D1" Ram type memory */
+  /* Initialized data sections into "RAM_D1" Ram type memory 
+  DW Changed from >RAM_D1 AT> FLASH*/
   .data : 
   {
     . = ALIGN(4);
@@ -143,9 +144,10 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
     
-  } >RAM_D1 AT> FLASH
+  } >DTCMRAM AT> FLASH
 
-  /* Uninitialized data section into "RAM_D1" Ram type memory */
+  /* Uninitialized data section into "RAM_D1" Ram type memory 
+   DW Changed from >RAM_D1 */
   . = ALIGN(4);
   .bss :
   {
@@ -159,7 +161,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM_D1
+  } >DTCMRAM
 
   /* User_heap_stack section, used to check that there is enough "RAM_D1" Ram  type memory left */
   ._user_heap_stack :
@@ -170,7 +172,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM_D1
+  } >DTCMRAM
 
   /* DW External SDRAM storage
      The `(NOLOAD)' directive will mark a section to not be loaded at run time. The linker will process the section normally,

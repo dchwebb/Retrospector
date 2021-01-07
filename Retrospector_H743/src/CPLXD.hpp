@@ -1,5 +1,7 @@
 #pragma once
 
+#define CPLXDMATH_ZERO_TEST   1.0E-50  // This is used to test for 0.
+
 class CplxD  // complex
 {
 public:
@@ -9,6 +11,13 @@ public:
 	// Constructors
 	CplxD();               // The default that gets called when vars are declared.
 	CplxD(double, double);
+	CplxD  conj();
+	CplxD cos(const CplxD& X);
+
+	friend CplxD operator - (const CplxD& X, const CplxD& Y);
+	friend CplxD operator / (const CplxD& X, const CplxD& Y);
+	friend CplxD operator / (const double& A, const CplxD& X);
+//	friend CplxD operator / (const CplxD& X, const double& A);
 };
 
 // Default Constructor. Only called when a var is declared w/o an init.
@@ -26,6 +35,49 @@ inline CplxD::CplxD(double RealPart, double ImagPart)
 	re = RealPart;
 	im = ImagPart;
 }
+
+// Complex Conjugate  ------------------------------------------------------------
+
+inline CplxD CplxD::conj()   // as in X.conj()
+{
+	return(CplxD(re, -im));
+}
+
+inline CplxD cos(const CplxD& X)
+{
+	return CplxD(cos(X.re) * cosh(X.im), -sin(X.re) * sinh(X.im) );
+}
+
+
+
+// Division -------------------------------------------------------------------
+
+//  CplxD / CplxD
+inline CplxD operator / (const CplxD& X, const CplxD& Y)
+{
+	double Mag = Y.re * Y.re + Y.im * Y.im;
+	if (Mag < CPLXDMATH_ZERO_TEST)
+		Mag = CPLXDMATH_ZERO_TEST; // to avoid / 0
+	double re = ((X.re * Y.re) + (X.im * Y.im)) / Mag;
+	double im = ((X.im * Y.re) - (X.re * Y.im)) / Mag;
+	return CplxD(re, im);
+}
+
+
+// CplxD / double
+inline CplxD operator / (const CplxD& X, const double& B)
+{
+	if (fabs(B) < CPLXDMATH_ZERO_TEST)
+		return CplxD(X.re / CPLXDMATH_ZERO_TEST, X.im / CPLXDMATH_ZERO_TEST); // to avoid / 0
+	return CplxD(X.re/B, X.im/B);
+}
+
+//  CplxD - CplxD
+inline CplxD operator - (const CplxD& X, const CplxD& Y)
+{
+	return CplxD(X.re - Y.re, X.im - Y.im);
+}
+
 
 #if false
 //---------------------------------------------------------------------------

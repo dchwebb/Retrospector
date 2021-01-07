@@ -44,13 +44,13 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 	// Put next output sample in I2S buffer
-	SPI2->TXDR = clamp(nextSample, -32767L, 32767L);
+	SPI2->TXDR = std::clamp(nextSample, -32767L, 32767L);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
 
-	samples[LR][writePos[LR]] = clamp(feedbackSample, -32767L, 32767L);
+	samples[LR][writePos[LR]] = std::clamp(feedbackSample, -32767L, 32767L);
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;

@@ -2,9 +2,26 @@
 #include "digitalDelay.h"
 #include "USB.h"
 #include "CDCHandler.h"
-#include "uartHandler.h"		// FIXME Only needed for dev boards with ST Link UART debugging available
 #include "sdram.h"
 #include "filter.h"
+
+/* TODO
+ * Explore use of DTCMRAM and ITCMRAM
+ * Look at handling distortions better (eg loud sine waves with repeats)
+ * Elliptic IIR Filter option
+ * Use C++ complex library
+ * IIR Filters for ADC smoothing
+ * IIR prototype code called every time coefficients recalculated
+ * CV control over cutoff
+ * Options for filter to operate in LP, HP and Both mode
+ * Explore LED options for filter control
+ * implement ADC CV controls
+ * Increase tempo Multiplier times for Long Delay
+ *
+ * Electrical
+ * CV control for filter?
+ * Power supply ripple and current final tests
+ */
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -32,7 +49,7 @@ bool clockValid;
 // Tone settings to control filter
 uint16_t currentTone = 0;
 int32_t dampedTone = 0;
-uint16_t toneHysteresis = 150;
+uint16_t toneHysteresis = 200;
 
 float DACLevel;							// Wet/Dry Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
