@@ -5,11 +5,11 @@ extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
-
-void __attribute__((section(".itcm_text"))) digitalDelay::calcSample(channel LR) {
+void digitalDelay::calcSample(channel LR) {
 	int32_t nextSample, delayClkCV;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
+
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
@@ -41,6 +41,19 @@ void __attribute__((section(".itcm_text"))) digitalDelay::calcSample(channel LR)
 				nextSample = static_cast<int32_t>(outputSample);
 			}
 		}
+	}
+
+	// Debug - generate sine wave with amplitude controlled by feedback pot
+//	static float sinVal = 0.0f;
+//	sinVal += 0.01;
+//	nextSample = sin(sinVal) * ADC_array[ADC_Feedback_Pot] * 2;
+
+	// Compression
+	if (nextSample > threshold || nextSample < -threshold) {
+		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
+		int8_t thresholdSign = (nextSample < -threshold ? -1 : 1);
+		int32_t excess = abs(nextSample - thresholdSign * threshold);
+		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;
 	}
 
 	// Put next output sample in I2S buffer

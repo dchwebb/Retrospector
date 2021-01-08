@@ -547,7 +547,32 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
+#ifdef ITCMRAM
+void CopyToITCMRAM()
+{
+	/* Load functions into ITCM RAM; To use add the following GCC attribute to function:
+
+	 void __attribute__((section(".itcm_text"))) myFunction()
+
+	 * The following section needs to be added to the linker script:
+
+  itcm_data = LOADADDR(.itcm_text);
+  .itcm_text :
+  {
+    . = ALIGN(4);
+    itcm_text_start = .;
+    *(.itcm_text)
+    *(.itcm_text*)
+    . = ALIGN(4);
+    itcm_text_end = .;
+  } >ITCMRAM AT> FLASH
 
 
-
+	 * */
+	extern  unsigned char itcm_text_start;
+	extern const unsigned char itcm_text_end;
+	extern const unsigned char itcm_data;
+	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
+}
+#endif
 

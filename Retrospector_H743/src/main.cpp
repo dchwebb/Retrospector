@@ -6,7 +6,6 @@
 #include "filter.h"
 
 /* TODO
- * Explore use of DTCMRAM and ITCMRAM (see https://www.openstm32.org/forumthread5297 )
  * Look at handling distortions better (eg loud sine waves with repeats)
  * Elliptic IIR Filter option
  * Use C++ complex library
@@ -25,6 +24,7 @@
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
+
 
 bool USBDebug;
 
@@ -71,16 +71,13 @@ int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENG
 char usbBuf[8 * FIRTAPS + 1];
 bool sendVals = false;
 
+
 extern "C" {
 #include "interrupts.h"
 }
 
 int main(void) {
-	/* Load functions into ITCM RAM */
-	extern  unsigned char itcm_text_start;
-	extern const unsigned char itcm_text_end;
-	extern const unsigned char itcm_data;
-	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
+
 
 
 	SystemClock_Config();					// Configure the clock and PLL
