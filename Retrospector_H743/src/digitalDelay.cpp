@@ -6,7 +6,7 @@ extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
 
-void digitalDelay::calcSample(channel LR) {
+void __attribute__((section(".itcm_text"))) digitalDelay::calcSample(channel LR) {
 	int32_t nextSample, delayClkCV;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter

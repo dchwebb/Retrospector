@@ -9,14 +9,14 @@ uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coef
 // Debug
 bool calculatingFilter = false;
 bool activateFilter = true;
-bool iirFilter = true;
+bool iirFilter = false;
 bool activateWindow = true;
 float currentCutoff;
 uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
 bool debugSort = false;
 
 // Rectangular FIR
-void filter::InitFIRFilter(uint16_t tone)
+void __attribute__((section(".itcm_text"))) filter::InitFIRFilter(uint16_t tone)
 {
 	float arg, omegaC;
 
@@ -55,7 +55,7 @@ void filter::InitFIRFilter(uint16_t tone)
 }
 
 
-void FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
+void __attribute__((section(".itcm_text"))) FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {
 	float arg;
 
@@ -66,7 +66,7 @@ void FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 a
 	}
 }
 
-float Sinc(float x)
+float __attribute__((section(".itcm_text"))) Sinc(float x)
 {
 	if (x > -1.0E-5 && x < 1.0E-5)
 		return(1.0);
@@ -74,7 +74,7 @@ float Sinc(float x)
 }
 
 // Used for Kaiser window calculations
-float Bessel(float x)
+float __attribute__((section(".itcm_text"))) Bessel(float x)
 {
 	float Sum = 0.0, XtoIpower;
 	int Factorial;
@@ -92,7 +92,7 @@ float Bessel(float x)
 
 
 
-void filter::InitIIRFilter(uint16_t tone) {
+void __attribute__((section(".itcm_text"))) filter::InitIIRFilter(uint16_t tone) {
 
 	iirdouble cutoff;
 
@@ -119,7 +119,7 @@ void filter::InitIIRFilter(uint16_t tone) {
 
 // We calculate the roots for a Butterworth filter directly. (No root finder needed)
 // We fill the array Roots[] and return the number of roots.
-int ButterworthPoly(int NumPoles, CplxD *Roots)
+int __attribute__((section(".itcm_text"))) ButterworthPoly(int NumPoles, CplxD *Roots)
 {
 	int j, n;
 	iirdouble Theta;
@@ -255,7 +255,7 @@ int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipP
 
 
 // Remember to set the Index array to 0, 1, 2, 3, ... N-1
-void HeapIndexSort(iirdouble *Data, int *Index, int N)
+void __attribute__((section(".itcm_text"))) HeapIndexSort(iirdouble *Data, int *Index, int N)
 {
 	int i, j, k, m, IndexTemp;
 	long long FailSafe, NSquared; // need this for big sorts
@@ -302,7 +302,7 @@ void HeapIndexSort(iirdouble *Data, int *Index, int N)
 // This also sets an inconsequential real or imag part to zero.
 // A matched pair of z plane real roots, such as +/- 1, don't come out together.
 // Used above in GetFilterCoeff and the FIR zero plot.
-void SortRootsByZeta(CplxD *Roots, int Count)
+void __attribute__((section(".itcm_text"))) SortRootsByZeta(CplxD *Roots, int Count)
 {
 	int j, k, RootJ[P51_ARRAY_SIZE];
 	iirdouble SortValue[P51_ARRAY_SIZE];
@@ -352,7 +352,7 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 // hand plane roots are grouped and in the correct order for IIR and Opamp filters.
 // We then check for duplicate roots, and set an inconsequential real or imag part to zero.
 // Then the 2nd order coefficients are calculated.
-int GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
+int __attribute__((section(".itcm_text"))) GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
 {
 	int PolyCount, j, k;
 
@@ -405,7 +405,7 @@ int GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, ii
 
 // TLowPassParams defines the low pass prototype (NumPoles, Ripple, etc.).
 // We return SPlaneCoeff filled with the 2nd order S plane coefficients.
-TSPlaneCoeff filter::CalcLowPassProtoCoeff()
+TSPlaneCoeff __attribute__((section(".itcm_text"))) filter::CalcLowPassProtoCoeff()
 {
 	int j, DenomCount, NumerCount, NumRoots;
 	CplxD Poles[ARRAY_DIM];
@@ -503,7 +503,7 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void filter::CalcIIRFilterCoeff(iirdouble OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
+void __attribute__((section(".itcm_text"))) filter::CalcIIRFilterCoeff(iirdouble OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
 {
 	int j;
 
@@ -602,7 +602,7 @@ void filter::CalcIIRFilterCoeff(iirdouble OmegaC, FilterType PassType, TIIRCoeff
 
 
 //	Take a new sample and return filtered value
-iirdouble filter::IIRFilter(iirdouble sample, channel c)
+iirdouble __attribute__((section(".itcm_text"))) filter::IIRFilter(iirdouble sample, channel c)
 {
 	iirdouble y;
 	int k = 0;
@@ -616,7 +616,7 @@ iirdouble filter::IIRFilter(iirdouble sample, channel c)
 
 
 // This gets used with the function above, FilterWithIIR()
-iirdouble filter::SectCalc(int k, iirdouble x, channel c)
+iirdouble __attribute__((section(".itcm_text"))) filter::SectCalc(int k, iirdouble x, channel c)
 {
 	iirdouble y, CenterTap;
 	static iirdouble RegX1[2][ARRAY_DIM], RegX2[2][ARRAY_DIM], RegY1[2][ARRAY_DIM], RegY2[2][ARRAY_DIM];

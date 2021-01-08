@@ -132,6 +132,18 @@ SECTIONS
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
+  /* DW created this section to test loading specific fast-executing code to ITCM RAM */
+  itcm_data = LOADADDR(.itcm_text);
+  .itcm_text :
+  {
+    . = ALIGN(4);
+    itcm_text_start = .;
+    *(.itcm_text)
+    *(.itcm_text*)
+    . = ALIGN(4);
+    itcm_text_end = .;
+  } >ITCMRAM AT> FLASH
+
   /* Initialized data sections into "RAM_D1" Ram type memory 
   DW Changed from >RAM_D1 AT> FLASH*/
   .data : 
