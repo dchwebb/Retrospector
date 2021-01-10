@@ -68,7 +68,7 @@ struct filter
 	uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
 
 	struct {
-		TFilterPoly ProtoType = BUTTERWORTH;
+		TFilterPoly ProtoType = ELLIPTIC;
 		int NumPoles = 1;				// 1 <= NumPoles <= 12, 15, 20 Depending on the filter.
 		iirdouble Ripple = 0.1;			// 0.0 <= Ripple <= 1.0 dB     Chebyshev and Elliptic (less for high order Chebyshev).
 		iirdouble StopBanddB = 60.0;	// 20 <= StopBand <= 120 dB    Inv Cheby and Elliptic
@@ -91,6 +91,8 @@ struct filter
 	void FIRFilterWindow(float beta);
 	float Bessel(float x);
 	int GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0);
+	void SetCornerFreq(int PolyCount, iirdouble *D2, iirdouble *D1, iirdouble *D0, iirdouble *N2, iirdouble *N1, iirdouble *N0);
+
 };
 
 extern filter Filter;

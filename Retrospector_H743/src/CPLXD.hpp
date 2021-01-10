@@ -11,13 +11,21 @@ public:
 	// Constructors
 	CplxD();               // The default that gets called when vars are declared.
 	CplxD(double, double);
-	CplxD  conj();
+	CplxD conj();
+	double cabs();			// absolute
 	CplxD cos(const CplxD& X);
 
+	friend CplxD operator + (const CplxD& X, const double& A);
+	friend CplxD operator + (const CplxD& X, const CplxD& Y);
 	friend CplxD operator - (const CplxD& X, const CplxD& Y);
 	friend CplxD operator / (const CplxD& X, const CplxD& Y);
 	friend CplxD operator / (const double& A, const CplxD& X);
-//	friend CplxD operator / (const CplxD& X, const double& A);
+	friend CplxD operator / (const CplxD& X, const double& A);
+	friend CplxD operator * (const CplxD& X, const CplxD& Y);
+	friend CplxD operator * (const double& A, const CplxD& X);
+	friend CplxD operator * (const CplxD& X, const double& A);
+	CplxD & operator *= (const CplxD& X);
+	CplxD & operator *= (const double& X);
 };
 
 // Default Constructor. Only called when a var is declared w/o an init.
@@ -48,9 +56,44 @@ inline CplxD cos(const CplxD& X)
 	return CplxD(cos(X.re) * cosh(X.im), -sin(X.re) * sinh(X.im) );
 }
 
+inline double cabs(const CplxD& X) // as in cabs(X)
+{
+	return sqrt(X.re * X.re + X.im * X.im);
+}
 
 
-// Division -------------------------------------------------------------------
+
+// Maths -------------------------------------------------------------------
+
+inline CplxD operator + (const CplxD& X, const CplxD& Y)
+{
+	return CplxD(X.re + Y.re, X.im + Y.im);
+}
+
+// Addition CplxD + double
+inline CplxD operator + (const CplxD& X, const double& a)
+{
+	return CplxD(X.re + a, X.im);
+}
+
+//  CplxD * CplxD
+inline CplxD operator * (const CplxD& X, const CplxD& Y)
+{
+	return CplxD(X.re * Y.re - X.im * Y.im, X.re * Y.im + X.im * Y.re);
+}
+// double * CplxD
+inline CplxD operator * (const double& a, const CplxD& X)
+{
+	return CplxD(X.re * a, X.im * a);
+}
+
+// *=  CplxD * double
+inline CplxD & CplxD::operator *= (const double& A)
+ {
+	re *= A;
+	im *= A;
+	return *this;
+}
 
 //  CplxD / CplxD
 inline CplxD operator / (const CplxD& X, const CplxD& Y)
@@ -70,6 +113,15 @@ inline CplxD operator / (const CplxD& X, const double& B)
 	if (fabs(B) < CPLXDMATH_ZERO_TEST)
 		return CplxD(X.re / CPLXDMATH_ZERO_TEST, X.im / CPLXDMATH_ZERO_TEST); // to avoid / 0
 	return CplxD(X.re/B, X.im/B);
+}
+
+//  double / CplxD
+inline CplxD operator / (const double& A, const CplxD& Y)
+{
+	double Mag = Y.re * Y.re + Y.im * Y.im;
+	if (Mag < CPLXDMATH_ZERO_TEST)
+		Mag = CPLXDMATH_ZERO_TEST; // to avoid / 0
+	return CplxD(A * Y.re / Mag , -A * Y.im / Mag);
 }
 
 //  CplxD - CplxD

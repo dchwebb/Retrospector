@@ -137,12 +137,12 @@ int ButterworthPoly(int NumPoles, CplxD *Roots)
 // H J Orchard and Alan N Willson  IEE Trans on Circuits and Systems April 97
 // The equation numbers in the comments are from the paper.
 // As the stop band attenuation -> infinity, the Elliptic -> Chebyshev.
-int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipPoles, CplxD *EllipZeros, int *ZeroCount)
+int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *EllipPoles, CplxD *EllipZeros, int *ZeroCount)
 {
 	int j, k, n, LastK;
-	double K[ELLIPARRAYSIZE], G[ELLIPARRAYSIZE], Epsilon[ELLIPARRAYSIZE];
-	double A, D, SBdB, dBErr, RealPart, ImagPart;
-	double DeltaK, PrevErr, Deriv;
+	iirdouble K[ELLIPARRAYSIZE], G[ELLIPARRAYSIZE], Epsilon[ELLIPARRAYSIZE];
+	iirdouble A, D, SBdB, dBErr, RealPart, ImagPart;
+	iirdouble DeltaK, PrevErr, Deriv;
 	CplxD C;
 
 	for (j = 0; j < ELLIPARRAYSIZE; j++)
@@ -154,32 +154,31 @@ int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipP
 	Epsilon[0] = sqrt(pow(10.0, Ripple / 10.0) - 1.0);
 
 	// Estimate K[0] to get the algorithm started.
-	K[0] = (double)(FiltOrder-2) * 0.1605 + 0.016;
+	K[0] = (iirdouble)(FiltOrder-2) * 0.1605 + 0.016;
 	if (K[0] < 0.01)
 		K[0] = 0.01;
 	if (K[0] > 0.7)
 		K[0] = 0.7;
 
 	// This loop calculates K[0] for the desired stopband attenuation. It typically loops < 5 times.
-	for (j = 0; j<MAX_ELLIP_ITER; j++) {
+	for (j = 0; j < MAX_ELLIP_ITER; j++) {
 		// Compute K with a forward Landen Transformation.
-		for (k=1; k<10; k++) {
-			K[k] = pow(K[k-1] / (1.0 + sqrt(1.0 - K[k-1]*K[k-1]) ), 2.0);   // eq. 10
+		for (k = 1; k < 10; k++) {
+			K[k] = pow(K[k-1] / (1.0 + sqrt(1.0 - K[k-1] * K[k-1]) ), 2.0);   // eq. 10
 			if (K[k] <= 1.0E-6)
 				break;
 		}
 		LastK = k;
 
 		// Compute G with a backwards Landen Transformation.
-		G[LastK] = 4.0 * pow( K[LastK] / 4.0, (double)FiltOrder);
-		for (k=LastK; k>=1; k--)
-		{
+		G[LastK] = 4.0 * pow( K[LastK] / 4.0, (iirdouble)FiltOrder);
+		for (k = LastK; k >= 1; k--) {
 			G[k-1] = 2.0 * sqrt(G[k]) / (1.0 + G[k]) ;  // eq. 9
 		}
 
 		if (G[0] <= 0.0)
 			G[0] = 1.0E-10;
-		SBdB = 10.0 * log10(1.0 + pow(Epsilon[0]/G[0], 2.0)); // Current stopband attenuation dB
+		SBdB = 10.0 * log10(1.0 + pow(Epsilon[0] / G[0], 2.0)); // Current stopband attenuation dB
 		dBErr = DesiredSBdB - SBdB;
 
 		if (fabs(dBErr) < 0.1)
@@ -191,11 +190,11 @@ int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipP
 			PrevErr = dBErr;
 		} else {
 			// Use Newtons Method to adjust K[0].
-			Deriv = (PrevErr - dBErr)/DeltaK;
+			Deriv = (PrevErr - dBErr) / DeltaK;
 			PrevErr = dBErr;
 			if (Deriv == 0.0)
 				break; // This happens when K[0] hits one of the limits set below.
-			DeltaK = dBErr/Deriv;
+			DeltaK = dBErr / Deriv;
 			if (DeltaK > 0.1)
 				DeltaK = 0.1;
 			if (DeltaK < -0.1)
@@ -211,42 +210,40 @@ int EllipticPoly(int FiltOrder, double Ripple, double DesiredSBdB, CplxD *EllipP
 
 	// Epsilon[0] was calulated above, now calculate Epsilon[LastK] from G
 	for (j = 1; j <= LastK; j++) {
-		A = (1.0 + G[j]) * Epsilon[j-1] / 2.0;  // eq. 37
+		A = (1.0 + G[j]) * Epsilon[j - 1] / 2.0;  // eq. 37
 		Epsilon[j] = A + sqrt(A*A + G[j]);
 	}
 
 	// Calulate the poles and zeros.
-	ImagPart = log((1.0 + sqrt(1.0 + Epsilon[LastK]*Epsilon[LastK])) / Epsilon[LastK] ) / (double)FiltOrder;  // eq. 22
+	ImagPart = log((1.0 + sqrt(1.0 + Epsilon[LastK] * Epsilon[LastK])) / Epsilon[LastK] ) / (iirdouble)FiltOrder;  // eq. 22
 	n = 0;
-	for (j=1; j<=FiltOrder/2; j++) {
-		RealPart = (double)(2*j - 1) * (M_PI / 2) / (double)FiltOrder;   // eq. 19
+	for (j = 1; j <= FiltOrder / 2; j++) {
+		RealPart = (iirdouble)(2*j - 1) * (M_PI / 2) / (iirdouble)FiltOrder;   // eq. 19
 		C = CplxD(0.0, -1.0) / cos(CplxD(-RealPart, ImagPart));      // eq. 20
 		D = 1.0 / cos(RealPart);
-		for (k=LastK; k>=1; k--) {
+		for (k = LastK; k >= 1; k--) {
 			C = (C - K[k]/C) / (1.0 + K[k]);  // eq. 36
 			D = (D + K[k]/D) / (1.0 + K[k]);
 		}
 
 		EllipPoles[n] = 1.0 / C;
 		EllipPoles[n+1] = EllipPoles[n].conj();
-		EllipZeros[n] = CplxD(0.0, D/K[0]);
+		EllipZeros[n] = CplxD(0.0, D / K[0]);
 		EllipZeros[n+1] = EllipZeros[n].conj();
 		n+=2;
 	}
 	*ZeroCount = n; // n is the num zeros
 
-	if (FiltOrder%2 == 1)   // The real pole for odd pole counts
-	{
+	if (FiltOrder % 2 == 1) {   // The real pole for odd pole counts
 		A = 1.0 / sinh(ImagPart);
-		for (k=LastK; k>=1; k--)
-		{
+		for (k = LastK; k >= 1; k--) {
 			A = (A - K[k]/A) / (1.0 + K[k]);      // eq. 38
 		}
-		EllipPoles[n] = CplxD(-1.0/A, 0.0);
+		EllipPoles[n] = CplxD(-1.0 / A, 0.0);
 		n++;
 	}
 
-	return(n); // n is the num poles. There will be 1 more pole than zeros for odd pole counts.
+	return n; // n is the num poles. There will be 1 more pole than zeros for odd pole counts.
 
 }
 
@@ -405,7 +402,7 @@ int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble
 // We return SPlaneCoeff filled with the 2nd order S plane coefficients.
 TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 {
-	int j, DenomCount, NumerCount, NumRoots;
+	int j, DenomCount, NumerCount, NumRoots, ZeroCount;
 	CplxD Poles[ARRAY_DIM];
 	TSPlaneCoeff Coeff;  // The return value.
 
@@ -464,12 +461,13 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 		}
 
 		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
-		// A Butterworth doesn't require frequncy scaling with SetCornerFreq().
+		// A Butterworth doesn't require frequency scaling with SetCornerFreq().
 	}  else if (iirSettings.ProtoType == ELLIPTIC) {
-//		NumRoots   = EllipticPoly(iirSettings.NumPoles, iirSettings.Ripple, iirSettings.StopBanddB, Poles, Zeros, &ZeroCount);
-//		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
-//		NumerCount = GetFilterCoeff(ZeroCount, Zeros, Coeff.N2, Coeff.N1, Coeff.N0);
-//		SetCornerFreq(DenomCount, Coeff.D2, Coeff.D1, Coeff.D0, Coeff.N2, Coeff.N1, Coeff.N0);
+		CplxD Zeros[ARRAY_DIM];
+		NumRoots   = EllipticPoly(iirSettings.NumPoles, iirSettings.Ripple, iirSettings.StopBanddB, Poles, Zeros, &ZeroCount);
+		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
+		NumerCount = GetFilterCoeff(ZeroCount, Zeros, Coeff.N2, Coeff.N1, Coeff.N0);
+		SetCornerFreq(DenomCount, Coeff.D2, Coeff.D1, Coeff.D0, Coeff.N2, Coeff.N1, Coeff.N0);
 	}
 
 
@@ -487,6 +485,63 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 	}
 
 	return(Coeff);
+
+}
+
+//---------------------------------------------------------------------------
+
+// This sets the polynomial's the 3 dB corner to 1 rad/sec. This isn' required for a Butterworth,
+// but the rest of the polynomials need correction. Esp the Adj Gauss, Inv Cheby and Bessel.
+// Poly Count is the number of 2nd order sections. D and N are the Denom and Num coefficients.
+// H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
+void filter::SetCornerFreq(int PolyCount, iirdouble *D2, iirdouble *D1, iirdouble *D0, iirdouble *N2, iirdouble *N1, iirdouble *N0)
+{
+	int j, n;
+	iirdouble Omega, FreqScalar, Zeta, Gain;
+	CplxD s,  H;
+
+	Gain = 1.0;
+	for (j = 0; j < PolyCount; j++)
+		Gain *= D0[j] / N0[j];
+
+	// Evaluate H(s) by increasing Omega until |H(s)| < -3 dB
+	for (j = 1; j < 6000; j++) {
+		Omega = (iirdouble)j / 512.0; // The step size for Omega is 1/512 radians.
+		s = CplxD(0.0, Omega);
+
+		H = CplxD(1.0, 0.0);
+		for (n = 0; n < PolyCount; n++) {
+			H = H * ( N2[n] * s * s + N1[n] * s + N0[n] ) / ( D2[n] * s * s + D1[n] * s + D0[n] );
+		}
+		H *= Gain;
+		if (cabs(H) < 0.7071)
+			break;  // -3 dB
+	}
+
+	FreqScalar = 1.0 / Omega;
+
+	// Freq scale the denominator. We hold the damping factor Zeta constant.
+	for (j = 0; j < PolyCount; j++) {
+		Omega = sqrt(D0[j]);
+		if (Omega == 0.0)
+			continue;   // should never happen
+		Zeta = D1[j] / Omega / 2.0;
+		if (D2[j] != 0.0) {				// 2nd degree poly
+			D0[j] = Omega * Omega * FreqScalar * FreqScalar;
+			D1[j] = 2.0 * Zeta * Omega * FreqScalar;
+		} else {						// 1st degree poly
+			D0[j] *= FreqScalar;
+		}
+	}
+
+	// Scale the numerator.   H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
+	// N1 is always zero. N2 is either 1 or 0. If N2 = 0, then N0 = 1 and there isn't a zero to scale.
+	// For all pole filters (Butter, Cheby, etc) N2 = 0 and N0 = 1.
+	for (j = 0; j < PolyCount; j++) {
+		if (N2[j] == 0.0)
+			continue;
+		N0[j] *= FreqScalar * FreqScalar;
+	}
 
 }
 
