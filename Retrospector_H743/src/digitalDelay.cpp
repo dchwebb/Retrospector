@@ -23,7 +23,7 @@ void digitalDelay::calcSample(channel LR) {
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
 	filterBuffer[LR][filterBuffPos[LR]] = nextSample;
 	if (activateFilter) {			// For debug
-		if (iirFilter) {
+		if (Filter.filterType == IIR) {
 			float filteredSample = Filter.IIRFilter(static_cast<float>(nextSample), LR);
 			nextSample = static_cast<int32_t>(filteredSample);
 		} else {
@@ -36,21 +36,15 @@ void digitalDelay::calcSample(channel LR) {
 				int16_t pos = filterBuffPos[LR];
 				for (uint16_t i = 0; i < FIRTAPS; ++i) {
 					if (++pos == FIRTAPS) pos = 0;
-					outputSample += firCoeff[activeFilter][i] * filterBuffer[LR][pos];
+					outputSample += firCoeff[Filter.activeFilter][i] * filterBuffer[LR][pos];
 				}
 				nextSample = static_cast<int32_t>(outputSample);
 			}
 		}
 	}
 
-	// Debug - generate sine wave with amplitude controlled by feedback pot
-//	static float sinVal = 0.0f;
-//	sinVal += 0.01;
-//	nextSample = sin(sinVal) * ADC_array[ADC_Feedback_Pot] * 2;
-
 	// Compression
 	if (nextSample > threshold || nextSample < -threshold) {
-		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
 		int8_t thresholdSign = (nextSample < -threshold ? -1 : 1);
 		int32_t excess = abs(nextSample - thresholdSign * threshold);
 		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;

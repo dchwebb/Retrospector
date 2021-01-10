@@ -4,15 +4,13 @@
 float firCoeff[2][FIRTAPS];
 float winCoeff[FIRTAPS];
 int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
-uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 
 // Debug
 bool calculatingFilter = false;
 bool activateFilter = true;
-bool iirFilter = false;
 bool activateWindow = true;
 float currentCutoff;
-uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
+
 bool debugSort = false;
 
 // Rectangular FIR
@@ -22,13 +20,13 @@ void filter::InitFIRFilter(uint16_t tone)
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
 	if (tone < filterPotCentre - 1000) {		// Low Pass
-		filterType = LowPass;
+		passType = LowPass;
 		omegaC = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
 	} else if (tone > filterPotCentre + 1000) {
-		filterType = HighPass;
+		passType = HighPass;
 		omegaC = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
 	} else {
-		filterType = FilterOff;
+		passType = FilterOff;
 		omegaC = 1.0f;
 	}
 
@@ -36,12 +34,12 @@ void filter::InitFIRFilter(uint16_t tone)
 	//uint8_t inactiveFilter = activeFilter;
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	if (filterType == LowPass) {
+	if (passType == LowPass) {
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
 			firCoeff[inactiveFilter][j] = omegaC * Sinc(omegaC * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
 		}
-	} else if (filterType == HighPass)  {
+	} else if (passType == HighPass)  {
 		int8_t sign = 1;
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
@@ -55,7 +53,7 @@ void filter::InitFIRFilter(uint16_t tone)
 }
 
 
-void FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
+void filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {
 	float arg;
 
@@ -66,7 +64,7 @@ void FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 a
 	}
 }
 
-float Sinc(float x)
+float filter::Sinc(float x)
 {
 	if (x > -1.0E-5 && x < 1.0E-5)
 		return(1.0);
@@ -74,7 +72,7 @@ float Sinc(float x)
 }
 
 // Used for Kaiser window calculations
-float Bessel(float x)
+float filter::Bessel(float x)
 {
 	float Sum = 0.0, XtoIpower;
 	int Factorial;
@@ -98,17 +96,17 @@ void filter::InitIIRFilter(uint16_t tone) {
 
 	if (tone <= filterPotCentre) {		// Low Pass
 		iirSettings.NumPoles = 4;
-		filterType = LowPass;
+		passType = LowPass;
 		cutoff = std::min(pow(((iirdouble)tone + 15000) / 37000.0, 5.0), 0.999);
 	} else if (tone > filterPotCentre) {
-		filterType = HighPass;
+		passType = HighPass;
 		iirSettings.NumPoles = 1;
 		cutoff = pow((((iirdouble)tone - filterPotCentre) / 65536.0), 4.0);
 	}
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	CalcIIRFilterCoeff(cutoff, filterType, IIRCoeff[inactiveFilter]);
+	CalcIIRFilterCoeff(cutoff, passType, IIRCoeff[inactiveFilter]);
 
 	activeFilter = inactiveFilter;
 	currentCutoff = cutoff;
@@ -352,7 +350,7 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 // hand plane roots are grouped and in the correct order for IIR and Opamp filters.
 // We then check for duplicate roots, and set an inconsequential real or imag part to zero.
 // Then the 2nd order coefficients are calculated.
-int GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
+int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
 {
 	int PolyCount, j, k;
 
@@ -503,7 +501,7 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void filter::CalcIIRFilterCoeff(iirdouble OmegaC, FilterType PassType, TIIRCoeff &iirCoeff)
+void filter::CalcIIRFilterCoeff(iirdouble OmegaC, PassType PassType, TIIRCoeff &iirCoeff)
 {
 	int j;
 

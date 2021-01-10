@@ -39,9 +39,9 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
 
-		if (iirFilter) {
+		if (Filter.filterType == IIR) {
 			usb.SendString(std::string("FIR Filter Activated\n").c_str());
-			iirFilter = false;
+			Filter.filterType = FIR;
 			currentTone = 0;
 		}
 
@@ -51,16 +51,16 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Activate IIR
 
-		if (!iirFilter) {
-			iirFilter = true;
+		if (Filter.filterType == FIR) {
+			Filter.filterType = IIR;
 			currentTone = 0;			// Force reset
 			usb.SendString("IIR Filter Activated\n");
 		}
 
 		// Output coefficients
-		for (int i = 0; i < Filter.IIRCoeff[activeFilter].NumSections; ++i) {
-			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[activeFilter].b2[i]).append("\n").c_str());
-			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[activeFilter].a2[i]).append("\n").c_str());
+		for (int i = 0; i < Filter.IIRCoeff[Filter.activeFilter].NumSections; ++i) {
+			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b2[i]).append("\n").c_str());
+			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a2[i]).append("\n").c_str());
 		}
 
 	} else if (ComCmd.compare("iirsort\n") == 0) {		// IIR Sort test
@@ -159,7 +159,7 @@ bool CDCCommand(const std::string ComCmd) {
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			sprintf(buf, "%0.10f", firCoeff[activeFilter][f]);		// 10dp
+			sprintf(buf, "%0.10f", firCoeff[Filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\n").c_str());
 		}

@@ -6,7 +6,6 @@
 #include "filter.h"
 
 /* TODO
- * Look at handling distortions better (eg loud sine waves with repeats)
  * Elliptic IIR Filter option
  * Use C++ complex library
  * IIR Filters for ADC smoothing
@@ -16,6 +15,7 @@
  * Explore LED options for filter control
  * implement ADC CV controls
  * Increase tempo Multiplier times for Long Delay
+ * USB hangs when sending over CDC and client disconnects
  *
  * Electrical
  * CV control for filter?
@@ -91,7 +91,7 @@ int main(void) {
 	InitIO();
 
 	// Initialise filter
-	FIRFilterWindow(4.0);
+	Filter.FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
 	Filter.InitFIRFilter(currentTone);
@@ -143,7 +143,7 @@ int main(void) {
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;
 			currentTone = dampedTone;
-			if (iirFilter) {
+			if (Filter.filterType == IIR) {
 				Filter.InitIIRFilter(currentTone);
 			} else {
 				Filter.InitFIRFilter(currentTone);
