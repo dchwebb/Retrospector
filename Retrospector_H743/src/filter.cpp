@@ -94,14 +94,25 @@ void filter::InitIIRFilter(uint16_t tone) {
 
 	iirdouble cutoff;
 
-	if (tone <= filterPotCentre) {		// Low Pass
-		iirSettings.NumPoles = 4;
+	//activateFilter = true;
+	if (filterControl == LP) {			// Want a sweep from 0.03 to 0.999 with most travel at low end
+		iirSettings.NumPoles = 8;
 		passType = LowPass;
-		cutoff = std::min(pow(((iirdouble)tone + 15000) / 37000.0, 5.0), 0.999);
-	} else if (tone > filterPotCentre) {
+		cutoff = std::min(0.03 + pow((iirdouble)tone / 65536.0, 2.0), 0.999);
+	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
 		passType = HighPass;
-		iirSettings.NumPoles = 1;
-		cutoff = pow((((iirdouble)tone - filterPotCentre) / 65536.0), 4.0);
+		iirSettings.NumPoles = 4;
+		cutoff = 0.001 + pow(((iirdouble)tone / 100000.0), 3.0);
+	} else {
+		if (tone <= filterPotCentre) {		// Low Pass
+			iirSettings.NumPoles = 8;
+			passType = LowPass;
+			cutoff = std::min(pow(((iirdouble)tone + 15000) / 32000.0, 2.0), 0.999);
+		} else if (tone > filterPotCentre) {
+			passType = HighPass;
+			iirSettings.NumPoles = 8;
+			cutoff = 0.001 + pow((((iirdouble)tone - filterPotCentre) / 50000.0), 3.0);
+		}
 	}
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
@@ -113,11 +124,9 @@ void filter::InitIIRFilter(uint16_t tone) {
 }
 
 
-//---------------------------------------------------------------------------
-
 // We calculate the roots for a Butterworth filter directly. (No root finder needed)
 // We fill the array Roots[] and return the number of roots.
-int ButterworthPoly(int NumPoles, CplxD *Roots)
+int ButterworthPoly(int NumPoles, std::complex<double> *Roots)
 {
 	int j, n;
 	iirdouble Theta;
@@ -125,11 +134,11 @@ int ButterworthPoly(int NumPoles, CplxD *Roots)
 	n = 0;
 	for (j = 0; j < NumPoles / 2; j++) {
 		Theta = M_PI * (iirdouble)(2 * j + NumPoles + 1) / (iirdouble)(2 * NumPoles);
-		Roots[n++] = CplxD(cos(Theta), sin(Theta));
-		Roots[n++] = CplxD(cos(Theta), -sin(Theta));
+		Roots[n++] = std::complex<double>(cos(Theta), sin(Theta));
+		Roots[n++] = std::complex<double>(cos(Theta), -sin(Theta));
 	}
 	if (NumPoles % 2 == 1)
-		Roots[n++] = CplxD(-1.0, 0.0); // The real root for odd pole counts.
+		Roots[n++] = std::complex<double>(-1.0, 0.0); // The real root for odd pole counts.
 	return NumPoles;
 }
 
@@ -137,13 +146,13 @@ int ButterworthPoly(int NumPoles, CplxD *Roots)
 // H J Orchard and Alan N Willson  IEE Trans on Circuits and Systems April 97
 // The equation numbers in the comments are from the paper.
 // As the stop band attenuation -> infinity, the Elliptic -> Chebyshev.
-int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *EllipPoles, CplxD *EllipZeros, int *ZeroCount)
+int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, std::complex<double> *EllipPoles, std::complex<double> *EllipZeros, int *ZeroCount)
 {
 	int j, k, n, LastK;
 	iirdouble K[ELLIPARRAYSIZE], G[ELLIPARRAYSIZE], Epsilon[ELLIPARRAYSIZE];
 	iirdouble A, D, SBdB, dBErr, RealPart, ImagPart;
 	iirdouble DeltaK, PrevErr, Deriv;
-	CplxD C;
+	std::complex<double> C;
 
 	for (j = 0; j < ELLIPARRAYSIZE; j++)
 		K[j] = G[j] = Epsilon[j] = 0.0;
@@ -154,7 +163,7 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 	Epsilon[0] = sqrt(pow(10.0, Ripple / 10.0) - 1.0);
 
 	// Estimate K[0] to get the algorithm started.
-	K[0] = (iirdouble)(FiltOrder-2) * 0.1605 + 0.016;
+	K[0] = (iirdouble)(FiltOrder - 2) * 0.1605 + 0.016;
 	if (K[0] < 0.01)
 		K[0] = 0.01;
 	if (K[0] > 0.7)
@@ -183,7 +192,7 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 
 		if (fabs(dBErr) < 0.1)
 			break;
-		if (j == 0) { // Do this on the 1st loop so we can calc a derivative.
+		if (j == 0) {				// Do this on the 1st loop so we can calc a derivative.
 			if (dBErr > 0)
 				DeltaK = 0.005;
 			else DeltaK = -0.005;
@@ -193,7 +202,7 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 			Deriv = (PrevErr - dBErr) / DeltaK;
 			PrevErr = dBErr;
 			if (Deriv == 0.0)
-				break; // This happens when K[0] hits one of the limits set below.
+				break;				// This happens when K[0] hits one of the limits set below.
 			DeltaK = dBErr / Deriv;
 			if (DeltaK > 0.1)
 				DeltaK = 0.1;
@@ -202,15 +211,15 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 		}
 		K[0] -= DeltaK;
 		if (K[0] < 0.001)
-			K[0] = 0.001;  // must not be < 0.0
+			K[0] = 0.001;			// must not be < 0.0
 		if (K[0] > 0.990)
-			K[0] = 0.990;  // if > 0.990 we get a pole in the RHP. This means we were unable to set the stop band atten to the desired level (the Ripple is too large for the Pole Count).
+			K[0] = 0.990;			// if > 0.990 we get a pole in the RHP. This means we were unable to set the stop band atten to the desired level (the Ripple is too large for the Pole Count).
 	}
 
 
 	// Epsilon[0] was calulated above, now calculate Epsilon[LastK] from G
 	for (j = 1; j <= LastK; j++) {
-		A = (1.0 + G[j]) * Epsilon[j - 1] / 2.0;  // eq. 37
+		A = (1.0 + G[j]) * Epsilon[j - 1] / 2.0;	// eq. 37
 		Epsilon[j] = A + sqrt(A*A + G[j]);
 	}
 
@@ -219,17 +228,17 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 	n = 0;
 	for (j = 1; j <= FiltOrder / 2; j++) {
 		RealPart = (iirdouble)(2*j - 1) * (M_PI / 2) / (iirdouble)FiltOrder;   // eq. 19
-		C = CplxD(0.0, -1.0) / cos(CplxD(-RealPart, ImagPart));      // eq. 20
+		C = std::complex<double>(0.0, -1.0) / cos(std::complex<double>(-RealPart, ImagPart));      // eq. 20
 		D = 1.0 / cos(RealPart);
 		for (k = LastK; k >= 1; k--) {
-			C = (C - K[k]/C) / (1.0 + K[k]);  // eq. 36
+			C = (C - K[k]/C) / (1.0 + K[k]);		// eq. 36
 			D = (D + K[k]/D) / (1.0 + K[k]);
 		}
 
 		EllipPoles[n] = 1.0 / C;
-		EllipPoles[n+1] = EllipPoles[n].conj();
-		EllipZeros[n] = CplxD(0.0, D / K[0]);
-		EllipZeros[n+1] = EllipZeros[n].conj();
+		EllipPoles[n+1] = std::conj(EllipPoles[n]);
+		EllipZeros[n] = std::complex<double>(0.0, D / K[0]);
+		EllipZeros[n+1] = conj(EllipZeros[n]);
 		n+=2;
 	}
 	*ZeroCount = n; // n is the num zeros
@@ -237,13 +246,13 @@ int EllipticPoly(int FiltOrder, iirdouble Ripple, iirdouble DesiredSBdB, CplxD *
 	if (FiltOrder % 2 == 1) {   // The real pole for odd pole counts
 		A = 1.0 / sinh(ImagPart);
 		for (k = LastK; k >= 1; k--) {
-			A = (A - K[k]/A) / (1.0 + K[k]);      // eq. 38
+			A = (A - K[k]/A) / (1.0 + K[k]);		// eq. 38
 		}
-		EllipPoles[n] = CplxD(-1.0 / A, 0.0);
+		EllipPoles[n] = std::complex<double>(-1.0 / A, 0.0);
 		n++;
 	}
 
-	return n; // n is the num poles. There will be 1 more pole than zeros for odd pole counts.
+	return n;				// n is the num poles. There will be 1 more pole than zeros for odd pole counts.
 
 }
 
@@ -297,19 +306,19 @@ void HeapIndexSort(iirdouble *Data, int *Index, int N)
 // This also sets an inconsequential real or imag part to zero.
 // A matched pair of z plane real roots, such as +/- 1, don't come out together.
 // Used above in GetFilterCoeff and the FIR zero plot.
-void SortRootsByZeta(CplxD *Roots, int Count)
+void SortRootsByZeta(std::complex<double> *Roots, int Count)
 {
 	int j, k, RootJ[P51_ARRAY_SIZE];
 	iirdouble SortValue[P51_ARRAY_SIZE];
-	CplxD TempRoots[P51_ARRAY_SIZE];
+	std::complex<double> TempRoots[P51_ARRAY_SIZE];
 
 	// Set an inconsequential real or imag part to zero. FIXME - not sure this is working or necessary
 	for (j = 0; j < Count; j++)	{
-		if (fabs(Roots[j].re) * 1.0E3 < fabs(Roots[j].im) ) {
-			Roots[j].re = 0.0;
+		if (abs(Roots[j].real()) * 1.0E3 < abs(Roots[j].imag()) ) {
+			Roots[j].real(0.0);
 		}
-		if (fabs(Roots[j].im) * 1.0E3 < fabs(Roots[j].re) ) {
-			Roots[j].im = 0.0;
+		if (fabs(Roots[j].imag()) * 1.0E3 < fabs(Roots[j].real()) ) {
+			Roots[j].imag(0.0);
 		}
 	}
 
@@ -317,12 +326,12 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 	for (j = 0; j < Count; j++)
 		RootJ[j] = j;  // Needed for HeapIndexSort
 
-	if (Roots[0].re != 0.0 ) {				// Sort on Real part
+	if (Roots[0].real() != 0.0 ) {				// Sort on Real part
 		for (j = 0; j < Count; j++)
-			SortValue[j] = Roots[j].re;
+			SortValue[j] = Roots[j].real();
 	} else {  								// Sort on Imag part
 		for (j = 0; j < Count; j++)
-			SortValue[j] = fabs(Roots[j].im);
+			SortValue[j] = fabs(Roots[j].imag());
 	}
 	HeapIndexSort(SortValue, RootJ, Count);  // most negative root on top
 
@@ -347,7 +356,7 @@ void SortRootsByZeta(CplxD *Roots, int Count)
 // hand plane roots are grouped and in the correct order for IIR and Opamp filters.
 // We then check for duplicate roots, and set an inconsequential real or imag part to zero.
 // Then the 2nd order coefficients are calculated.
-int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
+int filter::GetFilterCoeff(int RootCount, std::complex<double> *Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
 {
 	int PolyCount, j, k;
 
@@ -357,8 +366,8 @@ int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble
 	// Elliptic generates duplicate real roots. We set duplicates to a RHP value.
 	for (j = 0; j < RootCount-1; j++) {
 		for (k = j + 1; k < RootCount; k++) {
-			if (fabs(Roots[j].re - Roots[k].re) < 1.0E-3 && fabs(Roots[j].im - Roots[k].im) < 1.0E-3) {
-				Roots[k] = CplxD((iirdouble)k, 0.0); // RHP roots are ignored below, Use k is to prevent duplicate checks for matches.
+			if (fabs(Roots[j].real() - Roots[k].real()) < 1.0E-3 && fabs(Roots[j].imag() - Roots[k].imag()) < 1.0E-3) {
+				Roots[k] = std::complex<double>((iirdouble)k, 0.0); // RHP roots are ignored below, Use k is to prevent duplicate checks for matches.
 			}
 		}
 	}
@@ -367,26 +376,26 @@ int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble
 	// We ignore roots in the Right Hand Plane.
 	PolyCount = 0;
 	for (j = 0; j < RootCount; j++) {
-		if (Roots[j].re > 0.0)
+		if ((double)Roots[j].real() > 0.0)
 			continue;						// Right Hand Plane
-		if (Roots[j].re == 0.0 && Roots[j].im == 0.0)
+		if (Roots[j].real() == 0.0 && Roots[j].imag() == 0.0)
 			continue;						// At the origin.  This should never happen.
 
-		if (Roots[j].re == 0.0) {			// Imag Root (A poly zero)
+		if (Roots[j].real() == 0.0) {			// Imag Root (A poly zero)
 			A2[PolyCount] = 1.0;
 			A1[PolyCount] = 0.0;
-			A0[PolyCount] = Roots[j].im * Roots[j].im;
+			A0[PolyCount] = Roots[j].imag() * Roots[j].imag();
 			j++;
 			PolyCount++;
-		} else if (Roots[j].im == 0.0) {	// Real Pole
+		} else if (Roots[j].imag() == 0.0) {	// Real Pole
 			A2[PolyCount] = 0.0;
 			A1[PolyCount] = 1.0;
-			A0[PolyCount] = -Roots[j].re;
+			A0[PolyCount] = -Roots[j].real();
 			PolyCount++;
 		} else { 							// Complex Pole
 			A2[PolyCount] = 1.0;
-			A1[PolyCount] = -2.0 * Roots[j].re;
-			A0[PolyCount] = Roots[j].re * Roots[j].re + Roots[j].im * Roots[j].im;
+			A1[PolyCount] = -2.0 * Roots[j].real();
+			A0[PolyCount] = Roots[j].real() * Roots[j].real() + Roots[j].imag() * Roots[j].imag();
 			j++;
 			PolyCount++;
 		}
@@ -403,7 +412,7 @@ int filter::GetFilterCoeff(int RootCount, CplxD *Roots, iirdouble *A2, iirdouble
 TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 {
 	int j, DenomCount, NumerCount, NumRoots, ZeroCount;
-	CplxD Poles[ARRAY_DIM];
+	std::complex<double> Poles[ARRAY_DIM];
 	TSPlaneCoeff Coeff;  // The return value.
 
 	// Init the S Plane Coeff. H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
@@ -456,14 +465,14 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 
 		if (debugSort) {
 			for (int i = 0; i < NumRoots; ++i) {
-				usb.SendString(std::to_string(i) + ": re=" + std::to_string(Poles[i].re) + " im=" + std::to_string(Poles[i].im).append("\n").c_str());
+				usb.SendString(std::to_string(i) + ": re=" + std::to_string(Poles[i].real()) + " im=" + std::to_string(Poles[i].imag()).append("\n").c_str());
 			}
 		}
 
 		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
 		// A Butterworth doesn't require frequency scaling with SetCornerFreq().
 	}  else if (iirSettings.ProtoType == ELLIPTIC) {
-		CplxD Zeros[ARRAY_DIM];
+		std::complex<double> Zeros[ARRAY_DIM];
 		NumRoots   = EllipticPoly(iirSettings.NumPoles, iirSettings.Ripple, iirSettings.StopBanddB, Poles, Zeros, &ZeroCount);
 		DenomCount = GetFilterCoeff(NumRoots, Poles, Coeff.D2, Coeff.D1, Coeff.D0);
 		NumerCount = GetFilterCoeff(ZeroCount, Zeros, Coeff.N2, Coeff.N1, Coeff.N0);
@@ -484,7 +493,7 @@ TSPlaneCoeff filter::CalcLowPassProtoCoeff()
 		Coeff.N0[0] = 1.0;
 	}
 
-	return(Coeff);
+	return Coeff;
 
 }
 
@@ -498,7 +507,7 @@ void filter::SetCornerFreq(int PolyCount, iirdouble *D2, iirdouble *D1, iirdoubl
 {
 	int j, n;
 	iirdouble Omega, FreqScalar, Zeta, Gain;
-	CplxD s,  H;
+	std::complex<double> s,  H;
 
 	Gain = 1.0;
 	for (j = 0; j < PolyCount; j++)
@@ -507,14 +516,14 @@ void filter::SetCornerFreq(int PolyCount, iirdouble *D2, iirdouble *D1, iirdoubl
 	// Evaluate H(s) by increasing Omega until |H(s)| < -3 dB
 	for (j = 1; j < 6000; j++) {
 		Omega = (iirdouble)j / 512.0; // The step size for Omega is 1/512 radians.
-		s = CplxD(0.0, Omega);
+		s = std::complex<double>(0.0, Omega);
 
-		H = CplxD(1.0, 0.0);
+		H = std::complex<double>(1.0, 0.0);
 		for (n = 0; n < PolyCount; n++) {
 			H = H * ( N2[n] * s * s + N1[n] * s + N0[n] ) / ( D2[n] * s * s + D1[n] * s + D0[n] );
 		}
 		H *= Gain;
-		if (cabs(H) < 0.7071)
+		if (abs(H) < 0.7071)
 			break;  // -3 dB
 	}
 
@@ -583,22 +592,22 @@ void filter::CalcIIRFilterCoeff(iirdouble OmegaC, PassType PassType, TIIRCoeff &
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
 	T = 2.0 * tan(OmegaC * M_PI / 2);
-	Q = 1.0 + OmegaC;             // Q is used for band pass and notch filters.
+	Q = 1.0 + OmegaC;					// Q is used for band pass and notch filters.
 	if (Q > 1.95)
 		Q = 1.95;
-	Q = 0.8 * tan(Q * M_PI / 4);            // This is a correction factor for Q.
-	Q = OmegaC / iirSettings.BW / Q;  // This is the corrected Q.
+	Q = 0.8 * tan(Q * M_PI / 4);		// This is a correction factor for Q.
+	Q = OmegaC / iirSettings.BW / Q;	// This is the corrected Q.
 
 
 	// Calc the IIR coefficients.
 	// SPlaneCoeff.NumSections is the number of 1st and 2nd order s plane factors.
 
 	for (j = 0; j < SPlaneCoeff.NumSections; j++) {
-		A = SPlaneCoeff.D2[j]; // We use A - F to make the code easier to read.
+		A = SPlaneCoeff.D2[j];			// We use A - F to make the code easier to read.
 		B = SPlaneCoeff.D1[j];
 		C = SPlaneCoeff.D0[j];
 		D = SPlaneCoeff.N2[j];
-		E = SPlaneCoeff.N1[j]; // N1 is always zero, except for the all pass. Consequently, the equations below can be simplified a bit by removing E.
+		E = SPlaneCoeff.N1[j];			// N1 is always zero, except for the all pass. Consequently, the equations below can be simplified a bit by removing E.
 		F = SPlaneCoeff.N0[j];
 
 		// b's are the numerator  a's are the denominator
@@ -657,11 +666,8 @@ void filter::CalcIIRFilterCoeff(iirdouble OmegaC, PassType PassType, TIIRCoeff &
 //	Take a new sample and return filtered value
 iirdouble filter::IIRFilter(iirdouble sample, channel c)
 {
-	iirdouble y;
-	int k = 0;
-
-	y = SectCalc(0, sample, c);
-	for (k = 1; k < IIRCoeff[activeFilter].NumSections; k++) {
+	iirdouble y = SectCalc(0, sample, c);
+	for (uint8_t k = 1; k < IIRCoeff[activeFilter].NumSections; k++) {
 		y = SectCalc(k, y, c);
 	}
 	return y;

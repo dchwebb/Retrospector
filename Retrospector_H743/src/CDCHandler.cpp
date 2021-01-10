@@ -28,6 +28,9 @@ bool CDCCommand(const std::string ComCmd) {
 				"dl        -  Dump samples for left channel\n"
 				"dr        -  Dump samples for right channel\n"
 				"f         -  Filter on/off\n"
+				"lp        -  Filter is low pass\n"
+				"hp        -  Filter is high pass\n"
+				"both      -  Filter sweeps from low pass to high pass\n"
 				"fd        -  Dump filter coefficients\n"
 				"fdl       -  Dump left filter buffer\n"
 				"wd        -  Dump filter window coefficients\n"
@@ -139,6 +142,21 @@ bool CDCCommand(const std::string ComCmd) {
 		} else {
 			usb.SendString(std::string("Filter off\n").c_str());
 		}
+
+	} else if (ComCmd.compare("lp\n") == 0) {		// Activate filter
+
+		Filter.filterControl = LP;
+		usb.SendString(std::string("Low Pass\n").c_str());
+
+	} else if (ComCmd.compare("hp\n") == 0) {		// Activate filter
+
+		Filter.filterControl = HP;
+		usb.SendString(std::string("High Pass\n").c_str());
+
+	} else if (ComCmd.compare("both\n") == 0) {		// Activate filter
+
+		Filter.filterControl = Both;
+		usb.SendString(std::string("Low Pass to High Pass\n").c_str());
 
 	} else if (ComCmd.compare("w\n") == 0) {		// Activate filter window
 

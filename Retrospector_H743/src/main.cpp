@@ -6,8 +6,7 @@
 #include "filter.h"
 
 /* TODO
- * Elliptic IIR Filter option
- * Use C++ complex library
+
  * IIR Filters for ADC smoothing
  * IIR prototype code called every time coefficients recalculated
  * CV control over cutoff
