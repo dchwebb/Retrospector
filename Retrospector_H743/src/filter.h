@@ -28,90 +28,108 @@ enum FilterPoly {BUTTERWORTH, GAUSSIAN, BESSEL, ADJUSTABLE, CHEBYSHEV,	INVERSE_C
 
 typedef double iirdouble;
 
-#define MAX_POLE_COUNT 8
-#define ARRAY_DIM 16 				// This MUST be at least 2*MAX_POLE_COUNT because some filter polys are defined in terms of 2 * NumPoles
-#define OVERFLOW_LIMIT  1.0E5
+//#define MAX_POLE_COUNT 8
+#define MAX_POLES 8 				// This MUST be at least 2*MAX_POLE_COUNT because some filter polys are defined in terms of 2 * NumPoles
 
 
-struct TIIRCoeff {
-	iirdouble a0[ARRAY_DIM];
-	iirdouble a1[ARRAY_DIM];
-	iirdouble a2[ARRAY_DIM];
-	iirdouble a3[ARRAY_DIM];
-	iirdouble a4[ARRAY_DIM];
-	iirdouble b0[ARRAY_DIM];
-	iirdouble b1[ARRAY_DIM];
-	iirdouble b2[ARRAY_DIM];
-	iirdouble b3[ARRAY_DIM];
-	iirdouble b4[ARRAY_DIM];
+struct IIRCoeff {
+	iirdouble a0[MAX_POLES];
+	iirdouble a1[MAX_POLES];
+	iirdouble a2[MAX_POLES];
+	iirdouble b0[MAX_POLES];
+	iirdouble b1[MAX_POLES];
+	iirdouble b2[MAX_POLES];
 	int NumSections;
 };
 
 // These coeff form H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
 // NumSections is the number of 1st and 2nd order polynomial factors .
 struct SPlaneCoeff {
-	iirdouble N2[ARRAY_DIM];
-	iirdouble N1[ARRAY_DIM];
-	iirdouble N0[ARRAY_DIM];
-	iirdouble D2[ARRAY_DIM];
-	iirdouble D1[ARRAY_DIM];
-	iirdouble D0[ARRAY_DIM];
-	int NumSections;
+	iirdouble N2[MAX_POLES];
+	iirdouble N1[MAX_POLES];
+	iirdouble N0[MAX_POLES];
+	iirdouble D2[MAX_POLES];
+	iirdouble D1[MAX_POLES];
+	iirdouble D0[MAX_POLES];
 };
 
-class iirPrototype
+struct IIRRegisters {
+	iirdouble RegX1[2][MAX_POLES];
+	iirdouble RegX2[2][MAX_POLES];
+	iirdouble RegY1[2][MAX_POLES];
+	iirdouble RegY2[2][MAX_POLES];
+};
+
+class IIRPrototype
 {
 public:
 	/*
 	 * 	CalcLowPassProtoCoeff
 	 *  	ButterworthPoly
 	 *  	GetFilterCoeff
-	 *  		SortRootsByZeta
-	 *  			HeapIndexSort
 	 */
 	int NumPoles;
+	int NumSections;
 	SPlaneCoeff Coeff;
 
-	iirPrototype(uint8_t numPoles) {
+	IIRPrototype(uint8_t numPoles) {
 		NumPoles = numPoles;
 		CalcLowPassProtoCoeff();
 	}
+	IIRPrototype() {};
 	void CalcLowPassProtoCoeff();
-	void ButterworthPoly(std::array<std::complex<double>, ARRAY_DIM> &Roots);
-	void GetFilterCoeff(std::array<std::complex<double>, ARRAY_DIM> &Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0);
-//	void SortRootsByZeta(std::array<std::complex<double>, ARRAY_DIM> &Roots, int Count);
-//	void HeapIndexSort(iirdouble *Data, int *Index, int N);
+	void ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots);
+	void GetFilterCoeff(std::array<std::complex<double>, MAX_POLES> &Roots);
 };
 
-struct filter
+
+struct IIRFilter
+{
+	IIRPrototype iirProto;
+	IIRCoeff iirCoeff;
+	int numPoles = 1;
+
+	IIRFilter(uint8_t poles) {
+		iirProto = IIRPrototype(poles);
+		numPoles = poles;
+	}
+	IIRFilter() {};
+
+	void CalcIIRFilterCoeff(iirdouble OmegaC, PassType PassType);
+//	iirdouble IIRFilter(iirdouble sample, channel c);
+//	iirdouble SectCalc(int k, iirdouble x, channel c);
+
+};
+
+struct Filter
 {
 	uint16_t filterPotCentre = 29000;		//32768	FIXME - make this configurable
 
-	struct {
-		FilterPoly ProtoType = BUTTERWORTH;
-		int NumPoles = 1;				// 1 <= NumPoles <= 12, 15, 20 Depending on the filter.
-		iirdouble BW = 0.1;				// 0.0 < BandWidth < 1.0       3 dB bandwidth for bandpass and notch filters
-	} iirSettings;
+//	struct {
+//		FilterPoly ProtoType = BUTTERWORTH;
+//		int NumPoles = 1;				// 1 <= NumPoles <= 12, 15, 20 Depending on the filter.
+//		iirdouble BW = 0.1;				// 0.0 < BandWidth < 1.0       3 dB bandwidth for bandpass and notch filters
+//	} iirSettings;
 
-	TIIRCoeff IIRCoeff[2];
-	FilterType filterType = FIR;
+	FilterType filterType = IIR;
 	PassType passType;
-	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
+	FilterControl filterControl = LP;		// Tone control sweeps from LP to HP (or choose just LP or HP)
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
-	std::map<uint8_t, iirPrototype> IIRPrototypes;
+
+	const uint8_t polesLP = 8;
+	const uint8_t polesHP = 4;
+	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP), IIRFilter(polesLP)};			// Two filters for active and inactive
+	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP), IIRFilter(polesHP)};
 
 	void InitFIRFilter(uint16_t tone);
 	void InitIIRFilter(uint16_t tone);
-	void CalcIIRFilterCoeff(iirdouble OmegaC, PassType PassType, TIIRCoeff &iirCoeff);
-	iirdouble IIRFilter(iirdouble sample, channel c);
-	iirdouble SectCalc(int k, iirdouble x, channel c);
+	iirdouble CalcIIRFilter(iirdouble sample, channel c);
+	iirdouble SectCalc(int k, iirdouble x, channel c, IIRFilter& currentFilter);
 	float Sinc(float x);
 	void FIRFilterWindow(float beta);
 	float Bessel(float x);
-	iirPrototype& GetPrototype(uint8_t poles);
 };
 
 
 
-
-extern filter Filter;
+extern Filter filter;

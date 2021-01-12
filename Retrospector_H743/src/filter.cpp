@@ -1,4 +1,4 @@
-#include "filter.h"
+#include "Filter.h"
 
 /*
  * CalcIIRFilterCoeff
@@ -23,7 +23,7 @@ float currentCutoff;
 bool debugSort = false;
 
 // Rectangular FIR
-void filter::InitFIRFilter(uint16_t tone)
+void Filter::InitFIRFilter(uint16_t tone)
 {
 	float arg, omegaC;
 
@@ -62,7 +62,7 @@ void filter::InitFIRFilter(uint16_t tone)
 }
 
 
-void filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
+void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {
 	float arg;
 
@@ -73,7 +73,7 @@ void filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value betwe
 	}
 }
 
-float filter::Sinc(float x)
+float Filter::Sinc(float x)
 {
 	if (x > -1.0E-5 && x < 1.0E-5)
 		return(1.0);
@@ -81,7 +81,7 @@ float filter::Sinc(float x)
 }
 
 // Used for Kaiser window calculations
-float filter::Bessel(float x)
+float Filter::Bessel(float x)
 {
 	float Sum = 0.0, XtoIpower;
 	int Factorial;
@@ -99,79 +99,117 @@ float filter::Bessel(float x)
 
 
 
-void filter::InitIIRFilter(uint16_t tone) {
-
+void Filter::InitIIRFilter(uint16_t tone)
+{
 	iirdouble cutoff;
 
-	//activateFilter = true;
 	if (filterControl == LP) {			// Want a sweep from 0.03 to 0.999 with most travel at low end
-		iirSettings.NumPoles = 8;
 		passType = LowPass;
 		cutoff = std::min(0.03 + pow((iirdouble)tone / 65536.0, 2.0), 0.999);
 	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
 		passType = HighPass;
-		iirSettings.NumPoles = 4;
 		cutoff = 0.001 + pow(((iirdouble)tone / 100000.0), 3.0);
 	} else {
 		if (tone <= filterPotCentre) {		// Low Pass
-			iirSettings.NumPoles = 8;
 			passType = LowPass;
 			cutoff = std::min(pow(((iirdouble)tone + 15000) / 32000.0, 2.0), 0.999);
 		} else if (tone > filterPotCentre) {
 			passType = HighPass;
-			iirSettings.NumPoles = 4;
 			cutoff = 0.001 + pow((((iirdouble)tone - filterPotCentre) / 50000.0), 3.0);
 		}
 	}
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	CalcIIRFilterCoeff(cutoff, passType, IIRCoeff[inactiveFilter]);
+	// store reference to active filter (LP or HP and by activeFilter)
+	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[inactiveFilter] : iirHPFilter[inactiveFilter];
+
+	currentFilter.CalcIIRFilterCoeff(cutoff, passType);
 
 	activeFilter = inactiveFilter;
 	currentCutoff = cutoff;
 }
 
 
+//	Take a new sample and return filtered value
+iirdouble Filter::CalcIIRFilter(iirdouble sample, channel c)
+{
+	// store reference to active filter (LP or HP and by activeFilter)
+	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[activeFilter] : iirHPFilter[activeFilter];
 
-//---------------------------------------------------------------------------
+	iirdouble y = SectCalc(0, sample, c, currentFilter);
+	for (uint8_t k = 1; k < currentFilter.iirCoeff.NumSections; k++) {
+		y = SectCalc(k, y, c, currentFilter);
+	}
+	return y;
+}
+
+
+// Calculates each stage of a multi-section IIR filter (eg 8 pole is constructed from four 2-pole filters)
+iirdouble Filter::SectCalc(int k, iirdouble x, channel c, IIRFilter& currentFilter)
+{
+	iirdouble y, CenterTap;
+	static iirdouble RegX1[2][MAX_POLES], RegX2[2][MAX_POLES], RegY1[2][MAX_POLES], RegY2[2][MAX_POLES];
+	static iirdouble MaxRegVal = 1.0E-12;
+
+	// Zero the registers on an overflow condition
+	if (MaxRegVal > 1.0E5) {
+
+		MaxRegVal = 1.0E-12;
+		for (uint8_t i = 0; i < MAX_POLES; i++) {
+			RegX1[c][i] = 0.0;
+			RegX2[c][i] = 0.0;
+			RegY1[c][i] = 0.0;
+			RegY2[c][i] = 0.0;
+		}
+	}
+
+	CenterTap = x * currentFilter.iirCoeff.b0[k] + currentFilter.iirCoeff.b1[k] * RegX1[c][k] + currentFilter.iirCoeff.b2[k] * RegX2[c][k];
+	y = currentFilter.iirCoeff.a0[k] * CenterTap - currentFilter.iirCoeff.a1[k] * RegY1[c][k] - currentFilter.iirCoeff.a2[k] * RegY2[c][k];
+
+	RegX2[c][k] = RegX1[c][k];
+	RegX1[c][k] = x;
+	RegY2[c][k] = RegY1[c][k];
+	RegY1[c][k] = y;
+
+	// MaxRegVal is used to prevent overflow.  Overflow seldom occurs, but will
+	// if the filter has faulty coefficients. MaxRegVal is usually less than 100.0
+	if (std::abs(CenterTap) > MaxRegVal)
+		MaxRegVal = std::abs(CenterTap);
+	if (std::abs(y) > MaxRegVal)
+		MaxRegVal = std::abs(y);
+	return(y);
+}
+
+
+
 /*
- This calculates the coefficients for IIR filters from a set of 2nd order s plane coefficients
- which are obtained by calling CalcLowPassProtoCoeff() in LowPassPrototypes.cpp.
- The s plane filters are frequency scaled so their 3 dB frequency is at s = omega = 1 rad/sec.
- The poles and zeros are also ordered in a manner appropriate for IIR filters.
- For a derivation of the formulas used here, see the IIREquationDerivations.pdf
- This shows how the various poly coefficients are defined.
+ Calculate the z-plane coefficients for IIR filters from 2nd order S-plane coefficients
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void filter::CalcIIRFilterCoeff(iirdouble omegaC, PassType passType, TIIRCoeff &iirCoeff)
+void IIRFilter::CalcIIRFilterCoeff(iirdouble omega, PassType passType)
 {
 	int j;
 
 	iirdouble A, B, C, D, E, F, T, Arg;
 
-	// Get the low pass prototype 2nd order s plane coefficients.
-	iirPrototype iirProto = GetPrototype(iirSettings.NumPoles);
-
 	// Init the IIR structure.
-	for (j = 0; j < ARRAY_DIM; j++)	{
+	for (j = 0; j < MAX_POLES; j++)	{
 		iirCoeff.a0[j] = 0.0;  iirCoeff.b0[j] = 0.0;
 		iirCoeff.a1[j] = 0.0;  iirCoeff.b1[j] = 0.0;
 		iirCoeff.a2[j] = 0.0;  iirCoeff.b2[j] = 0.0;
-		iirCoeff.a3[j] = 0.0;  iirCoeff.b3[j] = 0.0;
-		iirCoeff.a4[j] = 0.0;  iirCoeff.b4[j] = 0.0;
 	}
 
 	// Set the number of IIR filter sections we will be generating.
-	iirCoeff.NumSections = (iirSettings.NumPoles + 1) / 2;
+	iirCoeff.NumSections = (numPoles + 1) / 2;
 
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
-	T = 2.0 * tan(omegaC * M_PI / 2);
+	T = 2.0 * tan(omega * M_PI / 2);
 
 	// Calc the IIR coefficients. SPlaneCoeff.NumSections is the number of 1st and 2nd order s plane factors.
-	for (j = 0; j < iirProto.Coeff.NumSections; j++) {
+	for (j = 0; j < iirProto.NumSections; j++) {
 		A = iirProto.Coeff.D2[j];			// We use A - F to make the code easier to read.
 		B = iirProto.Coeff.D1[j];
 		C = iirProto.Coeff.D0[j];
@@ -231,70 +269,12 @@ void filter::CalcIIRFilterCoeff(iirdouble omegaC, PassType passType, TIIRCoeff &
 }
 
 
-
-//	Take a new sample and return filtered value
-iirdouble filter::IIRFilter(iirdouble sample, channel c)
+void IIRPrototype::CalcLowPassProtoCoeff()
 {
-	iirdouble y = SectCalc(0, sample, c);
-	for (uint8_t k = 1; k < IIRCoeff[activeFilter].NumSections; k++) {
-		y = SectCalc(k, y, c);
-	}
-	return y;
-}
-
-
-// This gets used with the function above, FilterWithIIR()
-iirdouble filter::SectCalc(int k, iirdouble x, channel c)
-{
-	iirdouble y, CenterTap;
-	static iirdouble RegX1[2][ARRAY_DIM], RegX2[2][ARRAY_DIM], RegY1[2][ARRAY_DIM], RegY2[2][ARRAY_DIM];
-	static iirdouble MaxRegVal = 1.0E-12;
-
-	// Zero the registers on the 1st call or on an overflow condition. The overflow limit used
-	// here is small for iirdouble variables, but a filter that reaches this threshold is broken.
-	int j = 1;
-	if ((j == 0 && k == 0) || MaxRegVal > OVERFLOW_LIMIT) {
-
-		MaxRegVal = 1.0E-12;
-		for (int i = 0; i < ARRAY_DIM; i++) {
-			RegX1[c][i] = 0.0;
-			RegX2[c][i] = 0.0;
-			RegY1[c][i] = 0.0;
-			RegY2[c][i] = 0.0;
-		}
-	}
-
-	CenterTap = x * IIRCoeff[activeFilter].b0[k] + IIRCoeff[activeFilter].b1[k] * RegX1[c][k] + IIRCoeff[activeFilter].b2[k] * RegX2[c][k];
-	y = IIRCoeff[activeFilter].a0[k] * CenterTap - IIRCoeff[activeFilter].a1[k] * RegY1[c][k] - IIRCoeff[activeFilter].a2[k] * RegY2[c][k];
-
-	RegX2[c][k] = RegX1[c][k];
-	RegX1[c][k] = x;
-	RegY2[c][k] = RegY1[c][k];
-	RegY1[c][k] = y;
-
-	// MaxRegVal is used to prevent overflow.  Overflow seldom occurs, but will
-	// if the filter has faulty coefficients. MaxRegVal is usually less than 100.0
-	if (std::abs(CenterTap) > MaxRegVal)
-		MaxRegVal = std::abs(CenterTap);
-	if (std::abs(y) > MaxRegVal)
-		MaxRegVal = std::abs(y);
-	return(y);
-}
-
-iirPrototype& filter::GetPrototype(uint8_t poles) {
-	// Check if prototype exists in map and create if not
-	if (IIRPrototypes.find(poles) == IIRPrototypes.end()) {
-		IIRPrototypes.emplace(poles, iirPrototype(poles));
-	}
-	return IIRPrototypes.at(poles);
-}
-
-void iirPrototype::CalcLowPassProtoCoeff()
-{
-	std::array<std::complex<double>, ARRAY_DIM> Poles;
+	std::array<std::complex<double>, MAX_POLES> Poles;
 
 	// Init the S Plane Coeff. H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
-	for (uint8_t j = 0; j < ARRAY_DIM; j++) {
+	for (uint8_t j = 0; j < MAX_POLES; j++) {
 		Coeff.N2[j] = 0.0;
 		Coeff.N1[j] = 0.0;
 		Coeff.N0[j] = 1.0;
@@ -309,16 +289,16 @@ void iirPrototype::CalcLowPassProtoCoeff()
 	} else {				// Always use Butterworth
 		Poles[0] =  std::complex<double>(0.0, 0.0) ;
 		ButterworthPoly(Poles);
-		GetFilterCoeff(Poles, Coeff.D2, Coeff.D1, Coeff.D0);
+		GetFilterCoeff(Poles);
 	}
 
-	Coeff.NumSections = NumPoles;
+	NumSections = NumPoles;
 }
 
 
 // Calculate the roots for a Butterworth filter: fill the array Roots[]
 //void iirPrototype::ButterworthPoly(std::complex<double> *Roots)
-void iirPrototype::ButterworthPoly(std::array<std::complex<double>, ARRAY_DIM> &Roots)
+void IIRPrototype::ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots)
 {
 	int n = 0;
 	iirdouble theta;
@@ -334,159 +314,42 @@ void iirPrototype::ButterworthPoly(std::array<std::complex<double>, ARRAY_DIM> &
 }
 
 
-// Some of the Polys generate both left hand and right hand plane roots.
-// We use this function to get the left hand plane poles and imag axis zeros to
-// create the 2nd order polynomials with coefficients A2, A1, A0.
-// We return the Polynomial count.
-
-// We first sort the roots according the the real part (a zeta sort). Then all the left
-// hand plane roots are grouped and in the correct order for IIR and Opamp filters.
-// We then check for duplicate roots, and set an inconsequential real or imag part to zero.
-// Then the 2nd order coefficients are calculated.
-void iirPrototype::GetFilterCoeff(std::array<std::complex<double>, ARRAY_DIM> &Roots, iirdouble *A2, iirdouble *A1, iirdouble *A0)
+// Create the 2nd order polynomials with coefficients A2, A1, A0.
+void IIRPrototype::GetFilterCoeff(std::array<std::complex<double>, MAX_POLES> &Roots)
 {
-	int PolyCount, j;
-
-	//SortRootsByZeta(Roots, NumPoles);			// Places the most negative real part 1st.
+	int polyCount, j;
 
 	// Sort the roots with the most negative real part first
 	std::sort(Roots.begin(), Roots.end(), [](const std::complex<double> &lhs, const std::complex<double> &rhs) {
 		return lhs.real() < rhs.real();
 	});
 
-
-//	// Check for duplicate roots and set to a RHP value
-//	for (j = 0; j < NumPoles-1; j++) {
-//		for (k = j + 1; k < NumPoles; k++) {
-//			if (std::abs(Roots[j].real() - Roots[k].real()) < 1.0E-3 && std::abs(Roots[j].imag() - Roots[k].imag()) < 1.0E-3) {
-//				Roots[k] = std::complex<double>((iirdouble)k, 0.0); // RHP roots are ignored below, Use k is to prevent duplicate checks for matches.
-//				debugCount++;
-//			}
-//		}
-//	}
-
 	// This forms the 2nd order coefficients from the root value. Ignore roots in the Right Hand Plane.
-	PolyCount = 0;
+	polyCount = 0;
 	for (j = 0; j < NumPoles; j++) {
-		if ((double)Roots[j].real() > 0.0)
+		if (Roots[j].real() > 0.0)
 			continue;							// Right Hand Plane
 		if (Roots[j].real() == 0.0 && Roots[j].imag() == 0.0)
 			continue;							// At the origin.  This should never happen.
 
 		if (Roots[j].real() == 0.0) {			// Imag Root (A poly zero)
-			A2[PolyCount] = 1.0;
-			A1[PolyCount] = 0.0;
-			A0[PolyCount] = Roots[j].imag() * Roots[j].imag();
+			Coeff.D2[polyCount] = 1.0;
+			Coeff.D1[polyCount] = 0.0;
+			Coeff.D0[polyCount] = Roots[j].imag() * Roots[j].imag();
 			j++;
-			PolyCount++;
+			polyCount++;
 		} else if (Roots[j].imag() == 0.0) {	// Real Pole
-			A2[PolyCount] = 0.0;
-			A1[PolyCount] = 1.0;
-			A0[PolyCount] = -Roots[j].real();
-			PolyCount++;
+			Coeff.D2[polyCount] = 0.0;
+			Coeff.D1[polyCount] = 1.0;
+			Coeff.D0[polyCount] = -Roots[j].real();
+			polyCount++;
 		} else { 								// Complex Pole
-			A2[PolyCount] = 1.0;
-			A1[PolyCount] = -2.0 * Roots[j].real();
-			A0[PolyCount] = Roots[j].real() * Roots[j].real() + Roots[j].imag() * Roots[j].imag();
+			Coeff.D2[polyCount] = 1.0;
+			Coeff.D1[polyCount] = -2.0 * Roots[j].real();
+			Coeff.D0[polyCount] = Roots[j].real() * Roots[j].real() + Roots[j].imag() * Roots[j].imag();
 			j++;
-			PolyCount++;
+			polyCount++;
 		}
 	}
 
 }
-
-/*
-volatile int debugCount = 0;
-
-//---------------------------------------------------------------------------
-// This sorts on the real part if the real part of the 1st root != 0 (a Zeta sort)
-// else we sort on the imag part. If SortType == stMin for both the poles and zeros, then
-// the poles and zeros will be properly matched.
-// This also sets an inconsequential real or imag part to zero.
-// A matched pair of z plane real roots, such as +/- 1, don't come out together.
-// Used above in GetFilterCoeff and the FIR zero plot.
-void iirPrototype::SortRootsByZeta(std::array<std::complex<double>, ARRAY_DIM> &Roots, int Count)
-{
-	int j, k, RootJ[ARRAY_DIM];
-	iirdouble SortValue[ARRAY_DIM];
-	std::complex<double> TempRoots[ARRAY_DIM];
-
-	// Set an inconsequential real or imag part to zero. FIXME - not sure this is working or necessary
-	for (j = 0; j < Count; j++)	{
-		if (std::abs(Roots[j].real()) * 1.0E3 < std::abs(Roots[j].imag()) ) {
-			Roots[j].real(0.0);
-			debugCount++;
-		}
-		if (std::abs(Roots[j].imag()) * 1.0E3 < std::abs(Roots[j].real()) ) {
-			Roots[j].imag(0.0);
-			debugCount++;
-		}
-	}
-
-	// Sort the roots.
-	for (j = 0; j < Count; j++) {
-		RootJ[j] = j;							// Needed for HeapIndexSort
-	}
-
-	if (Roots[0].real() != 0.0 ) {				// Sort on Real part
-		for (j = 0; j < Count; j++)
-			SortValue[j] = Roots[j].real();
-	} else {  									// Sort on Imag part
-		for (j = 0; j < Count; j++)
-			SortValue[j] = std::abs(Roots[j].imag());
-	}
-	HeapIndexSort(SortValue, RootJ, Count);		// most negative root on top
-
-	for (j = 0; j < Count; j++)	{
-		k = RootJ[j];							// RootJ is the sort index
-		TempRoots[j] = Roots[k];
-	}
-	for (j = 0; j < Count; j++)	{
-		Roots[j] = TempRoots[j];
-	}
-
-}
-
-
-
-// Remember to set the Index array to 0, 1, 2, 3, ... N-1
-void iirPrototype::HeapIndexSort(iirdouble *Data, int *Index, int N)
-{
-	int i, j, k, m, IndexTemp;
-	long long FailSafe, NSquared; // need this for big sorts
-
-	NSquared = (long long)N * (long long)N;
-	m = N / 2;
-	k = N - 1;
-	for (FailSafe = 0; FailSafe < NSquared; FailSafe++) { // typical FailSafe value on return is N*log2(N)
-
-		if (m > 0)
-			IndexTemp = Index[--m];
-		else {
-			IndexTemp = Index[k];
-			Index[k] = Index[0];
-			if (--k == 0) {
-				Index[0] = IndexTemp;
-				return;
-			}
-		}
-
-		i = m + 1;
-		j = 2 * i;
-
-		while (j < k + 2) {
-			FailSafe++;
-			if (j <= k && Data[Index[j-1]] < Data[Index[j]])
-				j++;
-			if (Data[IndexTemp] < Data[Index[j-1]]) {
-				Index[i-1] = Index[j-1];
-				i = j;
-				j += i;
-			}
-			else break;
-		}
-
-		Index[i-1] = IndexTemp;
-	}
-}
-*/

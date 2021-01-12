@@ -1,7 +1,7 @@
 #include "initialisation.h"
 #include "USB.h"
 #include "DigitalDelay.h"
-#include "filter.h"
+#include "Filter.h"
 
 extern USB usb;
 extern digitalDelay DigitalDelay;

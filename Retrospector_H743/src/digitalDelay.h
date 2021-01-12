@@ -1,8 +1,8 @@
 #pragma once
 
 #include "initialisation.h"
-#include "filter.h"
 #include <map>
+#include "Filter.h"
 
 
 extern uint16_t adcZeroOffset[2];

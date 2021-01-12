@@ -2,8 +2,8 @@
 #include "digitalDelay.h"
 #include "USB.h"
 #include "CDCHandler.h"
+#include "Filter.h"
 #include "sdram.h"
-#include "filter.h"
 
 /* TODO
  * Options for filter to operate in LP, HP and Both mode
@@ -61,7 +61,7 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 
 USB usb;
 digitalDelay DigitalDelay;
-filter Filter;
+Filter filter;
 
 
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
@@ -91,11 +91,11 @@ int main(void) {
 	InitIO();
 
 	// Initialise filter
-	Filter.FIRFilterWindow(4.0);
+	filter.FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];
 	dampedTone = currentTone;
-	Filter.InitFIRFilter(currentTone);
-	Filter.InitIIRFilter(currentTone);
+	filter.InitFIRFilter(currentTone);
+	filter.InitIIRFilter(currentTone);
 
 	usb.InitUSB();
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
@@ -143,10 +143,10 @@ int main(void) {
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;
 			currentTone = dampedTone;
-			if (Filter.filterType == IIR) {
-				Filter.InitIIRFilter(currentTone);
+			if (filter.filterType == IIR) {
+				filter.InitIIRFilter(currentTone);
 			} else {
-				Filter.InitFIRFilter(currentTone);
+				filter.InitFIRFilter(currentTone);
 			}
 			calculatingFilter = false;
 		}

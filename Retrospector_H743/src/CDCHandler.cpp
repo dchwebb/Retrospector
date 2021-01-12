@@ -42,9 +42,9 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
 
-		if (Filter.filterType == IIR) {
+		if (filter.filterType == IIR) {
 			usb.SendString(std::string("FIR Filter Activated\n").c_str());
-			Filter.filterType = FIR;
+			filter.filterType = FIR;
 			currentTone = 0;
 		}
 
@@ -54,24 +54,24 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Activate IIR
 
-		if (Filter.filterType == FIR) {
-			Filter.filterType = IIR;
+		if (filter.filterType == FIR) {
+			filter.filterType = IIR;
 			currentTone = 0;			// Force reset
 			usb.SendString("IIR Filter Activated\n");
 		}
-
+/*
 		// Output coefficients
 		for (int i = 0; i < Filter.IIRCoeff[Filter.activeFilter].NumSections; ++i) {
 			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b2[i]).append("\n").c_str());
 			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a2[i]).append("\n").c_str());
 		}
-
+*/
 	} else if (ComCmd.compare("iirsort\n") == 0) {		// IIR Sort test
 		suspendI2S();
 
 		debugSort = true;
 		for (int tone = 0; tone < 65536; tone += 1000) {
-			Filter.InitIIRFilter(tone);
+//			Filter.InitIIRFilter(tone);
 		}
 
 		resumeI2S();
@@ -83,11 +83,11 @@ bool CDCCommand(const std::string ComCmd) {
 		float out;
 		int i;
 
-		out = Filter.IIRFilter(500, left);		// Impulse
+		//out = Filter.IIRFilter(500, left);		// Impulse
 		usb.SendString(std::to_string(out).append("\n").c_str());
 
 		for (i = 1; i < 500; ++i) {
-			out = Filter.IIRFilter(0, left);
+			//out = Filter.IIRFilter(0, left);
 			usb.SendString(std::to_string(out).append("\n").c_str());
 		}
 
@@ -95,7 +95,7 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("iirs\n") == 0) {		// IIR Filter test on square wave
 		suspendI2S();
-
+		/*
 		float out;
 		int i;
 
@@ -120,7 +120,7 @@ bool CDCCommand(const std::string ComCmd) {
 
 			usb.SendString(std::to_string(out).append("\n").c_str());
 		}
-
+*/
 		resumeI2S();
 
 	} else if (ComCmd.compare("dl\n") == 0 || ComCmd.compare("dr\n") == 0) {		// Dump sample buffer for L or R output
@@ -145,17 +145,17 @@ bool CDCCommand(const std::string ComCmd) {
 
 	} else if (ComCmd.compare("lp\n") == 0) {		// Activate filter
 
-		Filter.filterControl = LP;
+		filter.filterControl = LP;
 		usb.SendString(std::string("Low Pass\n").c_str());
 
 	} else if (ComCmd.compare("hp\n") == 0) {		// Activate filter
 
-		Filter.filterControl = HP;
+		filter.filterControl = HP;
 		usb.SendString(std::string("High Pass\n").c_str());
 
 	} else if (ComCmd.compare("both\n") == 0) {		// Activate filter
 
-		Filter.filterControl = Both;
+		filter.filterControl = Both;
 		usb.SendString(std::string("Low Pass to High Pass\n").c_str());
 
 	} else if (ComCmd.compare("w\n") == 0) {		// Activate filter window
@@ -177,7 +177,7 @@ bool CDCCommand(const std::string ComCmd) {
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			sprintf(buf, "%0.10f", firCoeff[Filter.activeFilter][f]);		// 10dp
+			sprintf(buf, "%0.10f", firCoeff[filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\n").c_str());
 		}
