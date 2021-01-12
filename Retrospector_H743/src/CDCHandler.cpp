@@ -66,15 +66,6 @@ bool CDCCommand(const std::string ComCmd) {
 			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a2[i]).append("\n").c_str());
 		}
 */
-	} else if (ComCmd.compare("iirsort\n") == 0) {		// IIR Sort test
-		suspendI2S();
-
-		debugSort = true;
-		for (int tone = 0; tone < 65536; tone += 1000) {
-//			Filter.InitIIRFilter(tone);
-		}
-
-		resumeI2S();
 
 
 	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter test
@@ -177,7 +168,7 @@ bool CDCCommand(const std::string ComCmd) {
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			sprintf(buf, "%0.10f", firCoeff[filter.activeFilter][f]);		// 10dp
+			sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\n").c_str());
 		}
@@ -191,7 +182,7 @@ bool CDCCommand(const std::string ComCmd) {
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			sprintf(buf, "%0.10f", winCoeff[f]);		// 10dp
+			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\n").c_str());
 		}

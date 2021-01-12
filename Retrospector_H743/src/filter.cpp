@@ -1,17 +1,6 @@
 #include "Filter.h"
 
-/*
- * CalcIIRFilterCoeff
- * 	CalcLowPassProtoCoeff
- *  	ButterworthPoly
- *  	GetFilterCoeff
- *  		SortRootsByZeta
- *  			HeapIndexSort
- */
-
 // FIR data
-float firCoeff[2][FIRTAPS];
-float winCoeff[FIRTAPS];
 int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 
 // Debug
@@ -20,7 +9,6 @@ bool activateFilter = true;
 bool activateWindow = true;
 float currentCutoff;
 
-bool debugSort = false;
 
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
@@ -40,7 +28,6 @@ void Filter::InitFIRFilter(uint16_t tone)
 	}
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other
-	//uint8_t inactiveFilter = activeFilter;
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
 	if (passType == LowPass) {
@@ -101,21 +88,21 @@ float Filter::Bessel(float x)
 
 void Filter::InitIIRFilter(uint16_t tone)
 {
-	iirdouble cutoff;
+	iirdouble_t cutoff;
 
-	if (filterControl == LP) {			// Want a sweep from 0.03 to 0.999 with most travel at low end
+	if (filterControl == LP) {				// Want a sweep from 0.03 to 0.999 with most travel at low end
 		passType = LowPass;
-		cutoff = std::min(0.03 + pow((iirdouble)tone / 65536.0, 2.0), 0.999);
+		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), 0.999);
 	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
 		passType = HighPass;
-		cutoff = 0.001 + pow(((iirdouble)tone / 100000.0), 3.0);
+		cutoff = 0.001 + pow(((iirdouble_t)tone / 100000.0), 3.0);
 	} else {
 		if (tone <= filterPotCentre) {		// Low Pass
 			passType = LowPass;
-			cutoff = std::min(pow(((iirdouble)tone + 15000) / 32000.0, 2.0), 0.999);
+			cutoff = std::min(pow(((iirdouble_t)tone + 15000) / 32000.0, 2.0), 0.999);
 		} else if (tone > filterPotCentre) {
 			passType = HighPass;
-			cutoff = 0.001 + pow((((iirdouble)tone - filterPotCentre) / 50000.0), 3.0);
+			cutoff = 0.001 + pow((((iirdouble_t)tone - filterPotCentre) / 50000.0), 3.0);
 		}
 	}
 
@@ -124,7 +111,7 @@ void Filter::InitIIRFilter(uint16_t tone)
 	// store reference to active filter (LP or HP and by activeFilter)
 	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[inactiveFilter] : iirHPFilter[inactiveFilter];
 
-	currentFilter.CalcIIRFilterCoeff(cutoff, passType);
+	currentFilter.CalcCoeff(cutoff, passType);
 
 	activeFilter = inactiveFilter;
 	currentCutoff = cutoff;
@@ -132,53 +119,62 @@ void Filter::InitIIRFilter(uint16_t tone)
 
 
 //	Take a new sample and return filtered value
-iirdouble Filter::CalcIIRFilter(iirdouble sample, channel c)
+iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
 	// store reference to active filter (LP or HP and by activeFilter)
 	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[activeFilter] : iirHPFilter[activeFilter];
+	IIRRegisters& currentRegs = iirReg[c];			// necessary as we use one filter for two sets of data (left and right channel)
 
-	iirdouble y = SectCalc(0, sample, c, currentFilter);
-	for (uint8_t k = 1; k < currentFilter.iirCoeff.NumSections; k++) {
-		y = SectCalc(k, y, c, currentFilter);
+	return currentFilter.FilterSample(sample, currentRegs);
+}
+
+
+//	Take a new sample and return filtered value
+iirdouble_t IIRFilter::FilterSample(iirdouble_t sample, IIRRegisters& registers)
+{
+	iirdouble_t y = CalcSection(0, sample, registers);
+	for (uint8_t k = 1; k < numSections; k++) {
+		y = CalcSection(k, y, registers);
 	}
 	return y;
 }
 
-
 // Calculates each stage of a multi-section IIR filter (eg 8 pole is constructed from four 2-pole filters)
-iirdouble Filter::SectCalc(int k, iirdouble x, channel c, IIRFilter& currentFilter)
+iirdouble_t IIRFilter::CalcSection(int k, iirdouble_t x, IIRRegisters& registers)
 {
-	iirdouble y, CenterTap;
-	static iirdouble RegX1[2][MAX_POLES], RegX2[2][MAX_POLES], RegY1[2][MAX_POLES], RegY2[2][MAX_POLES];
-	static iirdouble MaxRegVal = 1.0E-12;
+	iirdouble_t y, CenterTap;
+	static iirdouble_t MaxRegVal = 1.0E-12;
 
 	// Zero the registers on an overflow condition
-	if (MaxRegVal > 1.0E5) {
+	if (MaxRegVal > 1.0E6) {
 
 		MaxRegVal = 1.0E-12;
-		for (uint8_t i = 0; i < MAX_POLES; i++) {
-			RegX1[c][i] = 0.0;
-			RegX2[c][i] = 0.0;
-			RegY1[c][i] = 0.0;
-			RegY2[c][i] = 0.0;
+		for (uint8_t i = 0; i < MAX_SECTIONS; i++) {
+			registers.X1[i] = 0.0;
+			registers.X2[i] = 0.0;
+			registers.Y1[i] = 0.0;
+			registers.Y2[i] = 0.0;
 		}
 	}
 
-	CenterTap = x * currentFilter.iirCoeff.b0[k] + currentFilter.iirCoeff.b1[k] * RegX1[c][k] + currentFilter.iirCoeff.b2[k] * RegX2[c][k];
-	y = currentFilter.iirCoeff.a0[k] * CenterTap - currentFilter.iirCoeff.a1[k] * RegY1[c][k] - currentFilter.iirCoeff.a2[k] * RegY2[c][k];
+	CenterTap = x * iirCoeff.b0[k] + iirCoeff.b1[k] * registers.X1[k] + iirCoeff.b2[k] * registers.X2[k];
+	y = iirCoeff.a0[k] * CenterTap - iirCoeff.a1[k] * registers.Y1[k] - iirCoeff.a2[k] * registers.Y2[k];
 
-	RegX2[c][k] = RegX1[c][k];
-	RegX1[c][k] = x;
-	RegY2[c][k] = RegY1[c][k];
-	RegY1[c][k] = y;
+	registers.X2[k] = registers.X1[k];
+	registers.X1[k] = x;
+	registers.Y2[k] = registers.Y1[k];
+	registers.Y1[k] = y;
 
-	// MaxRegVal is used to prevent overflow.  Overflow seldom occurs, but will
-	// if the filter has faulty coefficients. MaxRegVal is usually less than 100.0
-	if (std::abs(CenterTap) > MaxRegVal)
+	// MaxRegVal is used to prevent overflow. Note that CenterTap regularly exceeds 100k but y maxes out at about 65k
+	if (std::abs(CenterTap) > MaxRegVal) {
 		MaxRegVal = std::abs(CenterTap);
-	if (std::abs(y) > MaxRegVal)
+	}
+	if (std::abs(y) > MaxRegVal) {
 		MaxRegVal = std::abs(y);
-	return(y);
+	}
+
+
+	return y;
 }
 
 
@@ -188,29 +184,29 @@ iirdouble Filter::SectCalc(int k, iirdouble x, channel c, IIRFilter& currentFilt
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
  */
-void IIRFilter::CalcIIRFilterCoeff(iirdouble omega, PassType passType)
+void IIRFilter::CalcCoeff(iirdouble_t omega, PassType passType)
 {
 	int j;
 
-	iirdouble A, B, C, D, E, F, T, Arg;
+	iirdouble_t A, B, C, D, E, F, T, arg;
 
 	// Init the IIR structure.
-	for (j = 0; j < MAX_POLES; j++)	{
+	for (j = 0; j < MAX_SECTIONS; j++)	{
 		iirCoeff.a0[j] = 0.0;  iirCoeff.b0[j] = 0.0;
 		iirCoeff.a1[j] = 0.0;  iirCoeff.b1[j] = 0.0;
 		iirCoeff.a2[j] = 0.0;  iirCoeff.b2[j] = 0.0;
 	}
 
 	// Set the number of IIR filter sections we will be generating.
-	iirCoeff.NumSections = (numPoles + 1) / 2;
+	numSections = (numPoles + 1) / 2;
 
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
 	T = 2.0 * tan(omega * M_PI / 2);
 
 	// Calc the IIR coefficients. SPlaneCoeff.NumSections is the number of 1st and 2nd order s plane factors.
-	for (j = 0; j < iirProto.NumSections; j++) {
-		A = iirProto.Coeff.D2[j];			// We use A - F to make the code easier to read.
+	for (j = 0; j < numSections; j++) {
+		A = iirProto.Coeff.D2[j];			// Use A - F to make the code easier to read.
 		B = iirProto.Coeff.D1[j];
 		C = iirProto.Coeff.D0[j];
 		D = iirProto.Coeff.N2[j];
@@ -220,48 +216,48 @@ void IIRFilter::CalcIIRFilterCoeff(iirdouble omega, PassType passType)
 		// b's are the numerator  a's are the denominator
 		if (passType == LowPass) {
 			if (A == 0.0 && D == 0.0) {					// 1 pole case
-				Arg = (2.0 * B + C * T);
+				arg = (2.0 * B + C * T);
 				iirCoeff.a2[j] = 0.0;
-				iirCoeff.a1[j] = (-2.0 * B + C * T) / Arg;
+				iirCoeff.a1[j] = (-2.0 * B + C * T) / arg;
 				iirCoeff.a0[j] = 1.0;
 
 				iirCoeff.b2[j] = 0.0;
-				iirCoeff.b1[j] = (-2.0 * E + F * T) / Arg * C/F;
-				iirCoeff.b0[j] = ( 2.0 * E + F * T) / Arg * C/F;
+				iirCoeff.b1[j] = (-2.0 * E + F * T) / arg * C/F;
+				iirCoeff.b0[j] = ( 2.0 * E + F * T) / arg * C/F;
 			} else {									// 2 poles
 
-				Arg = (4.0 * A + 2.0 * B * T + C * T * T);
-				iirCoeff.a2[j] = (4.0 * A - 2.0 * B * T + C * T * T) / Arg;
-				iirCoeff.a1[j] = (2.0 * C * T * T - 8.0 * A) / Arg;
+				arg = (4.0 * A + 2.0 * B * T + C * T * T);
+				iirCoeff.a2[j] = (4.0 * A - 2.0 * B * T + C * T * T) / arg;
+				iirCoeff.a1[j] = (2.0 * C * T * T - 8.0 * A) / arg;
 				iirCoeff.a0[j] = 1.0;
 
-				// With all pole filters, our LPF numerator is (z+1)^2, so all our Z Plane zeros are at -1
-				iirCoeff.b2[j] = (4.0 * D - 2.0 * E * T + F * T * T) / Arg * C/F;
-				iirCoeff.b1[j] = (2.0 * F * T * T - 8.0 * D) / Arg * C/F;
-				iirCoeff.b0[j] = (4*D + F * T * T + 2.0 * E * T) / Arg * C/F;
+				// With all pole filters, LPF numerator is (z+1)^2, so all Z Plane zeros are at -1
+				iirCoeff.b2[j] = (4.0 * D - 2.0 * E * T + F * T * T) / arg * C/F;
+				iirCoeff.b1[j] = (2.0 * F * T * T - 8.0 * D) / arg * C/F;
+				iirCoeff.b0[j] = (4*D + F * T * T + 2.0 * E * T) / arg * C/F;
 			}
 		}
 
-		if (passType == HighPass) { // High Pass
-			if (A == 0.0 && D == 0.0) { // 1 pole
-				Arg = 2.0 * C + B * T;
+		if (passType == HighPass) {						// High Pass
+			if (A == 0.0 && D == 0.0) {					// 1 pole
+				arg = 2.0 * C + B * T;
 				iirCoeff.a2[j] = 0.0;
-				iirCoeff.a1[j] = (B * T - 2.0 * C) / Arg;
+				iirCoeff.a1[j] = (B * T - 2.0 * C) / arg;
 				iirCoeff.a0[j] = 1.0;
 
 				iirCoeff.b2[j] = 0.0;
-				iirCoeff.b1[j] = (E * T - 2.0 * F) / Arg * C/F;
-				iirCoeff.b0[j] = (E * T + 2.0 * F) / Arg * C/F;
-			} else {  // 2 poles
-				Arg = A * T * T + 4.0 * C + 2.0 * B * T;
-				iirCoeff.a2[j] = (A * T * T + 4.0 * C - 2.0 * B * T) / Arg;
-				iirCoeff.a1[j] = (2.0 * A * T * T - 8.0 * C) / Arg;
+				iirCoeff.b1[j] = (E * T - 2.0 * F) / arg * C/F;
+				iirCoeff.b0[j] = (E * T + 2.0 * F) / arg * C/F;
+			} else {									// 2 poles
+				arg = A * T * T + 4.0 * C + 2.0 * B * T;
+				iirCoeff.a2[j] = (A * T * T + 4.0 * C - 2.0 * B * T) / arg;
+				iirCoeff.a1[j] = (2.0 * A * T * T - 8.0 * C) / arg;
 				iirCoeff.a0[j] = 1.0;
 
 				// With all pole filters, our HPF numerator is (z-1)^2, so all our Z Plane zeros are at 1
-				iirCoeff.b2[j] = (D * T * T - 2.0 * E * T + 4.0 * F) / Arg * C/F;
-				iirCoeff.b1[j] = (2.0 * D * T * T - 8.0 * F) / Arg * C/F;
-				iirCoeff.b0[j] = (D * T * T + 4.0 * F + 2.0 * E * T) / Arg * C/F;
+				iirCoeff.b2[j] = (D * T * T - 2.0 * E * T + 4.0 * F) / arg * C/F;
+				iirCoeff.b1[j] = (2.0 * D * T * T - 8.0 * F) / arg * C/F;
+				iirCoeff.b0[j] = (D * T * T + 4.0 * F + 2.0 * E * T) / arg * C/F;
 			}
 		}
 	}
@@ -271,7 +267,7 @@ void IIRFilter::CalcIIRFilterCoeff(iirdouble omega, PassType passType)
 
 void IIRPrototype::CalcLowPassProtoCoeff()
 {
-	std::array<std::complex<double>, MAX_POLES> Poles;
+	std::array<complex_t, MAX_POLES> Poles;
 
 	// Init the S Plane Coeff. H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
 	for (uint8_t j = 0; j < MAX_POLES; j++) {
@@ -284,49 +280,48 @@ void IIRPrototype::CalcLowPassProtoCoeff()
 	}
 
 	// A one pole filter is simply 1/(s+1)
-	if (NumPoles == 1) {
+	if (numPoles == 1) {
 		Coeff.D1[0] = 1.0;
 	} else {				// Always use Butterworth
-		Poles[0] =  std::complex<double>(0.0, 0.0) ;
+		Poles[0] =  complex_t(0.0, 0.0) ;
 		ButterworthPoly(Poles);
 		GetFilterCoeff(Poles);
 	}
 
-	NumSections = NumPoles;
+	numSections = numPoles;
 }
 
 
 // Calculate the roots for a Butterworth filter: fill the array Roots[]
-//void iirPrototype::ButterworthPoly(std::complex<double> *Roots)
-void IIRPrototype::ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots)
+void IIRPrototype::ButterworthPoly(std::array<complex_t, MAX_POLES> &Roots)
 {
 	int n = 0;
-	iirdouble theta;
+	iirdouble_t theta;
 
-	for (uint8_t j = 0; j < NumPoles / 2; j++) {
-		theta = M_PI * (iirdouble)(2 * j + NumPoles + 1) / (iirdouble)(2 * NumPoles);
-		Roots[n++] = std::complex<double>(cos(theta), sin(theta));
-		Roots[n++] = std::complex<double>(cos(theta), -sin(theta));
+	for (uint8_t j = 0; j < numPoles / 2; j++) {
+		theta = M_PI * (iirdouble_t)(2 * j + numPoles + 1) / (iirdouble_t)(2 * numPoles);
+		Roots[n++] = complex_t(cos(theta), sin(theta));
+		Roots[n++] = complex_t(cos(theta), -sin(theta));
 	}
-	if (NumPoles % 2 == 1)
-		Roots[n++] = std::complex<double>(-1.0, 0.0);		// The real root for odd pole counts
+	if (numPoles % 2 == 1)
+		Roots[n++] = complex_t(-1.0, 0.0);		// The real root for odd pole counts
 
 }
 
 
 // Create the 2nd order polynomials with coefficients A2, A1, A0.
-void IIRPrototype::GetFilterCoeff(std::array<std::complex<double>, MAX_POLES> &Roots)
+void IIRPrototype::GetFilterCoeff(std::array<complex_t, MAX_POLES> &Roots)
 {
 	int polyCount, j;
 
 	// Sort the roots with the most negative real part first
-	std::sort(Roots.begin(), Roots.end(), [](const std::complex<double> &lhs, const std::complex<double> &rhs) {
+	std::sort(Roots.begin(), Roots.end(), [](const complex_t &lhs, const complex_t &rhs) {
 		return lhs.real() < rhs.real();
 	});
 
 	// This forms the 2nd order coefficients from the root value. Ignore roots in the Right Hand Plane.
 	polyCount = 0;
-	for (j = 0; j < NumPoles; j++) {
+	for (j = 0; j < numPoles; j++) {
 		if (Roots[j].real() > 0.0)
 			continue;							// Right Hand Plane
 		if (Roots[j].real() == 0.0 && Roots[j].imag() == 0.0)

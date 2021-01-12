@@ -36,7 +36,7 @@ void digitalDelay::calcSample(channel LR) {
 				int16_t pos = filterBuffPos[LR];
 				for (uint16_t i = 0; i < FIRTAPS; ++i) {
 					if (++pos == FIRTAPS) pos = 0;
-					outputSample += firCoeff[filter.activeFilter][i] * filterBuffer[LR][pos];
+					outputSample += filter.firCoeff[filter.activeFilter][i] * filterBuffer[LR][pos];
 				}
 				nextSample = static_cast<int32_t>(outputSample);
 			}

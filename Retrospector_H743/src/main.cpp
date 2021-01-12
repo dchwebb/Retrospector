@@ -78,8 +78,6 @@ extern "C" {
 
 int main(void) {
 
-
-
 	SystemClock_Config();					// Configure the clock and PLL
 	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
