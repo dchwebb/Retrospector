@@ -6,15 +6,16 @@
 #include "filter.h"
 
 /* TODO
-
+ * Options for filter to operate in LP, HP and Both mode
+ * Ping pong
  * IIR Filters for ADC smoothing
  * IIR prototype code called every time coefficients recalculated
  * CV control over cutoff
- * Options for filter to operate in LP, HP and Both mode
  * Explore LED options for filter control
  * implement ADC CV controls
  * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
+ * Accuracy of tempo (add negative jitter?)
  *
  * Electrical
  * CV control for filter?

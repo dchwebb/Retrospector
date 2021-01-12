@@ -83,10 +83,10 @@ bool CDCCommand(const std::string ComCmd) {
 		float out;
 		int i;
 
-		out = Filter.IIRFilter(IIRSAMPLECOUNT, left);		// Impulse
+		out = Filter.IIRFilter(500, left);		// Impulse
 		usb.SendString(std::to_string(out).append("\n").c_str());
 
-		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
+		for (i = 1; i < 500; ++i) {
 			out = Filter.IIRFilter(0, left);
 			usb.SendString(std::to_string(out).append("\n").c_str());
 		}
@@ -99,7 +99,7 @@ bool CDCCommand(const std::string ComCmd) {
 		float out;
 		int i;
 
-		for (i = 1; i < IIRSAMPLECOUNT; ++i) {
+		for (i = 1; i < 1000; ++i) {
 			if (i < 50) {
 				out = Filter.IIRFilter(0, left);
 			} else if (i < 100) {
