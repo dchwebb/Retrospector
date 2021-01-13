@@ -15,6 +15,13 @@ void suspendI2S() {
 
 void resumeI2S() {
 	sampleClock = true;
+
+	// to allow resume from debugging ensure suspended then clear buffer underrun flag
+	SPI2->CR1 |= SPI_CR1_CSUSP;
+	while ((SPI2->SR & SPI_SR_SUSP) == 0);
+	SPI2->IFCR |= SPI_IFCR_UDRC;
+
+	// Clear suspend state and resume
 	SPI2->IFCR |= SPI_IFCR_SUSPC;
 	while ((SPI2->SR & SPI_SR_SUSP) != 0);
 	SPI2->CR1 |= SPI_CR1_CSTART;
@@ -23,21 +30,21 @@ void resumeI2S() {
 bool CDCCommand(const std::string ComCmd) {
 
 	if (ComCmd.compare("help\n") == 0) {
-		usb.SendString("Mountjoy Retrospector - supported commands:\n\n"
-				"help      -  Shows this information\n"
-				"dl        -  Dump samples for left channel\n"
-				"dr        -  Dump samples for right channel\n"
-				"f         -  Filter on/off\n"
-				"lp        -  Filter is low pass\n"
-				"hp        -  Filter is high pass\n"
-				"both      -  Filter sweeps from low pass to high pass\n"
-				"fd        -  Dump filter coefficients\n"
-				"fdl       -  Dump left filter buffer\n"
-				"wd        -  Dump filter window coefficients\n"
-				"imp       -  IIR impulse response\n"
-				"iirs      -  IIR square wave test\n"
-				"iir       -  Activate IIR filter\n"
-				"fir       -  Activate FIR filter\n"
+		usb.SendString("Mountjoy Retrospector - supported commands:\n\n\r"
+				"help      -  Shows this information\n\r"
+				"dl        -  Dump samples for left channel\n\r"
+				"dr        -  Dump samples for right channel\n\r"
+				"f         -  Filter on/off\n\r"
+				"lp        -  Filter is low pass\n\r"
+				"hp        -  Filter is high pass\n\r"
+				"both      -  Filter sweeps from low pass to high pass\n\r"
+				"fd        -  Dump filter coefficients\n\r"
+				"fdl       -  Dump left filter buffer\n\r"
+				"wd        -  Dump filter window coefficients\n\r"
+				"imp       -  IIR impulse response\n\r"
+				"iirs      -  IIR square wave test\n\r"
+				"iir       -  Activate IIR filter\n\r"
+				"fir       -  Activate FIR filter\n\r"
 		);
 
 	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
