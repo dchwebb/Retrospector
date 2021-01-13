@@ -10,6 +10,8 @@
 extern USB usb;
 
 #define FIRTAPS 101
+#define MAX_POLES 8		// For declaring IIR arrays
+#define MAX_SECTIONS (MAX_POLES + 1) / 2
 #define M_PI           3.14159265358979323846
 
 extern bool activateFilter, activateWindow;
@@ -26,8 +28,7 @@ enum FilterType {FIR, IIR};
 typedef double iirdouble_t;			// to allow easy testing with floats or doubles
 typedef std::complex<double> complex_t;
 
-#define MAX_POLES 8
-#define MAX_SECTIONS (MAX_POLES + 1) / 2
+
 
 struct IIRCoeff {
 	iirdouble_t a0[MAX_SECTIONS];
@@ -73,40 +74,48 @@ public:
 };
 
 
-struct IIRFilter
-{
+struct IIRFilter {
+public:
 	uint8_t numPoles = 1;
 	uint8_t numSections;
+	PassType passType;
 	IIRPrototype iirProto;
 	IIRCoeff iirCoeff;
 
-	IIRFilter(uint8_t poles) {
+	// constructors
+	IIRFilter(uint8_t poles, PassType pass) {
 		iirProto = IIRPrototype(poles);
 		numPoles = poles;
+		passType = pass;
 	}
 	IIRFilter() {};
 
 	void CalcCoeff(iirdouble_t OmegaC, PassType passType);
 	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
+
+private:
 	iirdouble_t CalcSection(int k, iirdouble_t x, IIRRegisters& registers);
 };
 
-struct Filter
-{
+
+struct Filter {
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
 	FilterType filterType = IIR;
 	PassType passType;
-	FilterControl filterControl = LP;		// Tone control sweeps from LP to HP (or choose just LP or HP)
+	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 
+	// FIR Settings
 	float firCoeff[2][FIRTAPS];
 	float winCoeff[FIRTAPS];
 
+	// IIR settings
 	const uint8_t polesLP = 8;
 	const uint8_t polesHP = 4;
-	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP), IIRFilter(polesLP)};			// Two filters for active and inactive
-	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP), IIRFilter(polesHP)};
-	IIRRegisters iirReg[2];						// Two channels (left and right)
+	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP, LowPass), IIRFilter(polesLP, LowPass)};			// Two filters for active and inactive
+	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP, HighPass), IIRFilter(polesHP, HighPass)};
+	IIRRegisters iirLPReg[2];				// Two channels (left and right)
+	IIRRegisters iirHPReg[2];				// STore separate shift registers for high and low pass to allow smooth transition
 
 	void InitFIRFilter(uint16_t tone);
 	void InitIIRFilter(uint16_t tone);
@@ -115,7 +124,6 @@ struct Filter
 	void FIRFilterWindow(float beta);
 	float Bessel(float x);
 };
-
 
 
 extern Filter filter;

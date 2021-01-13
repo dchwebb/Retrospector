@@ -9,7 +9,6 @@
  * Options for filter to operate in LP, HP and Both mode
  * Ping pong
  * IIR Filters for ADC smoothing
- * IIR prototype code called every time coefficients recalculated
  * CV control over cutoff
  * Explore LED options for filter control
  * implement ADC CV controls
@@ -53,7 +52,6 @@ uint16_t toneHysteresis = 200;
 
 float DACLevel;							// Wet/Dry Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
-//bool ledL, ledR;
 
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
@@ -63,7 +61,7 @@ USB usb;
 digitalDelay DigitalDelay;
 Filter filter;
 
-
+// Place sample buffers in external SDRAM
 int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
@@ -114,7 +112,7 @@ int main(void) {
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
-			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
+ 			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
 				newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
 				if (offsetCounter[lr] == 3000000) {
 					adcZeroOffset[lr] = newOffset[lr];

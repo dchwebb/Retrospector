@@ -92,17 +92,18 @@ void Filter::InitIIRFilter(uint16_t tone)
 
 	if (filterControl == LP) {				// Want a sweep from 0.03 to 0.999 with most travel at low end
 		passType = LowPass;
-		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), 0.999);
+		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), 0.99);
 	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
+
 		passType = HighPass;
 		cutoff = 0.001 + pow(((iirdouble_t)tone / 100000.0), 3.0);
 	} else {
 		if (tone <= filterPotCentre) {		// Low Pass
 			passType = LowPass;
-			cutoff = std::min(pow(((iirdouble_t)tone + 15000) / 32000.0, 2.0), 0.999);
+			cutoff = std::min(pow(((iirdouble_t)tone + 5000) / 28000.0, 2.0), 0.99);
 		} else if (tone > filterPotCentre) {
 			passType = HighPass;
-			cutoff = 0.001 + pow((((iirdouble_t)tone - filterPotCentre) / 50000.0), 3.0);
+			cutoff = 0.001 + pow((((iirdouble_t)tone - filterPotCentre) / 70000.0), 3.0);
 		}
 	}
 
@@ -121,11 +122,11 @@ void Filter::InitIIRFilter(uint16_t tone)
 //	Take a new sample and return filtered value
 iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
-	// store reference to active filter (LP or HP and by activeFilter)
-	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[activeFilter] : iirHPFilter[activeFilter];
-	IIRRegisters& currentRegs = iirReg[c];			// necessary as we use one filter for two sets of data (left and right channel)
+	// store reference to active filter and shift register according to LP or HP; activeFilter; left or right channel
+	IIRFilter& filter = (passType == LowPass) ? iirLPFilter[activeFilter] : iirHPFilter[activeFilter];
+	IIRRegisters& regs = (passType == LowPass) ? iirLPReg[c] : iirHPReg[c];
 
-	return currentFilter.FilterSample(sample, currentRegs);
+	return filter.FilterSample(sample, regs);
 }
 
 
@@ -172,7 +173,6 @@ iirdouble_t IIRFilter::CalcSection(int k, iirdouble_t x, IIRRegisters& registers
 	if (std::abs(y) > MaxRegVal) {
 		MaxRegVal = std::abs(y);
 	}
-
 
 	return y;
 }
