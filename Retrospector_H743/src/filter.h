@@ -1,3 +1,7 @@
+/*
+ * Much of the filter code gratefully taken from Iowa Hills Software
+ * http://www.iowahills.com/
+ */
 #pragma once
 
 #include "initialisation.h"
@@ -22,7 +26,7 @@ extern bool calculatingFilter;				// For debugging
 extern bool debugSort;
 
 enum FilterControl {LP, HP, Both};
-enum PassType {FilterOff, LowPass, HighPass};
+enum PassType {FilterOff, LowPass, HighPass, BandPass};
 enum FilterType {FIR, IIR};
 
 typedef double iirdouble_t;			// to allow easy testing with floats or doubles
@@ -79,6 +83,7 @@ public:
 	uint8_t numPoles = 1;
 	uint8_t numSections;
 	PassType passType;
+	iirdouble_t cutoffFreq;
 	IIRPrototype iirProto;
 	IIRCoeff iirCoeff;
 
@@ -90,7 +95,7 @@ public:
 	}
 	IIRFilter() {};
 
-	void CalcCoeff(iirdouble_t OmegaC, PassType passType);
+	void CalcCoeff(iirdouble_t omega);
 	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
 
 private:
@@ -104,13 +109,15 @@ struct Filter {
 	PassType passType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
+	uint16_t crossfade = 0;
+	const uint16_t crossfadeLength = 200;
 
 	// FIR Settings
 	float firCoeff[2][FIRTAPS];
 	float winCoeff[FIRTAPS];
 
 	// IIR settings
-	const uint8_t polesLP = 8;
+	const uint8_t polesLP = 4;
 	const uint8_t polesHP = 4;
 	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP, LowPass), IIRFilter(polesLP, LowPass)};			// Two filters for active and inactive
 	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP, HighPass), IIRFilter(polesHP, HighPass)};

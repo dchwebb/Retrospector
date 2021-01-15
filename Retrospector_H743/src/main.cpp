@@ -6,10 +6,10 @@
 #include "sdram.h"
 
 /* TODO
+ * CV control over cutoff
  * Options for filter to operate in LP, HP and Both mode
  * Ping pong
  * IIR Filters for ADC smoothing
- * CV control over cutoff
  * Explore LED options for filter control
  * implement ADC CV controls
  * Increase tempo Multiplier times for Long Delay
@@ -134,7 +134,7 @@ int main(void) {
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;		// Dry level
 
 		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);
+		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Delay_CV_L]) >> 5, 0L);
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;

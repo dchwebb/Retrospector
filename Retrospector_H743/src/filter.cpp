@@ -89,32 +89,56 @@ float Filter::Bessel(float x)
 void Filter::InitIIRFilter(uint16_t tone)
 {
 	iirdouble_t cutoff;
-
-	if (filterControl == LP) {				// Want a sweep from 0.03 to 0.999 with most travel at low end
-		passType = LowPass;
-		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), 0.99);
-	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
-
-		passType = HighPass;
-		cutoff = 0.001 + pow(((iirdouble_t)tone / 100000.0), 3.0);
-	} else {
-		if (tone <= filterPotCentre) {		// Low Pass
-			passType = LowPass;
-			cutoff = std::min(pow(((iirdouble_t)tone + 5000) / 28000.0, 2.0), 0.99);
-		} else if (tone > filterPotCentre) {
-			passType = HighPass;
-			cutoff = 0.001 + pow((((iirdouble_t)tone - filterPotCentre) / 70000.0), 3.0);
-		}
-	}
+	const iirdouble_t LPMax = 0.995;
+	const iirdouble_t HPMin = 0.001;
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
+
+	if (filterControl == LP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
+		passType = LowPass;
+		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), LPMax);
+	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
+
+		passType = HighPass;
+		cutoff = HPMin + pow(((iirdouble_t)tone / 100000.0), 3.0);
+	} else {
+		if (tone <= filterPotCentre - 200 || (tone <= filterPotCentre && passType == LowPass)) {		// Low Pass (with hysteresis)
+
+			if (passType == HighPass) {
+				//GPIOC->ODR &= ~GPIO_ODR_OD12;		// for debugging
+				//GPIOC->ODR |= GPIO_ODR_OD12;
+				crossfade = crossfadeLength;
+			}
+
+			cutoff = std::min(pow(((iirdouble_t)tone + 5000) / 28000.0, 2.0), LPMax);
+
+			iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
+			iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
+			activeFilter = inactiveFilter;
+			passType = LowPass;
+		} else {			//if (tone > filterPotCentre + 200 || (tone > filterPotCentre && passType == HighPass))
+
+			if (passType == LowPass) {
+				//GPIOC->ODR |= GPIO_ODR_OD12;
+				crossfade = crossfadeLength;
+			}
+
+			cutoff = HPMin + pow((((iirdouble_t)tone - filterPotCentre) / 70000.0), 3.0);
+
+			iirLPFilter[activeFilter].CalcCoeff(LPMax);
+			iirHPFilter[inactiveFilter].CalcCoeff(cutoff);
+			activeFilter = inactiveFilter;
+			passType = HighPass;
+
+		}
+	}
+
 	// store reference to active filter (LP or HP and by activeFilter)
-	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[inactiveFilter] : iirHPFilter[inactiveFilter];
+//	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[inactiveFilter] : iirHPFilter[inactiveFilter];
+//	currentFilter.CalcCoeff(cutoff);
 
-	currentFilter.CalcCoeff(cutoff, passType);
-
-	activeFilter = inactiveFilter;
+//	activeFilter = inactiveFilter;
 	currentCutoff = cutoff;
 }
 
@@ -122,11 +146,47 @@ void Filter::InitIIRFilter(uint16_t tone)
 //	Take a new sample and return filtered value
 iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
-	// store reference to active filter and shift register according to LP or HP; activeFilter; left or right channel
-	IIRFilter& filter = (passType == LowPass) ? iirLPFilter[activeFilter] : iirHPFilter[activeFilter];
-	IIRRegisters& regs = (passType == LowPass) ? iirLPReg[c] : iirHPReg[c];
+	// Calculate both High Pass and Low Pass (even when not used) to pre-populate shift registers so that transitions are smooth
+//	if (passType == LowPass) {
+//		iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
+//		return iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
+//	} else {
+//		iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
+//		return iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
+//	}
+	volatile iirdouble_t lpSample = iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
+	volatile iirdouble_t hpSample = iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
 
-	return filter.FilterSample(sample, regs);
+	static volatile PassType pt = LowPass;
+	if (pt != passType) {
+		GPIOC->ODR |= GPIO_ODR_OD12;
+		pt = passType;
+	}
+
+
+	if (passType == LowPass) {
+		if (crossfade > 0) {
+			--crossfade;
+
+			if (crossfade == 0)
+				GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
+
+			return (hpSample * ((iirdouble_t)crossfade / crossfadeLength)) + (lpSample * (1.0 - ((iirdouble_t)crossfade / crossfadeLength)));
+		} else {
+			return lpSample;
+		}
+
+	} else {
+		if (crossfade > 0) {
+			--crossfade;
+			if (crossfade == 0)
+				GPIOC->ODR &= ~GPIO_ODR_OD12;
+
+			return (lpSample * ((iirdouble_t)crossfade / crossfadeLength)) + (hpSample * (1.0 - ((iirdouble_t)crossfade / crossfadeLength)));
+		} else {
+			return hpSample;
+		}
+	}
 }
 
 
@@ -183,12 +243,18 @@ iirdouble_t IIRFilter::CalcSection(int k, iirdouble_t x, IIRRegisters& registers
  Calculate the z-plane coefficients for IIR filters from 2nd order S-plane coefficients
  H(s) = ( Ds^2 + Es + F ) / ( As^2 + Bs + C )
  H(z) = ( b2z^2 + b1z + b0 ) / ( a2z^2 + a1z + a0 )
+ See http://www.iowahills.com/A4IIRBilinearTransform.html
+ function originally CalcIIRFilterCoeff()
  */
-void IIRFilter::CalcCoeff(iirdouble_t omega, PassType passType)
+void IIRFilter::CalcCoeff(iirdouble_t omega)
 {
 	int j;
-
 	iirdouble_t A, B, C, D, E, F, T, arg;
+
+	if (cutoffFreq == omega)		// Avoid recalculating coefficients when already found
+		return;
+	else
+		cutoffFreq = omega;
 
 	// Init the IIR structure.
 	for (j = 0; j < MAX_SECTIONS; j++)	{
@@ -199,6 +265,8 @@ void IIRFilter::CalcCoeff(iirdouble_t omega, PassType passType)
 
 	// Set the number of IIR filter sections we will be generating.
 	numSections = (numPoles + 1) / 2;
+	 if (passType == BandPass)
+		 numSections = numPoles;
 
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
@@ -260,6 +328,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega, PassType passType)
 				iirCoeff.b0[j] = (D * T * T + 4.0 * F + 2.0 * E * T) / arg * C/F;
 			}
 		}
+
 	}
 
 }
@@ -283,7 +352,7 @@ void IIRPrototype::CalcLowPassProtoCoeff()
 	if (numPoles == 1) {
 		Coeff.D1[0] = 1.0;
 	} else {				// Always use Butterworth
-		Poles[0] =  complex_t(0.0, 0.0) ;
+		Poles[0] =  complex_t(0.0, 0.0);
 		ButterworthPoly(Poles);
 		GetFilterCoeff(Poles);
 	}

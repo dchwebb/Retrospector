@@ -66,13 +66,13 @@ bool CDCCommand(const std::string ComCmd) {
 			currentTone = 0;			// Force reset
 			usb.SendString("IIR Filter Activated\n");
 		}
-/*
+
 		// Output coefficients
-		for (int i = 0; i < Filter.IIRCoeff[Filter.activeFilter].NumSections; ++i) {
-			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b0[i]) + " b1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b1[i]) + " b2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].b2[i]).append("\n").c_str());
-			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a0[i]) + " a1=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a1[i]) + " a2=" + std::to_string(Filter.IIRCoeff[Filter.activeFilter].a2[i]).append("\n").c_str());
+		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
+		for (int i = 0; i < activeFilter.numSections; ++i) {
+			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(activeFilter.iirCoeff.b0[i]) + " b1=" + std::to_string(activeFilter.iirCoeff.b1[i]) + " b2=" + std::to_string(activeFilter.iirCoeff.b2[i]).append("\n").c_str());
+			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\n").c_str());
 		}
-*/
 
 
 	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter test
