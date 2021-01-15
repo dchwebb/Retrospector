@@ -13,18 +13,18 @@ float currentCutoff;
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
 {
-	float arg, omegaC;
+	float arg, omega;
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
 	if (tone < filterPotCentre - 1000) {		// Low Pass
 		passType = LowPass;
-		omegaC = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
+		omega = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
 	} else if (tone > filterPotCentre + 1000) {
 		passType = HighPass;
-		omegaC = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
+		omega = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
 	} else {
 		passType = FilterOff;
-		omegaC = 1.0f;
+		omega = 1.0f;
 	}
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other
@@ -33,19 +33,19 @@ void Filter::InitFIRFilter(uint16_t tone)
 	if (passType == LowPass) {
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-			firCoeff[inactiveFilter][j] = omegaC * Sinc(omegaC * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
+			firCoeff[inactiveFilter][j] = omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
 		}
 	} else if (passType == HighPass)  {
 		int8_t sign = 1;
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
 
-			firCoeff[inactiveFilter][j] = sign * omegaC * Sinc(omegaC * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
+			firCoeff[inactiveFilter][j] = sign * omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
 			sign = sign * -1;
 		}
 	}
 	activeFilter = inactiveFilter;
-	currentCutoff = omegaC;
+	currentCutoff = omega;
 }
 
 
@@ -94,99 +94,59 @@ void Filter::InitIIRFilter(uint16_t tone)
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-
-	if (filterControl == LP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
+	if (filterControl == HP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
+		passType = HighPass;
+		cutoff = pow(((iirdouble_t)tone / 100000.0), 3.0) + HPMin;
+		iirLPFilter[inactiveFilter].CalcCoeff(LPMax);
+		iirHPFilter[inactiveFilter].CalcCoeff(cutoff);
+	} else {		// Want a sweep from 0.001 to 0.2-0.3
 		passType = LowPass;
 		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), LPMax);
-	} else if (filterControl == HP) {		// Want a sweep from 0.001 to 0.2-0.3
-
-		passType = HighPass;
-		cutoff = HPMin + pow(((iirdouble_t)tone / 100000.0), 3.0);
-	} else {
-		if (tone <= filterPotCentre - 200 || (tone <= filterPotCentre && passType == LowPass)) {		// Low Pass (with hysteresis)
-
-			if (passType == HighPass) {
-				//GPIOC->ODR &= ~GPIO_ODR_OD12;		// for debugging
-				//GPIOC->ODR |= GPIO_ODR_OD12;
-				crossfade = crossfadeLength;
-			}
-
-			cutoff = std::min(pow(((iirdouble_t)tone + 5000) / 28000.0, 2.0), LPMax);
-
-			iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
-			iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
-			activeFilter = inactiveFilter;
-			passType = LowPass;
-		} else {			//if (tone > filterPotCentre + 200 || (tone > filterPotCentre && passType == HighPass))
-
-			if (passType == LowPass) {
-				//GPIOC->ODR |= GPIO_ODR_OD12;
-				crossfade = crossfadeLength;
-			}
-
-			cutoff = HPMin + pow((((iirdouble_t)tone - filterPotCentre) / 70000.0), 3.0);
-
-			iirLPFilter[activeFilter].CalcCoeff(LPMax);
-			iirHPFilter[inactiveFilter].CalcCoeff(cutoff);
-			activeFilter = inactiveFilter;
-			passType = HighPass;
-
-		}
+		iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
+		iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
 	}
 
-	// store reference to active filter (LP or HP and by activeFilter)
-//	IIRFilter& currentFilter = (passType == LowPass) ? iirLPFilter[inactiveFilter] : iirHPFilter[inactiveFilter];
-//	currentFilter.CalcCoeff(cutoff);
-
-//	activeFilter = inactiveFilter;
-	currentCutoff = cutoff;
+	activeFilter = inactiveFilter;
+	currentCutoff = cutoff;		// For debug
 }
 
 
 //	Take a new sample and return filtered value
 iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
-	// Calculate both High Pass and Low Pass (even when not used) to pre-populate shift registers so that transitions are smooth
-//	if (passType == LowPass) {
-//		iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
-//		return iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
-//	} else {
-//		iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
-//		return iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
-//	}
-	volatile iirdouble_t lpSample = iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
-	volatile iirdouble_t hpSample = iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
+	static PassType pt = LowPass;
+	static uint16_t crossfade = 0;
+	const uint16_t crossfadeLength = 100;
+	static iirdouble_t prevSample = 0;
 
-	static volatile PassType pt = LowPass;
+	iirdouble_t hpSample = iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
+	iirdouble_t lpSample = iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
+
 	if (pt != passType) {
-		GPIOC->ODR |= GPIO_ODR_OD12;
+//		GPIOC->ODR |= GPIO_ODR_OD12;
+		crossfade = crossfadeLength;
 		pt = passType;
 	}
 
-
-	if (passType == LowPass) {
-		if (crossfade > 0) {
-			--crossfade;
-
-			if (crossfade == 0)
-				GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
-
-			return (hpSample * ((iirdouble_t)crossfade / crossfadeLength)) + (lpSample * (1.0 - ((iirdouble_t)crossfade / crossfadeLength)));
+	// Crossfade from last stored sample to current output when changing between highpass to lowpass
+	if (crossfade > 0) {
+		--crossfade;
+		volatile iirdouble_t cf = (iirdouble_t)crossfade / (iirdouble_t)crossfadeLength;
+		if (passType == HighPass) {
+			return prevSample * cf + hpSample * ((iirdouble_t)1.0 - cf);
 		} else {
-			return lpSample;
+			return prevSample * cf + lpSample * ((iirdouble_t)1.0 - cf);
 		}
-
 	} else {
-		if (crossfade > 0) {
-			--crossfade;
-			if (crossfade == 0)
-				GPIOC->ODR &= ~GPIO_ODR_OD12;
-
-			return (lpSample * ((iirdouble_t)crossfade / crossfadeLength)) + (hpSample * (1.0 - ((iirdouble_t)crossfade / crossfadeLength)));
+		if (passType == HighPass) {
+			prevSample = hpSample;
 		} else {
-			return hpSample;
+			prevSample = lpSample;
 		}
+		return prevSample;
 	}
+
+
 }
 
 
@@ -328,17 +288,16 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 				iirCoeff.b0[j] = (D * T * T + 4.0 * F + 2.0 * E * T) / arg * C/F;
 			}
 		}
-
 	}
 
 }
 
 
+// Calculate the S Plane Coefficients:  H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
 void IIRPrototype::CalcLowPassProtoCoeff()
 {
 	std::array<complex_t, MAX_POLES> Poles;
 
-	// Init the S Plane Coeff. H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
 	for (uint8_t j = 0; j < MAX_POLES; j++) {
 		Coeff.N2[j] = 0.0;
 		Coeff.N1[j] = 0.0;
@@ -352,7 +311,7 @@ void IIRPrototype::CalcLowPassProtoCoeff()
 	if (numPoles == 1) {
 		Coeff.D1[0] = 1.0;
 	} else {				// Always use Butterworth
-		Poles[0] =  complex_t(0.0, 0.0);
+		Poles[0] = complex_t(0.0, 0.0);
 		ButterworthPoly(Poles);
 		GetFilterCoeff(Poles);
 	}

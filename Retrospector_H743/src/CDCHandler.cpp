@@ -4,6 +4,7 @@
 extern volatile bool sampleClock;
 extern bool activateFilter;
 extern uint16_t currentTone;
+extern int32_t dampedTone;
 
 volatile bool CmdPending = false;
 std::string ComCmd;
@@ -30,48 +31,54 @@ void resumeI2S() {
 bool CDCCommand(const std::string ComCmd) {
 
 	if (ComCmd.compare("help\n") == 0) {
-		usb.SendString("Mountjoy Retrospector - supported commands:\n\n\r"
-				"help      -  Shows this information\n\r"
-				"dl        -  Dump samples for left channel\n\r"
-				"dr        -  Dump samples for right channel\n\r"
-				"f         -  Filter on/off\n\r"
-				"lp        -  Filter is low pass\n\r"
-				"hp        -  Filter is high pass\n\r"
-				"both      -  Filter sweeps from low pass to high pass\n\r"
-				"fd        -  Dump filter coefficients\n\r"
-				"fdl       -  Dump left filter buffer\n\r"
-				"wd        -  Dump filter window coefficients\n\r"
-				"imp       -  IIR impulse response\n\r"
-				"iirs      -  IIR square wave test\n\r"
-				"iir       -  Activate IIR filter\n\r"
-				"fir       -  Activate FIR filter\n\r"
+		usb.SendString("Mountjoy Retrospector - supported commands:\r\n\r\n"
+				"help      -  Shows this information\r\n"
+				"dl        -  Dump samples for left channel\r\n"
+				"dr        -  Dump samples for right channel\r\n"
+				"f         -  Filter on/off\r\n"
+				"lp        -  Filter is low pass\r\n"
+				"hp        -  Filter is high pass\r\n"
+				"both      -  Filter sweeps from low pass to high pass\r\n"
+				"fd        -  Dump filter coefficients\r\n"
+				"fdl       -  Dump left filter buffer\r\n"
+				"wd        -  Dump filter window coefficients\r\n"
+				"imp       -  IIR impulse response\r\n"
+				"iirs      -  IIR square wave test\r\n"
+				"iir       -  Activate IIR filter\r\n"
+				"fir       -  Activate FIR filter\r\n"
+				"resume    -  Resume I2S after debugging\r\n"
 		);
+
+	} else if (ComCmd.compare("resume\n") == 0) {		// Resume I2S after debugging
+		resumeI2S();
 
 	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
 
 		if (filter.filterType == IIR) {
-			usb.SendString(std::string("FIR Filter Activated\n").c_str());
+			usb.SendString(std::string("FIR Filter Activated\r\n").c_str());
 			filter.filterType = FIR;
 			currentTone = 0;
 		}
 
 		char buf[50];
 		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
-		usb.SendString(std::string("FIR Filter: ").append(std::string(buf)).append("\n").c_str());
+		usb.SendString(std::string("FIR Filter: ").append(std::string(buf)).append("\r\n").c_str());
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Activate IIR
 
 		if (filter.filterType == FIR) {
 			filter.filterType = IIR;
 			currentTone = 0;			// Force reset
-			usb.SendString("IIR Filter Activated\n");
+			usb.SendString("IIR Filter Activated\r\n");
 		}
+
+		usb.SendString((filter.passType == LowPass) ? "Low Pass\r\n" : "High Pass\r\n");
 
 		// Output coefficients
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
-			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(activeFilter.iirCoeff.b0[i]) + " b1=" + std::to_string(activeFilter.iirCoeff.b1[i]) + " b2=" + std::to_string(activeFilter.iirCoeff.b2[i]).append("\n").c_str());
-			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\n").c_str());
+			usb.SendString(std::to_string(i) + ": b0=" + std::to_string(activeFilter.iirCoeff.b0[i]) + " b1=" + std::to_string(activeFilter.iirCoeff.b1[i]) + " b2=" + std::to_string(activeFilter.iirCoeff.b2[i]).append("\r\n").c_str());
+			usb.SendString(std::to_string(i) + ": a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\r\n").c_str());
 		}
 
 
@@ -82,11 +89,11 @@ bool CDCCommand(const std::string ComCmd) {
 		int i;
 
 		//out = Filter.IIRFilter(500, left);		// Impulse
-		usb.SendString(std::to_string(out).append("\n").c_str());
+		usb.SendString(std::to_string(out).append("\r\n").c_str());
 
 		for (i = 1; i < 500; ++i) {
 			//out = Filter.IIRFilter(0, left);
-			usb.SendString(std::to_string(out).append("\n").c_str());
+			usb.SendString(std::to_string(out).append("\r\n").c_str());
 		}
 
 		resumeI2S();
@@ -116,7 +123,7 @@ bool CDCCommand(const std::string ComCmd) {
 				out = Filter.IIRFilter(0, left);
 			}
 
-			usb.SendString(std::to_string(out).append("\n").c_str());
+			usb.SendString(std::to_string(out).append("\r\n").c_str());
 		}
 */
 		resumeI2S();
@@ -125,9 +132,9 @@ bool CDCCommand(const std::string ComCmd) {
 		suspendI2S();
 
 		channel LOrR = ComCmd.compare("dl\n") == 0 ? left : right;
-		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\n");
+		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\r\n");
 		for (int s = 0; s < SAMPLE_BUFFER_LENGTH; ++s) {
-			usb.SendString(std::to_string(samples[LOrR][s]).append("\n").c_str());
+			usb.SendString(std::to_string(samples[LOrR][s]).append("\r\n").c_str());
 		}
 
 		resumeI2S();
@@ -136,25 +143,31 @@ bool CDCCommand(const std::string ComCmd) {
 
 		activateFilter = !activateFilter;
 		if (activateFilter) {
-			usb.SendString(std::string("Filter on\n").c_str());
+			usb.SendString(std::string("Filter on\r\n").c_str());
 		} else {
-			usb.SendString(std::string("Filter off\n").c_str());
+			usb.SendString(std::string("Filter off\r\n").c_str());
 		}
 
 	} else if (ComCmd.compare("lp\n") == 0) {		// Activate filter
 
+		filter.filterType = IIR;
 		filter.filterControl = LP;
-		usb.SendString(std::string("Low Pass\n").c_str());
+		currentTone = dampedTone + 1000;			// to force update
+		usb.SendString(std::string("Low Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("hp\n") == 0) {		// Activate filter
 
+		filter.filterType = IIR;
 		filter.filterControl = HP;
-		usb.SendString(std::string("High Pass\n").c_str());
+		currentTone = dampedTone + 1000;			// to force update
+		usb.SendString(std::string("High Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("both\n") == 0) {		// Activate filter
 
+		filter.filterType = FIR;
 		filter.filterControl = Both;
-		usb.SendString(std::string("Low Pass to High Pass\n").c_str());
+		currentTone = dampedTone + 1000;			// to force update
+		usb.SendString(std::string("Low Pass to High Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("w\n") == 0) {		// Activate filter window
 
@@ -163,9 +176,9 @@ bool CDCCommand(const std::string ComCmd) {
 		currentTone = 0;		// force filter recalculation
 
 		if (activateWindow) {
-			usb.SendString(std::string("Window on\n").c_str());
+			usb.SendString(std::string("Window on\r\n").c_str());
 		} else {
-			usb.SendString(std::string("Window off\n").c_str());
+			usb.SendString(std::string("Window off\r\n").c_str());
 		}
 
 	} else if (ComCmd.compare("fd\n") == 0) {		// Dump filter coefficients
@@ -177,7 +190,7 @@ bool CDCCommand(const std::string ComCmd) {
 		for (int f = 0; f < FIRTAPS; ++f) {
 			sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
-			usb.SendString(ts.append("\n").c_str());
+			usb.SendString(ts.append("\r\n").c_str());
 		}
 
 		resumeI2S();
@@ -191,7 +204,7 @@ bool CDCCommand(const std::string ComCmd) {
 		for (int f = 0; f < FIRTAPS; ++f) {
 			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
 			std::string ts = std::string(buf);
-			usb.SendString(ts.append("\n").c_str());
+			usb.SendString(ts.append("\r\n").c_str());
 		}
 
 		resumeI2S();
@@ -201,7 +214,7 @@ bool CDCCommand(const std::string ComCmd) {
 
 		uint16_t pos = DigitalDelay.filterBuffPos[0];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			usb.SendString(std::to_string(filterBuffer[0][pos]).append("\n").c_str());
+			usb.SendString(std::to_string(filterBuffer[0][pos]).append("\r\n").c_str());
 			if (++pos == FIRTAPS) pos = 0;
 		}
 

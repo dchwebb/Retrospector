@@ -109,8 +109,6 @@ struct Filter {
 	PassType passType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
-	uint16_t crossfade = 0;
-	const uint16_t crossfadeLength = 200;
 
 	// FIR Settings
 	float firCoeff[2][FIRTAPS];

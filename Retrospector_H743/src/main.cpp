@@ -6,8 +6,6 @@
 #include "sdram.h"
 
 /* TODO
- * CV control over cutoff
- * Options for filter to operate in LP, HP and Both mode
  * Ping pong
  * IIR Filters for ADC smoothing
  * Explore LED options for filter control
@@ -134,7 +132,7 @@ int main(void) {
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;		// Dry level
 
 		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31 * dampedTone + ADC_array[ADC_Delay_CV_L]) >> 5, 0L);
+		dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;
@@ -150,7 +148,7 @@ int main(void) {
 		// Check for incoming CDC commands
 		if (CmdPending) {
 			if (!CDCCommand(ComCmd)) {
-				usb.SendString("Unrecognised command. Type 'help' for supported commands\n");
+				usb.SendString("Unrecognised command:" + ComCmd + ". Type 'help' for supported commands\r\n");
 			}
 			CmdPending = false;
 		}
