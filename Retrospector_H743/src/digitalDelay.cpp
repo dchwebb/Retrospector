@@ -6,19 +6,23 @@ extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 extern int16_t filterBuffer[2][FIRTAPS];
 
 void digitalDelay::calcSample(channel LR) {
-	int32_t nextSample, delayClkCV;
+	int32_t nextSample, pingSample, delayClkCV;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
 
+	channel RL = (LR == left) ? right : left;		// Get other channel for use in ping-pong calculations
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
 		nextSample = static_cast<float>(samples[LR][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[LR][oldReadPos[LR]]) * (scale);
+		pingSample = static_cast<float>(samples[RL][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[RL][oldReadPos[LR]]) * (scale);
 		--delayCrossfade[LR];
 	} else {
+		pingSample = samples[RL][readPos[LR]];
 		nextSample = samples[LR][readPos[LR]];
 	}
+
 
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
 	filterBuffer[LR][filterBuffPos[LR]] = nextSample;
@@ -42,6 +46,12 @@ void digitalDelay::calcSample(channel LR) {
 			}
 		}
 	}
+
+	if (pingPong) {
+
+		nextSample += static_cast<float>(ADC_array[ADC_Delay_CV_L]) / 65536.0f * static_cast<float>(pingSample);
+	}
+
 
 	// Compression
 	if (nextSample > threshold || nextSample < -threshold) {

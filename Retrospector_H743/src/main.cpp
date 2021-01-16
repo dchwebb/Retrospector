@@ -132,7 +132,8 @@ int main(void) {
 		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;		// Dry level
 
 		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+		//dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+		dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;

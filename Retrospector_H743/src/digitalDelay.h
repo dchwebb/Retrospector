@@ -25,6 +25,7 @@ public:
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
+	bool pingPong = true;
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

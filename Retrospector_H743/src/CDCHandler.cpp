@@ -47,10 +47,15 @@ bool CDCCommand(const std::string ComCmd) {
 				"iir       -  Activate IIR filter\r\n"
 				"fir       -  Activate FIR filter\r\n"
 				"resume    -  Resume I2S after debugging\r\n"
+				"pp        -  Turn ping pong mode on/off\r\n"
 		);
 
 	} else if (ComCmd.compare("resume\n") == 0) {		// Resume I2S after debugging
 		resumeI2S();
+
+	} else if (ComCmd.compare("pp\n") == 0) {		// Resume I2S after debugging
+		DigitalDelay.pingPong = !DigitalDelay.pingPong;
+		usb.SendString(DigitalDelay.pingPong ? "PingPong on\r\n" : "PingPong off\r\n");
 
 	} else if (ComCmd.compare("fir\n") == 0) {		// Activate FIR
 
