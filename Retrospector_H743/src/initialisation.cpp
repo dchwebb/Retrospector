@@ -495,7 +495,21 @@ void InitTempoClock()
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 
+void InitDebugTimer()
+{
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
 
+	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
+	// See manual page 1670 for info on Capture and Compare Input mode
+	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
+	TIM3->ARR = 65535;
+	TIM3->PSC = 10;
+
+	TIM3->CR1 |= TIM_CR1_CEN;
+
+}
+
+/*
 void InitClockTimer()
 {
 	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
@@ -529,7 +543,7 @@ void InitClockTimer()
 	TIM3->CR1 |= TIM_CR1_CEN;
 
 }
-
+*/
 
 void InitIO()
 {

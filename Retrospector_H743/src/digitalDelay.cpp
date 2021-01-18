@@ -3,10 +3,13 @@
 extern uint32_t clockInterval;
 extern bool clockValid;
 extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
-extern int16_t filterBuffer[2][FIRTAPS];
+
+int debugDuration = 0;
+int filterDuration = 0;
 
 void digitalDelay::calcSample(channel LR) {
-	int32_t nextSample, pingSample, delayClkCV;
+	int32_t delayClkCV;
+	float nextSample, pingSample;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
 
@@ -19,38 +22,52 @@ void digitalDelay::calcSample(channel LR) {
 		pingSample = static_cast<float>(samples[RL][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[RL][oldReadPos[LR]]) * (scale);
 		--delayCrossfade[LR];
 	} else {
-		pingSample = samples[RL][readPos[LR]];
-		nextSample = samples[LR][readPos[LR]];
+		TIM3->CNT = 0;		// Debug
+
+		nextSample = static_cast<float>(samples[LR][readPos[LR]]);
+		pingSample = static_cast<float>(samples[RL][readPos[LR]]);
+
+		volatile uint32_t time = TIM3->CNT;
+		if (time > filterDuration) {
+			filterDuration = time;		// Debug
+			if (time > 200) {
+				volatile int susp = 1;
+				susp++;
+			}
+		}
+
 	}
 
 
+
+	if (pingPong) {
+		nextSample += pingSample * ADC_array[ADC_Delay_CV_L] / 65536.0f;
+	}
+
+
+
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
-	filterBuffer[LR][filterBuffPos[LR]] = nextSample;
+	filter.filterBuffer[LR][filterBuffPos[LR]] = nextSample;
 	if (activateFilter) {			// For debug
 		if (filter.filterType == IIR) {
-			float filteredSample = filter.CalcIIRFilter(static_cast<float>(nextSample), LR);
-			nextSample = static_cast<int32_t>(filteredSample);
+			nextSample = filter.CalcIIRFilter(nextSample, LR);
 		} else {
 			if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
 				int16_t pos = filterBuffPos[LR] - (FIRTAPS / 2);
 				if (pos < 0) pos += FIRTAPS;
-				nextSample = filterBuffer[LR][pos];
+				nextSample = filter.filterBuffer[LR][pos];
 			} else {
 				float outputSample = 0.0;
 				int16_t pos = filterBuffPos[LR];
 				for (uint16_t i = 0; i < FIRTAPS; ++i) {
 					if (++pos == FIRTAPS) pos = 0;
-					outputSample += filter.firCoeff[filter.activeFilter][i] * filterBuffer[LR][pos];
+					outputSample += filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
 				}
-				nextSample = static_cast<int32_t>(outputSample);
+				nextSample = outputSample;
 			}
 		}
 	}
 
-	if (pingPong) {
-
-		nextSample += static_cast<float>(ADC_array[ADC_Delay_CV_L]) / 65536.0f * static_cast<float>(pingSample);
-	}
 
 
 	// Compression
@@ -61,11 +78,11 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 	// Put next output sample in I2S buffer
-	SPI2->TXDR = std::clamp(nextSample, -32767L, 32767L);
+	SPI2->TXDR = std::clamp(static_cast<int32_t>(nextSample), -32767L, 32767L);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
-			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * static_cast<float>(nextSample));
+			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
 
 	samples[LR][writePos[LR]] = std::clamp(feedbackSample, -32767L, 32767L);
 
@@ -133,6 +150,11 @@ void digitalDelay::calcSample(channel LR) {
 		}
 		updateLED(LR);
 	}
+
+
+//	time = TIM3->CNT;
+//	if (time > debugDuration)
+//		debugDuration = time;		// Debug
 
 
 }

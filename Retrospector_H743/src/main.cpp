@@ -84,6 +84,8 @@ int main(void) {
 	InitSDRAM();
 	InitIO();
 
+	InitDebugTimer();
+
 	// Initialise filter
 	filter.FIRFilterWindow(4.0);
 	currentTone = ADC_array[ADC_Tone];

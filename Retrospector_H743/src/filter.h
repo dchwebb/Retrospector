@@ -20,7 +20,6 @@ extern USB usb;
 
 extern bool activateFilter, activateWindow;
 extern float currentCutoff;
-extern int16_t filterBuffer[2][FIRTAPS];	// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 
 extern bool calculatingFilter;				// For debugging
 extern bool debugSort;
@@ -113,6 +112,7 @@ struct Filter {
 	// FIR Settings
 	float firCoeff[2][FIRTAPS];
 	float winCoeff[FIRTAPS];
+	float filterBuffer[2][FIRTAPS];			// Ring buffer containing most recent playback samples for quicker filtering from SRAM
 
 	// IIR settings
 	const uint8_t polesLP = 4;

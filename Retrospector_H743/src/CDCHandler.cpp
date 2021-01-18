@@ -219,7 +219,7 @@ bool CDCCommand(const std::string ComCmd) {
 
 		uint16_t pos = DigitalDelay.filterBuffPos[0];
 		for (int f = 0; f < FIRTAPS; ++f) {
-			usb.SendString(std::to_string(filterBuffer[0][pos]).append("\r\n").c_str());
+			usb.SendString(std::to_string(filter.filterBuffer[0][pos]).append("\r\n").c_str());
 			if (++pos == FIRTAPS) pos = 0;
 		}
 

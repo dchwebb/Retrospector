@@ -42,3 +42,4 @@ void InitI2S();
 void InitTempoClock();
 void InitIO();
 //void LED(channel c, bool on);
+void InitDebugTimer();

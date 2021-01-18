@@ -1,8 +1,5 @@
 #include "Filter.h"
 
-// FIR data
-int16_t filterBuffer[2][FIRTAPS];		// Ring buffer containing most recent playback samples for quicker filtering from SRAM
-
 // Debug
 bool calculatingFilter = false;
 bool activateFilter = true;
