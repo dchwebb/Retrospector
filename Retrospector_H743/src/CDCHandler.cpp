@@ -139,7 +139,7 @@ bool CDCCommand(const std::string ComCmd) {
 		channel LOrR = ComCmd.compare("dl\n") == 0 ? left : right;
 		usb.SendString("Read Pos: " + std::to_string(DigitalDelay.readPos[LOrR]) + "; Write Pos: " + std::to_string(DigitalDelay.writePos[LOrR]) + "\r\n");
 		for (int s = 0; s < SAMPLE_BUFFER_LENGTH; ++s) {
-			usb.SendString(std::to_string(samples[LOrR][s]).append("\r\n").c_str());
+			//usb.SendString(std::to_string(samples[LOrR][s]).append("\r\n").c_str());
 		}
 
 		resumeI2S();

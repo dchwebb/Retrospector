@@ -4,9 +4,13 @@
 #include <map>
 #include "Filter.h"
 
-
 extern uint16_t adcZeroOffset[2];
 extern uint32_t lastClock;
+
+union StereoSample {
+	int32_t bothSamples;
+	int16_t sample[2];
+};
 
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 

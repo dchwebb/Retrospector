@@ -5,7 +5,7 @@
 
 extern USB usb;
 extern digitalDelay DigitalDelay;
-extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
+extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 extern volatile bool CmdPending;
 extern std::string ComCmd;
 

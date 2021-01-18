@@ -60,7 +60,7 @@ digitalDelay DigitalDelay;
 Filter filter;
 
 // Place sample buffers in external SDRAM
-int16_t __attribute__((section (".sdramSection"))) samples[2][SAMPLE_BUFFER_LENGTH];
+int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 // Debug
@@ -97,8 +97,7 @@ int main(void) {
 	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitCache();				// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
-	std::fill_n(samples[0], SAMPLE_BUFFER_LENGTH, 0);
-	std::fill_n(samples[1], SAMPLE_BUFFER_LENGTH, 0);
+	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
 
 	DAC1->DHR12R2 = 2048;		// Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; 		// Pins 11 & 14 on VCA (MIX_DRY_CTL)

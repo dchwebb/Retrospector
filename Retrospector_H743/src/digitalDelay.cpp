@@ -2,48 +2,39 @@
 
 extern uint32_t clockInterval;
 extern bool clockValid;
-extern int16_t samples[2][SAMPLE_BUFFER_LENGTH];
+extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 
-int debugDuration = 0;
-int filterDuration = 0;
+uint32_t debugDuration = 0;
+uint32_t filterDuration = 0;
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
+	static int16_t leftWriteSample;
 	float nextSample, pingSample;
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
+	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 
 	channel RL = (LR == left) ? right : left;		// Get other channel for use in ping-pong calculations
 
+	TIM3->CNT = 0;		// Debug
+
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
+		StereoSample oldreadSamples = {samples[oldReadPos[LR]]};
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
-		nextSample = static_cast<float>(samples[LR][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[LR][oldReadPos[LR]]) * (scale);
-		pingSample = static_cast<float>(samples[RL][readPos[LR]]) * (1.0f - scale) + static_cast<float>(samples[RL][oldReadPos[LR]]) * (scale);
+		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[LR]) * (scale);
+		pingSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
 		--delayCrossfade[LR];
 	} else {
-		TIM3->CNT = 0;		// Debug
-
-		nextSample = static_cast<float>(samples[LR][readPos[LR]]);
-		pingSample = static_cast<float>(samples[RL][readPos[LR]]);
-
-		volatile uint32_t time = TIM3->CNT;
-		if (time > filterDuration) {
-			filterDuration = time;		// Debug
-			if (time > 200) {
-				volatile int susp = 1;
-				susp++;
-			}
-		}
-
+		nextSample = static_cast<float>(readSamples.sample[LR]);
+		pingSample = static_cast<float>(readSamples.sample[RL]);
 	}
 
-
-
+	// Add in a scaled amount of the sample from the opposite stereo channel
 	if (pingPong) {
 		nextSample += pingSample * ADC_array[ADC_Delay_CV_L] / 65536.0f;
 	}
-
 
 
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
@@ -69,6 +60,15 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 
+	// Timing Debug
+	volatile uint32_t time = TIM3->CNT;
+	if (time > filterDuration) {
+		filterDuration = time;
+		if (time > 200) {
+			volatile int susp = 1;
+			susp++;
+		}
+	}
 
 	// Compression
 	if (nextSample > threshold || nextSample < -threshold) {
@@ -77,6 +77,7 @@ void digitalDelay::calcSample(channel LR) {
 		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;
 	}
 
+
 	// Put next output sample in I2S buffer
 	SPI2->TXDR = std::clamp(static_cast<int32_t>(nextSample), -32767L, 32767L);
 
@@ -84,7 +85,19 @@ void digitalDelay::calcSample(channel LR) {
 	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
 
-	samples[LR][writePos[LR]] = std::clamp(feedbackSample, -32767L, 32767L);
+
+	// Hold the left sample in a temporary variable and write both left and right samples when processing right signal
+	if (LR == left) {
+		// Store left sample for writing on right channel
+		leftWriteSample = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
+	} else {
+		StereoSample writeSample;
+		writeSample.sample[left] = leftWriteSample;
+		writeSample.sample[right] = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
+		samples[writePos[LR]] = writeSample.bothSamples;
+	}
+
+
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;
