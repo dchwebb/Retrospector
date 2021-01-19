@@ -18,10 +18,9 @@ extern USB usb;
 #define MAX_SECTIONS (MAX_POLES + 1) / 2
 #define M_PI           3.14159265358979323846
 
+// For debugging
 extern bool activateFilter, activateWindow;
-extern float currentCutoff;
-
-extern bool calculatingFilter;				// For debugging
+extern bool calculatingFilter;
 extern bool debugSort;
 
 enum FilterControl {LP, HP, Both};
@@ -104,15 +103,17 @@ private:
 
 struct Filter {
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
-	FilterType filterType = IIR;
+	FilterType filterType = FIR;
 	PassType passType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
+	float currentCutoff;
 
 	// FIR Settings
 	float firCoeff[2][FIRTAPS];
 	float winCoeff[FIRTAPS];
 	float filterBuffer[2][FIRTAPS];			// Ring buffer containing most recent playback samples for quicker filtering from SRAM
+	int16_t filterBuffPos[2];
 
 	// IIR settings
 	const uint8_t polesLP = 4;
@@ -125,6 +126,7 @@ struct Filter {
 	void InitFIRFilter(uint16_t tone);
 	void InitIIRFilter(uint16_t tone);
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
+	float CalcFIRFilter(float sample, channel c);
 	float Sinc(float x);
 	void FIRFilterWindow(float beta);
 	float Bessel(float x);

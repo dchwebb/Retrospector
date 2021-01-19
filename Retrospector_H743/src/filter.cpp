@@ -4,7 +4,6 @@
 bool calculatingFilter = false;
 bool activateFilter = true;
 bool activateWindow = true;
-float currentCutoff;
 
 
 // Rectangular FIR
@@ -27,6 +26,18 @@ void Filter::InitFIRFilter(uint16_t tone)
 	// cycle between two sets of coefficients so one can be changed without affecting the other
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
+	int8_t sign = 1;		// HPF multiplies every other coefficient by -1
+/*
+	for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {		// Coefficients are symmetrical so only need to calculate first half
+		arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
+
+		firCoeff[inactiveFilter][j] = (float)sign * omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
+
+		if (passType == HighPass)
+			sign = sign * -1;
+	}
+*/
+
 	if (passType == LowPass) {
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
@@ -36,15 +47,53 @@ void Filter::InitFIRFilter(uint16_t tone)
 		int8_t sign = 1;
 		for (int8_t j = 0; j < FIRTAPS; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-
 			firCoeff[inactiveFilter][j] = sign * omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
 			sign = sign * -1;
 		}
 	}
+
 	activeFilter = inactiveFilter;
 	currentCutoff = omega;
 }
 
+
+float Filter::CalcFIRFilter(float sample, channel c)
+{
+	float outputSample = 0.0;
+	int16_t pos;
+
+	// Stores most recent samples in buffer as faster to process from SRAM than DRAM
+	filterBuffer[c][filterBuffPos[c]] = sample;
+
+	if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
+		pos = filterBuffPos[c] - (FIRTAPS / 2);
+		if (pos < 0)	pos += FIRTAPS;
+		outputSample = filterBuffer[c][pos];
+	} else {
+		pos = filterBuffPos[c];
+		int16_t revpos = filterBuffPos[c];
+		//for (uint16_t i = 0; i < FIRTAPS / 2; ++i) {
+		for (uint16_t i = 0; i < FIRTAPS; ++i) {
+
+			if (++pos == FIRTAPS)	pos = 0;
+
+			outputSample += firCoeff[activeFilter][i] * filterBuffer[c][pos];
+
+			// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
+			//outputSample += firCoeff[activeFilter][i] * (filterBuffer[c][pos] + filterBuffer[c][revpos]);
+
+			if (--revpos == -1)	revpos = FIRTAPS;
+		}
+		//outputSample += firCoeff[activeFilter][FIRTAPS / 2 + 1] * filterBuffer[c][++pos];
+
+	}
+
+	if (++filterBuffPos[c] == FIRTAPS)
+		filterBuffPos[c] = 0;
+
+
+	return outputSample;
+}
 
 void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {

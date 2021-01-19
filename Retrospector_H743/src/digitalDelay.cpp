@@ -1,11 +1,9 @@
 #include "digitaldelay.h"
 
-extern uint32_t clockInterval;
-extern bool clockValid;
-extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 
 uint32_t debugDuration = 0;
 uint32_t filterDuration = 0;
+volatile bool checkFilt = 0;
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
@@ -38,27 +36,91 @@ void digitalDelay::calcSample(channel LR) {
 
 
 	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
-	filter.filterBuffer[LR][filterBuffPos[LR]] = nextSample;
 	if (activateFilter) {			// For debug
 		if (filter.filterType == IIR) {
 			nextSample = filter.CalcIIRFilter(nextSample, LR);
 		} else {
-			if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-				int16_t pos = filterBuffPos[LR] - (FIRTAPS / 2);
+			//nextSample = filter.CalcFIRFilter(nextSample, LR);
+
+
+			filter.filterBuffer[LR][filter.filterBuffPos[LR]] = nextSample;
+			if (filter.currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
+				int16_t pos = filter.filterBuffPos[LR] - (FIRTAPS / 2);
 				if (pos < 0) pos += FIRTAPS;
 				nextSample = filter.filterBuffer[LR][pos];
 			} else {
-				float outputSample = 0.0;
-				int16_t pos = filterBuffPos[LR];
-				for (uint16_t i = 0; i < FIRTAPS; ++i) {
-					if (++pos == FIRTAPS) pos = 0;
-					outputSample += filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
+				volatile float outputSample = 0.0;
+				//volatile float outputSample2 = 0.0;
+				volatile int16_t pos = filter.filterBuffPos[LR];
+				volatile int16_t revpos = filter.filterBuffPos[LR];
+
+				if (!checkFilt) {
+					for (uint16_t i = 0; i < FIRTAPS; ++i) {
+						if (++pos == FIRTAPS) pos = 0;
+						outputSample += filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
+					}
 				}
+
+
+				if (checkFilt) {
+					pos = filter.filterBuffPos[LR];
+					for (uint16_t i = 0; i < FIRTAPS / 2; ++i) {
+						if (++pos == FIRTAPS) pos = 0;
+
+						// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
+						outputSample += filter.firCoeff[filter.activeFilter][i] * (filter.filterBuffer[LR][pos] + filter.filterBuffer[LR][revpos]);
+
+						if (--revpos == -1)	revpos = FIRTAPS - 1;
+					}
+					if (++pos == FIRTAPS) pos = 0;
+					outputSample += filter.firCoeff[filter.activeFilter][FIRTAPS / 2] * filter.filterBuffer[LR][pos];
+
+					/*
+					if (std::abs(outputSample - outputSample2) > 1) {
+						volatile float result;
+
+
+						pos = filter.filterBuffPos[LR];
+						for (uint16_t i = 0; i < FIRTAPS; ++i) {
+							if (++pos == FIRTAPS) pos = 0;
+							result = filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
+							outputSample += result;
+						}
+
+						pos = filter.filterBuffPos[LR];
+						for (uint16_t i = 0; i < FIRTAPS / 2; ++i) {
+							if (++pos == FIRTAPS) pos = 0;
+
+							// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
+							//outputSample2 += filter.firCoeff[filter.activeFilter][i] * (filter.filterBuffer[LR][pos] + filter.filterBuffer[LR][revpos]);
+							result = filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][revpos];
+							outputSample2 += result;
+							result = filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
+							outputSample2 += result;
+
+							if (--revpos == -1)	revpos = FIRTAPS - 1;
+						}
+						if (++pos == FIRTAPS) pos = 0;
+						result = filter.firCoeff[filter.activeFilter][FIRTAPS / 2] * filter.filterBuffer[LR][pos];
+						outputSample2 += result;
+						int test = 0;
+
+					}
+					*/
+
+				}
+
+
+
+
 				nextSample = outputSample;
 			}
+
+			if (++filter.filterBuffPos[LR] == FIRTAPS)
+				filter.filterBuffPos[LR] = 0;
+
 		}
 	}
-
 
 	// Timing Debug
 	volatile uint32_t time = TIM3->CNT;
@@ -81,6 +143,7 @@ void digitalDelay::calcSample(channel LR) {
 	// Put next output sample in I2S buffer
 	SPI2->TXDR = std::clamp(static_cast<int32_t>(nextSample), -32767L, 32767L);
 
+
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
 			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
@@ -88,7 +151,6 @@ void digitalDelay::calcSample(channel LR) {
 
 	// Hold the left sample in a temporary variable and write both left and right samples when processing right signal
 	if (LR == left) {
-		// Store left sample for writing on right channel
 		leftWriteSample = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
 	} else {
 		StereoSample writeSample;
@@ -108,7 +170,6 @@ void digitalDelay::calcSample(channel LR) {
 		if (++readPos[LR] == SAMPLE_BUFFER_LENGTH)		readPos[LR] = 0;
 		if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
 	}
-	if (++filterBuffPos[LR] == FIRTAPS) 				filterBuffPos[LR] = 0;
 
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth

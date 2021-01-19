@@ -6,6 +6,9 @@
 
 extern uint16_t adcZeroOffset[2];
 extern uint32_t lastClock;
+extern uint32_t clockInterval;
+extern bool clockValid;
+extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 
 union StereoSample {
 	int32_t bothSamples;
@@ -24,7 +27,6 @@ public:
 	volatile int32_t calcDelay[2];			// volatile required to prevent optimiser using incorrect ADC channel
 	volatile int16_t delayPotVal[2];
 	volatile float delayMult[2];
-	int16_t filterBuffPos[2];
 	delay_mode delayMode;
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators

@@ -5,6 +5,7 @@ extern volatile bool sampleClock;
 extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
+extern volatile bool checkFilt;
 
 volatile bool CmdPending = false;
 std::string ComCmd;
@@ -49,6 +50,10 @@ bool CDCCommand(const std::string ComCmd) {
 				"resume    -  Resume I2S after debugging\r\n"
 				"pp        -  Turn ping pong mode on/off\r\n"
 		);
+	} else if (ComCmd.compare("cf\n") == 0) {		// Resume I2S after debugging
+
+		checkFilt = !checkFilt;
+		usb.SendString(checkFilt ? "Folded FIR on\r\n" : "Folded FIR off\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {		// Resume I2S after debugging
 		resumeI2S();
@@ -66,7 +71,7 @@ bool CDCCommand(const std::string ComCmd) {
 		}
 
 		char buf[50];
-		sprintf(buf, "%0.10f", currentCutoff);		// 10dp
+		sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
 		usb.SendString(std::string("FIR Filter: ").append(std::string(buf)).append("\r\n").c_str());
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Activate IIR
@@ -217,7 +222,7 @@ bool CDCCommand(const std::string ComCmd) {
 	} else if (ComCmd.compare("fdl\n") == 0) {		// Dump left filter buffer
 		suspendI2S();
 
-		uint16_t pos = DigitalDelay.filterBuffPos[0];
+		uint16_t pos = filter.filterBuffPos[0];
 		for (int f = 0; f < FIRTAPS; ++f) {
 			usb.SendString(std::to_string(filter.filterBuffer[0][pos]).append("\r\n").c_str());
 			if (++pos == FIRTAPS) pos = 0;
