@@ -5,7 +5,7 @@ extern volatile bool sampleClock;
 extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
-extern volatile bool checkFilt;
+
 
 volatile bool CmdPending = false;
 std::string ComCmd;
@@ -50,10 +50,6 @@ bool CDCCommand(const std::string ComCmd) {
 				"resume    -  Resume I2S after debugging\r\n"
 				"pp        -  Turn ping pong mode on/off\r\n"
 		);
-	} else if (ComCmd.compare("cf\n") == 0) {		// Resume I2S after debugging
-
-		checkFilt = !checkFilt;
-		usb.SendString(checkFilt ? "Folded FIR on\r\n" : "Folded FIR off\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {		// Resume I2S after debugging
 		resumeI2S();
@@ -179,17 +175,6 @@ bool CDCCommand(const std::string ComCmd) {
 		currentTone = dampedTone + 1000;			// to force update
 		usb.SendString(std::string("Low Pass to High Pass\r\n").c_str());
 
-	} else if (ComCmd.compare("w\n") == 0) {		// Activate filter window
-
-		activateWindow = !activateWindow;
-		extern uint16_t currentTone;
-		currentTone = 0;		// force filter recalculation
-
-		if (activateWindow) {
-			usb.SendString(std::string("Window on\r\n").c_str());
-		} else {
-			usb.SendString(std::string("Window off\r\n").c_str());
-		}
 
 	} else if (ComCmd.compare("fd\n") == 0) {		// Dump filter coefficients
 		suspendI2S();

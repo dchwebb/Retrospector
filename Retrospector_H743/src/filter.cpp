@@ -3,7 +3,6 @@
 // Debug
 bool calculatingFilter = false;
 bool activateFilter = true;
-bool activateWindow = true;
 
 
 // Rectangular FIR
@@ -26,28 +25,16 @@ void Filter::InitFIRFilter(uint16_t tone)
 	// cycle between two sets of coefficients so one can be changed without affecting the other
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	int8_t sign = 1;		// HPF multiplies every other coefficient by -1
-/*
-	for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {		// Coefficients are symmetrical so only need to calculate first half
-		arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-
-		firCoeff[inactiveFilter][j] = (float)sign * omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
-
-		if (passType == HighPass)
-			sign = sign * -1;
-	}
-*/
-
 	if (passType == LowPass) {
-		for (int8_t j = 0; j < FIRTAPS; ++j) {
+		for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-			firCoeff[inactiveFilter][j] = omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
+			firCoeff[inactiveFilter][j] = omega * Sinc(omega * arg * M_PI) * winCoeff[j];
 		}
 	} else if (passType == HighPass)  {
 		int8_t sign = 1;
-		for (int8_t j = 0; j < FIRTAPS; ++j) {
+		for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {
 			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
-			firCoeff[inactiveFilter][j] = sign * omega * Sinc(omega * arg * M_PI) * (activateWindow ? winCoeff[j] : 1.0);
+			firCoeff[inactiveFilter][j] = sign * omega * Sinc(omega * arg * M_PI) * winCoeff[j];
 			sign = sign * -1;
 		}
 	}

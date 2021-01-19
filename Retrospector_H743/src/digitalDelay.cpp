@@ -3,7 +3,7 @@
 
 uint32_t debugDuration = 0;
 uint32_t filterDuration = 0;
-volatile bool checkFilt = 0;
+
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
@@ -42,51 +42,27 @@ void digitalDelay::calcSample(channel LR) {
 		} else {
 			//nextSample = filter.CalcFIRFilter(nextSample, LR);
 
-			//volatile uint8_t pos;
-
 			filter.filterBuffer[LR][filter.filterBuffPos[LR]] = nextSample;
 			if (filter.currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-
-				uint8_t mid = filter.filterBuffPos[LR] - (uint8_t)(FIRTAPS / 2);
-				//uint8_t mid = filter.filterBuffPos[LR];
-				//if (pos < 0) pos += FIRTAPS;
+				uint8_t mid = filter.filterBuffPos[LR] - (FIRTAPS / 2);
 				nextSample = filter.filterBuffer[LR][mid];
 			} else {
 				float outputSample = 0.0;
-				volatile uint8_t pos;
-				volatile uint8_t revpos = filter.filterBuffPos[LR];
+				uint8_t pos, revpos;
 
-				if (!checkFilt) {
-					pos = (uint8_t)(filter.filterBuffPos[LR] - FIRTAPS);
-					for (uint8_t i = 0; i < FIRTAPS; ++i) {
-						//if (++pos == FIRTAPS) pos = 0;
-						pos++;
-						outputSample += filter.firCoeff[filter.activeFilter][i] * filter.filterBuffer[LR][pos];
-					}
-				} else {
-					pos = filter.filterBuffPos[LR] - FIRTAPS;
-					for (uint8_t i = 0; i < FIRTAPS / 2; ++i) {
-						//if (++pos == FIRTAPS) pos = 0;
-						pos++;
-						// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
-						outputSample += filter.firCoeff[filter.activeFilter][i] * (filter.filterBuffer[LR][pos] + filter.filterBuffer[LR][revpos]);
-
-						--revpos;
-						//if (--revpos == -1)	revpos = FIRTAPS - 1;
-					}
-					//if (++pos == FIRTAPS) pos = 0;
-					pos++;
-					outputSample += filter.firCoeff[filter.activeFilter][FIRTAPS / 2] * filter.filterBuffer[LR][pos];
+				pos = filter.filterBuffPos[LR] - FIRTAPS + 1;
+				revpos = filter.filterBuffPos[LR];
+				for (uint8_t i = 0; i < FIRTAPS / 2; ++i) {
+					// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
+					outputSample += filter.firCoeff[filter.activeFilter][i] * (filter.filterBuffer[LR][pos++] + filter.filterBuffer[LR][revpos--]);
 				}
+
+				outputSample += filter.firCoeff[filter.activeFilter][FIRTAPS / 2] * filter.filterBuffer[LR][pos];
+
 				nextSample = outputSample;
 			}
 
-
 			++filter.filterBuffPos[LR];		// FIXME - probably need only one position, incremented on right sample
-
-//			if (++filter.filterBuffPos[LR] == FIRTAPS)
-//				filter.filterBuffPos[LR] = 0;
-
 		}
 	}
 

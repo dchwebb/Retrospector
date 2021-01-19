@@ -19,7 +19,7 @@ extern USB usb;
 #define M_PI           3.14159265358979323846
 
 // For debugging
-extern bool activateFilter, activateWindow;
+extern bool activateFilter;
 extern bool calculatingFilter;
 extern bool debugSort;
 
