@@ -47,40 +47,29 @@ void Filter::InitFIRFilter(uint16_t tone)
 float Filter::CalcFIRFilter(float sample, channel c)
 {
 	float outputSample = 0.0;
-	int16_t pos;
 
-	// Stores most recent samples in buffer as faster to process from SRAM than DRAM
 	filterBuffer[c][filterBuffPos[c]] = sample;
-
 	if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-		pos = filterBuffPos[c] - (FIRTAPS / 2);
-		if (pos < 0)	pos += FIRTAPS;
-		outputSample = filterBuffer[c][pos];
+		uint8_t mid = filterBuffPos[c] - (FIRTAPS / 2);
+		outputSample = filterBuffer[c][mid];
 	} else {
-		pos = filterBuffPos[c];
-		int16_t revpos = filterBuffPos[c];
-		//for (uint16_t i = 0; i < FIRTAPS / 2; ++i) {
-		for (uint16_t i = 0; i < FIRTAPS; ++i) {
+		uint8_t pos, revpos;
 
-			if (++pos == FIRTAPS)	pos = 0;
+		pos = filterBuffPos[c] - FIRTAPS + 1;		// position of sample 1, 2, 3 etc
+		revpos = filterBuffPos[c];					// posiiton of sample N, N-1, N-2 etc
 
-			outputSample += firCoeff[activeFilter][i] * filterBuffer[c][pos];
-
+		for (uint8_t i = 0; i < FIRTAPS / 2; ++i) {
 			// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
-			//outputSample += firCoeff[activeFilter][i] * (filterBuffer[c][pos] + filterBuffer[c][revpos]);
-
-			if (--revpos == -1)	revpos = FIRTAPS;
+			outputSample += firCoeff[activeFilter][i] * (filterBuffer[c][pos++] + filterBuffer[c][revpos--]);
 		}
-		//outputSample += firCoeff[activeFilter][FIRTAPS / 2 + 1] * filterBuffer[c][++pos];
 
+		outputSample += firCoeff[activeFilter][FIRTAPS / 2] * filterBuffer[c][pos];
 	}
 
-	if (++filterBuffPos[c] == FIRTAPS)
-		filterBuffPos[c] = 0;
-
-
+	++filterBuffPos[c];		// FIXME - probably need only one position, incremented on right sample
 	return outputSample;
 }
+
 
 void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
 {

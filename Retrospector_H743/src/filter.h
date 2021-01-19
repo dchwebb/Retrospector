@@ -112,7 +112,7 @@ struct Filter {
 	// FIR Settings
 	float firCoeff[2][FIRTAPS];
 	float winCoeff[FIRTAPS];
-	float filterBuffer[2][256];			// Ring buffer containing most recent playback samples for quicker filtering from SRAM
+	float filterBuffer[2][256];			// Ring buffer containing most recent playback samples for quicker filtering from SRAM (NB using 256 to speed up ring buffer navigation)
 	uint8_t filterBuffPos[2];
 
 	// IIR settings

@@ -35,34 +35,12 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 
-	// Filter output - use a separate filter buffer for the calculations as this will use SRAM which much faster than SDRAM
+	// Filter output
 	if (activateFilter) {			// For debug
 		if (filter.filterType == IIR) {
 			nextSample = filter.CalcIIRFilter(nextSample, LR);
 		} else {
-			//nextSample = filter.CalcFIRFilter(nextSample, LR);
-
-			filter.filterBuffer[LR][filter.filterBuffPos[LR]] = nextSample;
-			if (filter.currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-				uint8_t mid = filter.filterBuffPos[LR] - (FIRTAPS / 2);
-				nextSample = filter.filterBuffer[LR][mid];
-			} else {
-				float outputSample = 0.0;
-				uint8_t pos, revpos;
-
-				pos = filter.filterBuffPos[LR] - FIRTAPS + 1;
-				revpos = filter.filterBuffPos[LR];
-				for (uint8_t i = 0; i < FIRTAPS / 2; ++i) {
-					// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
-					outputSample += filter.firCoeff[filter.activeFilter][i] * (filter.filterBuffer[LR][pos++] + filter.filterBuffer[LR][revpos--]);
-				}
-
-				outputSample += filter.firCoeff[filter.activeFilter][FIRTAPS / 2] * filter.filterBuffer[LR][pos];
-
-				nextSample = outputSample;
-			}
-
-			++filter.filterBuffPos[LR];		// FIXME - probably need only one position, incremented on right sample
+			nextSample = filter.CalcFIRFilter(nextSample, LR);
 		}
 	}
 
