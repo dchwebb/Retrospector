@@ -214,7 +214,7 @@ void InitADCAudio()
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
 
-	// FIXME - currently ADC clock is set to HSI - might be more accurate to use HSE
+	// FIXME - currently ADC clock is set to HSI @ 64MHz - might be more accurate to use HSE
 	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
@@ -497,16 +497,30 @@ void InitTempoClock()
 
 void InitDebugTimer()
 {
-	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
-
-	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
-	// See manual page 1670 for info on Capture and Compare Input mode
+	// Configure timer to use in internal debug timing
 	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
 	TIM3->ARR = 65535;
 	TIM3->PSC = 10;
-
 	TIM3->CR1 |= TIM_CR1_CEN;
+}
 
+
+void InitChorusTimer()
+{
+	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
+	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
+
+	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
+	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
+	TIM2->ARR = 3000;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
+
+
+	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
+	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	TIM2->CR1 |= TIM_CR1_CEN;
+	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
 
 /*

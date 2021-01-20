@@ -23,8 +23,8 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	if (calculatingFilter)
-		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
+//	if (calculatingFilter)
+//		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
 
@@ -37,7 +37,7 @@ void SPI2_IRQHandler() {
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-	GPIOC->ODR &= ~GPIO_ODR_OD12;
+//	GPIOC->ODR &= ~GPIO_ODR_OD12;
 }
 
 
@@ -49,6 +49,34 @@ void EXTI9_5_IRQHandler(void) {
 		lastClock = SysTickVal;
 		EXTI->PR1 |= EXTI_PR1_PR7;							// Clear interrupt pending
 	}
+}
+
+void TIM2_IRQHandler() {
+	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
+
+	// Modify next ARR time
+	chorusLFO += chorusDir;
+	if (chorusLFO > 5000) {
+		GPIOC->ODR &= ~GPIO_ODR_OD12;
+		chorusDir = -1;
+	}
+
+	if (chorusLFO < 1200) {
+		chorusDir = 1;
+		GPIOC->ODR |= GPIO_ODR_OD12;
+	}
+	TIM2->ARR = chorusLFO;
+
+
+	chorusSamples[chorusWrite++] = ADC_audio[left];
+
+
+
+//	// Toggle debug output
+//	if (chorusWrite & 0b1)
+//		GPIOC->ODR &= ~GPIO_ODR_OD12;
+//	else
+//		GPIOC->ODR |= GPIO_ODR_OD12;
 }
 
 // System interrupts

@@ -6,7 +6,6 @@
 #include "sdram.h"
 
 /* TODO
- * Ping pong
  * IIR Filters for ADC smoothing
  * Explore LED options for filter control
  * implement ADC CV controls
@@ -14,9 +13,10 @@
  * USB hangs when sending over CDC and client disconnects
  * Accuracy of tempo (add negative jitter?)
  *
- * Electrical
+ * Electrical/Hardware
  * CV control for filter?
  * Power supply ripple and current final tests
+ * Control for panoramic mode
  */
 
 volatile uint32_t SysTickVal;
@@ -63,6 +63,11 @@ Filter filter;
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
+uint16_t chorusSamples[256];
+uint8_t chorusWrite = 0;
+uint16_t chorusLFO = 500;
+int8_t chorusDir = 1;
+
 // Debug
 char usbBuf[8 * FIRTAPS + 1];
 bool sendVals = false;
@@ -104,6 +109,7 @@ int main(void) {
 
 	DigitalDelay.init();
 	InitI2S();
+	InitChorusTimer();
 
 
 	while (1) {
