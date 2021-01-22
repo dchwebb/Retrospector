@@ -5,10 +5,10 @@ extern volatile bool sampleClock;
 extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
-extern uint16_t chorusSamples[256];
+extern uint16_t chorusSamples[2][65536];
 extern uint8_t chorusWrite;
 extern uint8_t chorusLFO;
-
+extern bool chorusMode;
 volatile bool CmdPending = false;
 std::string ComCmd;
 
@@ -51,11 +51,16 @@ bool CDCCommand(const std::string ComCmd) {
 				"fir       -  Activate FIR filter\r\n"
 				"resume    -  Resume I2S after debugging\r\n"
 				"pp        -  Turn ping pong mode on/off\r\n"
+				"c         -  Chorus on/off\r\n"
 				"cb        -  Dump chorus samples\r\n"
 		);
 
 	} else if (ComCmd.compare("resume\n") == 0) {		// Resume I2S after debugging
 		resumeI2S();
+
+	} else if (ComCmd.compare("c\n") == 0) {		// Resume I2S after debugging
+		chorusMode = !chorusMode;
+		usb.SendString(chorusMode ? "Chorus on\r\n" : "Chorus off\r\n");
 
 	} else if (ComCmd.compare("pp\n") == 0) {		// Resume I2S after debugging
 		DigitalDelay.pingPong = !DigitalDelay.pingPong;
@@ -142,8 +147,8 @@ bool CDCCommand(const std::string ComCmd) {
 		TIM2->CR1 &= ~TIM_CR1_CEN;
 
 		usb.SendString("Write Pos: " + std::to_string(chorusWrite) + "\r\n");
-		for (int s = 0; s < 256; ++s) {
-			usb.SendString(std::to_string(chorusSamples[s]).append("\r\n").c_str());
+		for (int s = 0; s < 65536; ++s) {
+			usb.SendString(std::to_string(chorusSamples[0][s]).append("\r\n").c_str());
 		}
 
 		TIM2->CR1 |= TIM_CR1_CEN;

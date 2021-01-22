@@ -63,10 +63,12 @@ Filter filter;
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
-uint16_t chorusSamples[256];
-uint8_t chorusWrite = 0;
-uint16_t chorusLFO = 500;
-int8_t chorusDir = 1;
+uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
+uint16_t chorusWrite = 10;
+uint16_t chorusRead[2] = {0, 0};
+const uint8_t chorusLFOdivider = 10;
+uint32_t chorusLFO = 4165 << chorusLFOdivider;
+int8_t chorusInc = -22;
 
 // Debug
 char usbBuf[8 * FIRTAPS + 1];

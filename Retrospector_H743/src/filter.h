@@ -76,7 +76,7 @@ public:
 };
 
 
-struct IIRFilter {
+class IIRFilter {
 public:
 	uint8_t numPoles = 1;
 	uint8_t numSections;
@@ -101,11 +101,12 @@ private:
 };
 
 
-struct Filter {
+class Filter {
+public:
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
-	FilterType filterType = FIR;
+	FilterType filterType = IIR;
 	PassType passType;
-	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP (or choose just LP or HP)
+	FilterControl filterControl = LP;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 	float currentCutoff;
 

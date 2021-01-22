@@ -512,7 +512,7 @@ void InitChorusTimer()
 
 	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
 	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
-	TIM2->ARR = 3000;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
+	TIM2->ARR = 4165;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
 
 
 	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register

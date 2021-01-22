@@ -15,6 +15,11 @@ union StereoSample {
 	int16_t sample[2];
 };
 
+#define CHORUS_MIN 50.0f
+#define CHORUS_MAX 245.0f
+#define CHORUS_INC (CHORUS_MAX - CHORUS_MIN) / 48000
+
+
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
 struct digitalDelay {
@@ -25,6 +30,8 @@ public:
 	int32_t oldReadPos[2];
 	int32_t currentDelay[2];
 	volatile int32_t calcDelay[2];			// volatile required to prevent optimiser using incorrect ADC channel
+	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
+	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	volatile int16_t delayPotVal[2];
 	volatile float delayMult[2];
 	delay_mode delayMode;

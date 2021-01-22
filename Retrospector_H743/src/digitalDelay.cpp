@@ -1,8 +1,10 @@
 #include "digitaldelay.h"
 
+extern uint16_t chorusRead[2];
 
 uint32_t debugDuration = 0;
 uint32_t filterDuration = 0;
+bool chorusMode = false;
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
@@ -11,6 +13,8 @@ void digitalDelay::calcSample(channel LR) {
 	bool reverse = (mode() == modeReverse);
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
+	if (LR == left)
+		chorusRead[0]++;
 
 	channel RL = (LR == left) ? right : left;		// Get other channel for use in ping-pong calculations
 
@@ -29,7 +33,7 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 	// Add in a scaled amount of the sample from the opposite stereo channel
-	if (pingPong) {
+	if (!chorusMode && pingPong) {
 		nextSample += pingSample * ADC_array[ADC_Delay_CV_L] / 65536.0f;
 	}
 
@@ -61,6 +65,8 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 
+
+
 	// Put next output sample in I2S buffer
 	SPI2->TXDR = std::clamp(static_cast<int32_t>(nextSample), -32767L, 32767L);
 
@@ -84,68 +90,79 @@ void digitalDelay::calcSample(channel LR) {
 
 	// Move write and read heads one sample forwards
 	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;
-	if (reverse) {
-		if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-		if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-	} else {
-		if (++readPos[LR] == SAMPLE_BUFFER_LENGTH)		readPos[LR] = 0;
-		if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
-	}
 
-
-	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
-	delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	if (clockValid) {
-		if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
-			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
-			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
+	if (chorusMode) {
+		chorusLFO[LR] += chorusAdd[LR];			// to achieve a 2 second LFO over the required delay range
+		if (chorusLFO[LR] > CHORUS_MAX || chorusLFO[LR] < CHORUS_MIN) {
+			chorusAdd[LR] *= -1;
 		}
-		calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
+		readPos[LR] = writePos[LR] - static_cast<int32_t>(chorusLFO[LR]) - 1;
+		while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
+
 
 	} else {
-		if (mode() != modeShort)
-			delayClkCV *= SAMPLE_BUFFER_LENGTH / 65356;
-		calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		if (reverse) {
+			if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+			if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+		} else {
+			if (++readPos[LR] == SAMPLE_BUFFER_LENGTH)		readPos[LR] = 0;
+			if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
+		}
+
+
+		// Get delay time from ADC or tempo clock and average over 32 readings to smooth
+		delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+		if (clockValid) {
+			if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
+				delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
+				delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
+			}
+			calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
+
+		} else {
+			if (mode() != modeShort)
+				delayClkCV *= SAMPLE_BUFFER_LENGTH / 65356;
+			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		}
+
+
+		// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
+		if (reverse) {
+			// Adjust read and write positions to handle circular buffer complications
+			int32_t wp = writePos[LR];
+			int32_t rp = readPos[LR];
+			if (rp > wp) {
+				if (wp - (calcDelay[LR] * 2) < 0)
+					wp += (SAMPLE_BUFFER_LENGTH - 1);
+				else
+					rp -= (SAMPLE_BUFFER_LENGTH - 1);
+			}
+			int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
+
+			// Scale the LED so it fades in with the timing of the reverse delay
+			reverseLED(LR, remainingDelay);
+
+			// check if read position is less than write position less delay then reset read position to write position
+			if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
+				ledOffTime[LR] = SysTickVal + 50;
+				oldReadPos[LR] = readPos[LR];
+				readPos[LR] = writePos[LR] - 1;
+				if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+				delayCrossfade[LR] = crossfade;
+			}
+
+		} else {
+			// If delay time has changed trigger crossfade from old to new read position
+			if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) > delayHysteresis) {
+				oldReadPos[LR] = readPos[LR];
+				readPos[LR] = writePos[LR] - calcDelay[LR] - 1;
+				while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
+				delayCrossfade[LR] = crossfade;
+				currentDelay[LR] = calcDelay[LR];
+			}
+			updateLED(LR);
+		}
 	}
-
-
-	// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
-	if (reverse) {
-		// Adjust read and write positions to handle circular buffer complications
-		int32_t wp = writePos[LR];
-		int32_t rp = readPos[LR];
-		if (rp > wp) {
-			if (wp - (calcDelay[LR] * 2) < 0)
-				wp += (SAMPLE_BUFFER_LENGTH - 1);
-			else
-				rp -= (SAMPLE_BUFFER_LENGTH - 1);
-		}
-		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
-
-		// Scale the LED so it fades in with the timing of the reverse delay
-		reverseLED(LR, remainingDelay);
-
-		// check if read position is less than write position less delay then reset read position to write position
-		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
-			ledOffTime[LR] = SysTickVal + 50;
-			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos[LR] - 1;
-			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-			delayCrossfade[LR] = crossfade;
-		}
-
-	} else {
-		// If delay time has changed trigger crossfade from old to new read position
-		if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) > delayHysteresis) {
-			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos[LR] - calcDelay[LR] - 1;
-			while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
-			delayCrossfade[LR] = crossfade;
-			currentDelay[LR] = calcDelay[LR];
-		}
-		updateLED(LR);
-	}
-
 
 //	time = TIM3->CNT;
 //	if (time > debugDuration)

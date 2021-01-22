@@ -54,29 +54,49 @@ void EXTI9_5_IRQHandler(void) {
 void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
 
+	static uint16_t maxLFO = 4666;
+	static uint16_t minLFO = 3666;
+	static uint16_t targetDiff = 0;
+
 	// Modify next ARR time
-	chorusLFO += chorusDir;
-	if (chorusLFO > 5000) {
+	chorusLFO += chorusInc;
+
+	uint16_t divLFO = chorusLFO >> chorusLFOdivider;
+	if (divLFO > maxLFO) {
+		//GPIOC->ODR &= ~GPIO_ODR_OD12;
+		chorusInc *= -1;
+		if (targetDiff == 0) {
+			targetDiff = (chorusWrite - chorusRead[0]) + 50;
+		} else if ((uint16_t)(chorusWrite - chorusRead[0]) > targetDiff) {
+			maxLFO--;
+		} else if ((uint16_t)(chorusWrite - chorusRead[0]) < targetDiff) {
+			maxLFO++;
+		}
+	}
+
+	if (divLFO < minLFO) {
+		chorusInc *= -1;
+//		if ((uint16_t)(chorusWrite - chorusRead[0]) > 36) {
+//			minLFO--;
+//		}
+		//GPIOC->ODR |= GPIO_ODR_OD12;
+	}
+
+
+
+
+	TIM2->ARR = divLFO;
+
+
+	chorusSamples[0][chorusWrite++] = ADC_audio[left];
+
+
+
+	// Toggle debug output
+	if (chorusWrite & 0b1)
 		GPIOC->ODR &= ~GPIO_ODR_OD12;
-		chorusDir = -1;
-	}
-
-	if (chorusLFO < 1200) {
-		chorusDir = 1;
+	else
 		GPIOC->ODR |= GPIO_ODR_OD12;
-	}
-	TIM2->ARR = chorusLFO;
-
-
-	chorusSamples[chorusWrite++] = ADC_audio[left];
-
-
-
-//	// Toggle debug output
-//	if (chorusWrite & 0b1)
-//		GPIOC->ODR &= ~GPIO_ODR_OD12;
-//	else
-//		GPIOC->ODR |= GPIO_ODR_OD12;
 }
 
 // System interrupts

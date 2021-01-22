@@ -186,6 +186,14 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
+  /* RAM for chorus buffer */
+  . = ALIGN(4);
+  .chorus_data (NOLOAD) :
+  {
+     KEEP(*(.chorus_data))
+  } >RAM_D1
+  
+
   /* DW External SDRAM storage
      The `(NOLOAD)' directive will mark a section to not be loaded at run time. The linker will process the section normally,
      but will mark it so that a program loader will not load it into memory. */
