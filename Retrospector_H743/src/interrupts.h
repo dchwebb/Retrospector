@@ -24,7 +24,7 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 void SPI2_IRQHandler() {
 
 //	if (calculatingFilter)
-//		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
+		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
 
@@ -37,7 +37,7 @@ void SPI2_IRQHandler() {
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-//	GPIOC->ODR &= ~GPIO_ODR_OD12;
+	GPIOC->ODR &= ~GPIO_ODR_OD12;
 }
 
 
@@ -47,60 +47,15 @@ void EXTI9_5_IRQHandler(void) {
 	if (EXTI->PR1 & EXTI_PR1_PR7) {
 		clockInterval = SysTickVal - lastClock;
 		lastClock = SysTickVal;
-		EXTI->PR1 |= EXTI_PR1_PR7;							// Clear interrupt pending
+		EXTI->PR1 |= EXTI_PR1_PR7;				// Clear interrupt pending
 	}
 }
+
 
 void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
-
-	static uint16_t minLFO = 3666;
-	static uint16_t targetDiff = 0;
-
-	// Modify next ARR time
-	chorusLFO += chorusInc;
-
-//	if ((uint16_t)(chorusWrite - chorusRead[0]) > 3200) {
-//		maxChorusLFO += 1;
-//	} else if ((uint16_t)(chorusWrite - chorusRead[0]) < 10) {
-//		maxChorusLFO -= 1;
-//	}
-
-	uint16_t divLFO = chorusLFO >> chorusLFOdivider;
-	if (divLFO > maxChorusLFO && chorusInc > 0) {
-		if ((uint16_t)(chorusWrite - chorusRead[0]) > 1500) {
-			maxChorusLFO += 2;
-		}
-		//GPIOC->ODR &= ~GPIO_ODR_OD12;
-		chorusInc = -22;
-
-
-	}
-
-	if (divLFO < minLFO && chorusInc < 0) {
-		chorusInc = 22;
-		if ((uint16_t)(chorusWrite - chorusRead[0]) < 1800) {
-			maxChorusLFO -= 2;
-		}
-		//GPIOC->ODR |= GPIO_ODR_OD12;
-	}
-
-
-
-
-	TIM2->ARR = divLFO;
-
-
-	chorusSamples[0][chorusWrite++] = ADC_audio[left];
-
-
-
-	// Toggle debug output
-	if (chorusWrite & 0b1)
-		GPIOC->ODR &= ~GPIO_ODR_OD12;
-	else
-		GPIOC->ODR |= GPIO_ODR_OD12;
 }
+
 
 // System interrupts
 void NMI_Handler(void) {}

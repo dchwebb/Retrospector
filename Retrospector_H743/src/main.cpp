@@ -64,12 +64,10 @@ int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH]
 //int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
-uint16_t chorusWrite = 100;
-uint16_t chorusRead[2] = {0, 0};
-const uint8_t chorusLFOdivider = 10;
-uint32_t chorusLFO = 4165 << chorusLFOdivider;
-int8_t chorusInc = -22;
- uint16_t maxChorusLFO = 4690;
+//const uint8_t chorusLFOdivider = 10;
+//uint32_t chorusLFO = 4165 << chorusLFOdivider;
+//int8_t chorusInc = -22;
+// uint16_t maxChorusLFO = 4690;
 
 // Debug
 char usbBuf[8 * FIRTAPS + 1];
@@ -112,7 +110,7 @@ int main(void) {
 
 	DigitalDelay.init();
 	InitI2S();
-	InitChorusTimer();
+//	InitChorusTimer();
 
 
 	while (1) {

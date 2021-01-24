@@ -15,10 +15,11 @@ union StereoSample {
 	int16_t sample[2];
 };
 
-#define CHORUS_MIN 50.0f
-#define CHORUS_MAX 245.0f
+#define CHORUS_MIN 80.0f * 2.0f
+#define CHORUS_MAX 260.0f * 2.0f
 #define CHORUS_INC (CHORUS_MAX - CHORUS_MIN) / 48000
 
+extern uint16_t chorusSamples[2][65536];
 
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
@@ -30,8 +31,6 @@ public:
 	int32_t oldReadPos[2];
 	int32_t currentDelay[2];
 	volatile int32_t calcDelay[2];			// volatile required to prevent optimiser using incorrect ADC channel
-	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
-	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	volatile int16_t delayPotVal[2];
 	volatile float delayMult[2];
 	delay_mode delayMode;
@@ -39,6 +38,10 @@ public:
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 	bool pingPong = true;
+	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
+	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
+	uint16_t chorusWrite = 0;
+	uint16_t chorusRead[2] = {0, 0};
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

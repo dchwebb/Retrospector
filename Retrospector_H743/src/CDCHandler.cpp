@@ -5,8 +5,7 @@ extern volatile bool sampleClock;
 extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
-extern uint16_t chorusSamples[2][65536];
-extern uint8_t chorusWrite;
+
 extern uint8_t chorusLFO;
 extern bool chorusMode;
 volatile bool CmdPending = false;
@@ -146,7 +145,7 @@ bool CDCCommand(const std::string ComCmd) {
 		suspendI2S();
 		TIM2->CR1 &= ~TIM_CR1_CEN;
 
-		usb.SendString("Write Pos: " + std::to_string(chorusWrite) + "\r\n");
+		usb.SendString("Write Pos: " + std::to_string(DigitalDelay.chorusWrite) + "\r\n");
 		for (int s = 0; s < 65536; ++s) {
 			usb.SendString(std::to_string(chorusSamples[0][s]).append("\r\n").c_str());
 		}
