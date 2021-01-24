@@ -54,31 +54,34 @@ void EXTI9_5_IRQHandler(void) {
 void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
 
-	static uint16_t maxLFO = 4666;
 	static uint16_t minLFO = 3666;
 	static uint16_t targetDiff = 0;
 
 	// Modify next ARR time
 	chorusLFO += chorusInc;
 
+//	if ((uint16_t)(chorusWrite - chorusRead[0]) > 3200) {
+//		maxChorusLFO += 1;
+//	} else if ((uint16_t)(chorusWrite - chorusRead[0]) < 10) {
+//		maxChorusLFO -= 1;
+//	}
+
 	uint16_t divLFO = chorusLFO >> chorusLFOdivider;
-	if (divLFO > maxLFO) {
-		//GPIOC->ODR &= ~GPIO_ODR_OD12;
-		chorusInc *= -1;
-		if (targetDiff == 0) {
-			targetDiff = (chorusWrite - chorusRead[0]) + 50;
-		} else if ((uint16_t)(chorusWrite - chorusRead[0]) > targetDiff) {
-			maxLFO--;
-		} else if ((uint16_t)(chorusWrite - chorusRead[0]) < targetDiff) {
-			maxLFO++;
+	if (divLFO > maxChorusLFO && chorusInc > 0) {
+		if ((uint16_t)(chorusWrite - chorusRead[0]) > 1500) {
+			maxChorusLFO += 2;
 		}
+		//GPIOC->ODR &= ~GPIO_ODR_OD12;
+		chorusInc = -22;
+
+
 	}
 
-	if (divLFO < minLFO) {
-		chorusInc *= -1;
-//		if ((uint16_t)(chorusWrite - chorusRead[0]) > 36) {
-//			minLFO--;
-//		}
+	if (divLFO < minLFO && chorusInc < 0) {
+		chorusInc = 22;
+		if ((uint16_t)(chorusWrite - chorusRead[0]) < 1800) {
+			maxChorusLFO -= 2;
+		}
 		//GPIOC->ODR |= GPIO_ODR_OD12;
 	}
 

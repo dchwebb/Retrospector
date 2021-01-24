@@ -49,7 +49,7 @@ void digitalDelay::calcSample(channel LR) {
 
 	// Timing Debug
 	volatile uint32_t time = TIM3->CNT;
-	if (time > filterDuration) {
+if (time > filterDuration) {
 		filterDuration = time;
 		if (time > 200) {
 			volatile int susp = 1;
