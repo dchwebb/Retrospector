@@ -6,8 +6,6 @@ extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
 
-extern uint8_t chorusLFO;
-extern bool chorusMode;
 volatile bool CmdPending = false;
 std::string ComCmd;
 
@@ -58,8 +56,8 @@ bool CDCCommand(const std::string ComCmd) {
 		resumeI2S();
 
 	} else if (ComCmd.compare("c\n") == 0) {		// Resume I2S after debugging
-		chorusMode = !chorusMode;
-		usb.SendString(chorusMode ? "Chorus on\r\n" : "Chorus off\r\n");
+		DigitalDelay.chorusMode = !DigitalDelay.chorusMode;
+		usb.SendString(DigitalDelay.chorusMode ? "Chorus on\r\n" : "Chorus off\r\n");
 
 	} else if (ComCmd.compare("pp\n") == 0) {		// Resume I2S after debugging
 		DigitalDelay.pingPong = !DigitalDelay.pingPong;

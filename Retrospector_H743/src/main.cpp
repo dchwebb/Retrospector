@@ -61,13 +61,9 @@ Filter filter;
 
 // Place sample buffers in external SDRAM
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
-//int16_t samples[2][SAMPLE_BUFFER_LENGTH];
 
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
-//const uint8_t chorusLFOdivider = 10;
-//uint32_t chorusLFO = 4165 << chorusLFOdivider;
-//int8_t chorusInc = -22;
-// uint16_t maxChorusLFO = 4690;
+
 
 // Debug
 char usbBuf[8 * FIRTAPS + 1];
@@ -110,7 +106,6 @@ int main(void) {
 
 	DigitalDelay.init();
 	InitI2S();
-//	InitChorusTimer();
 
 
 	while (1) {
@@ -136,9 +131,14 @@ int main(void) {
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
-		DAC1->DHR12R2 = DACLevel * 4095.0f;					// Wet level
-		DAC1->DHR12R1 = (1.0f - DACLevel) * 4095.0f;		// Dry level
-
+		if (DigitalDelay.chorusMode) {
+			// In chorus mode wet/dry mixing is handled in software
+			DAC1->DHR12R2 = 4095;								// Wet level
+			DAC1->DHR12R1 = 0;									// Dry level
+		} else {
+			DAC1->DHR12R2 = (1.0f - DACLevel) * 4095.0f;		// Wet level
+			DAC1->DHR12R1 = DACLevel * 4095.0f;					// Dry level
+		}
 		// Check if filter coefficients need to be updated
 		//dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
 		dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter

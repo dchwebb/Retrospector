@@ -1,21 +1,25 @@
 #include "digitaldelay.h"
 
-extern uint16_t chorusRead[2];
+//extern uint16_t chorusRead[2];
+extern float DACLevel;
 
 uint32_t debugDuration = 0;
 uint32_t filterDuration = 0;
-bool chorusMode = true;
+
 
 void digitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
-	static int16_t leftWriteSample;
-	float nextSample, pingSample;
+	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
+	float nextSample, pingSample;									// nextSample is the delayed sample to be played (pingSample form the opposite side)
 	bool reverse = (mode() == modeReverse);
-	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]);		// Capture recording sample here to avoid jitter
+	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
+	channel RL = (LR == left) ? right : left;						// Get other channel for use in ping-pong calculations
 
-	// Capture samples for L and R channels to get double speed sampling
+	// If chorussing, 'dry' sample is current sample + LFO delayed chorus sample
 	if (chorusMode) {
+
+		// Capture samples for L and R channels each time to get double speed sampling
 		chorusSamples[left][chorusWrite++] = ADC_audio[left];
 		chorusSamples[right][chorusWrite] = ADC_audio[right];
 
@@ -24,14 +28,12 @@ void digitalDelay::calcSample(channel LR) {
 		if (chorusLFO[LR] > CHORUS_MAX || chorusLFO[LR] < CHORUS_MIN) {
 			chorusAdd[LR] *= -1;
 		}
-		chorusRead[LR] = chorusWrite - static_cast<uint16_t>(chorusLFO[LR]) - 1;
-		//while (chorusRead[LR] < 0) 		chorusRead[LR] += SAMPLE_BUFFER_LENGTH;
+		uint16_t chorusRead = chorusWrite - static_cast<uint16_t>(chorusLFO[LR]) - 1;
+		recordSample = (recordSample + chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);
 
-		recordSample = (recordSample + chorusSamples[LR][chorusRead[LR]]) >> 1;
-
+		//recordSample = recordSample;
 	}
 
-	channel RL = (LR == left) ? right : left;		// Get other channel for use in ping-pong calculations
 
 	TIM3->CNT = 0;		// Debug
 
@@ -48,8 +50,10 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 	// Add in a scaled amount of the sample from the opposite stereo channel
-	if (!chorusMode && pingPong) {
-		nextSample += pingSample * ADC_array[ADC_Delay_CV_L] / 65536.0f;
+	if (pingPong) {
+		float ppLevel = ADC_array[ADC_Delay_CV_L] / 100000.0f;
+		//nextSample = (1 - ppLevel) * nextSample + ppLevel * pingSample;
+		nextSample = 0.6f * nextSample + ppLevel * pingSample;
 	}
 
 
@@ -80,16 +84,21 @@ void digitalDelay::calcSample(channel LR) {
 	}
 
 
-
+	// As mixing is done in software in chorus mode add current chorused sample to delay sample
+	float outputSample;
+	if (chorusMode) {
+		float multWet = 1.0f - std::pow(DACLevel * 1.05, 2.0f);
+		float multDry = 1.0f - std::pow(1 - (DACLevel * 1.05), 2.0f);
+		outputSample = (multWet * nextSample) + (multDry * recordSample);
+	} else {
+		outputSample = nextSample;
+	}
 
 	// Put next output sample in I2S buffer
-	SPI2->TXDR = std::clamp(static_cast<int32_t>(nextSample), -32767L, 32767L);
-
+	SPI2->TXDR = std::clamp(static_cast<int32_t>(outputSample), -32767L, 32767L);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
-	int32_t feedbackSample = (recordSample - adcZeroOffset[LR]) +
-			(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
-
+	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
 
 	// Hold the left sample in a temporary variable and write both left and right samples when processing right signal
 	if (LR == left) {

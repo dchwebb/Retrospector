@@ -38,10 +38,12 @@ public:
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 	bool pingPong = true;
+
+	bool chorusMode = true;
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
-	uint16_t chorusRead[2] = {0, 0};
+//	uint16_t chorusRead[2] = {0, 0};
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;
