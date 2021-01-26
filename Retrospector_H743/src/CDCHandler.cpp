@@ -199,7 +199,7 @@ bool CDCCommand(const std::string ComCmd) {
 		/* NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
-		for (int f = 0; f < FIRTAPS; ++f) {
+		for (int f = 0; f < Filter::firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\r\n").c_str());
@@ -213,7 +213,7 @@ bool CDCCommand(const std::string ComCmd) {
 		/* NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		or add manually "-u _printf_float" in linker flags */
 		char buf[50];
-		for (int f = 0; f < FIRTAPS; ++f) {
+		for (int f = 0; f < Filter::firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb.SendString(ts.append("\r\n").c_str());
@@ -225,9 +225,9 @@ bool CDCCommand(const std::string ComCmd) {
 		suspendI2S();
 
 		uint16_t pos = filter.filterBuffPos[0];
-		for (int f = 0; f < FIRTAPS; ++f) {
+		for (int f = 0; f < Filter::firTaps; ++f) {
 			usb.SendString(std::to_string(filter.filterBuffer[0][pos]).append("\r\n").c_str());
-			if (++pos == FIRTAPS) pos = 0;
+			if (++pos == Filter::firTaps) pos = 0;
 		}
 
 		resumeI2S();

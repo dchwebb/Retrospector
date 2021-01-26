@@ -4,13 +4,15 @@
 bool calculatingFilter = false;
 bool activateFilter = true;
 
+extern uint32_t debugDuration;
 
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
 {
-	float arg, omega;
+	float omega;
+	int8_t arg;
 
-	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass (settings optimised for 81 filter taps)
+	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass
 	if (tone < filterPotCentre - 1000) {		// Low Pass
 		passType = LowPass;
 		omega = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
@@ -25,61 +27,57 @@ void Filter::InitFIRFilter(uint16_t tone)
 	// cycle between two sets of coefficients so one can be changed without affecting the other
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
+	TIM3->CNT = 0;		// Debug
+
+
 	if (passType == LowPass) {
-		for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {
-			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
+		for (int8_t j = 0; j < firTaps / 2 + 1; ++j) {
+			arg = j - firTaps / 2;
 			firCoeff[inactiveFilter][j] = omega * Sinc(omega * arg * M_PI) * winCoeff[j];
 		}
 	} else if (passType == HighPass)  {
 		int8_t sign = 1;
-		for (int8_t j = 0; j < FIRTAPS / 2 + 1; ++j) {
-			arg = (float)j - (float)(FIRTAPS - 1) / 2.0;
+		for (int8_t j = 0; j < firTaps / 2 + 1; ++j) {
+			arg = j - firTaps / 2;
 			firCoeff[inactiveFilter][j] = sign * omega * Sinc(omega * arg * M_PI) * winCoeff[j];
 			sign = sign * -1;
 		}
 	}
+
+		uint32_t time = TIM3->CNT;
+//		if (time > debugDuration)
+			debugDuration = time;		// Debug
 
 	activeFilter = inactiveFilter;
 	currentCutoff = omega;
 }
 
 
+// Convolution routine for delayed samples - takes current sample, buffers, convolves and returns filtered sample
 float Filter::CalcFIRFilter(float sample, channel c)
 {
 	float outputSample = 0.0;
 
 	filterBuffer[c][filterBuffPos[c]] = sample;
 	if (currentCutoff == 1.0f) {		// If not filtering take middle most sample to account for FIR group delay when filtering active (gives more time for main loop when filter inactive)
-		uint8_t mid = filterBuffPos[c] - (FIRTAPS / 2);
+		uint8_t mid = filterBuffPos[c] - (firTaps / 2);
 		outputSample = filterBuffer[c][mid];
 	} else {
 		uint8_t pos, revpos;
 
-		pos = filterBuffPos[c] - FIRTAPS + 1;		// position of sample 1, 2, 3 etc
+		pos = filterBuffPos[c] - firTaps + 1;		// position of sample 1, 2, 3 etc
 		revpos = filterBuffPos[c];					// posiiton of sample N, N-1, N-2 etc
 
-		for (uint8_t i = 0; i < FIRTAPS / 2; ++i) {
+		for (uint8_t i = 0; i < firTaps / 2; ++i) {
 			// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc
 			outputSample += firCoeff[activeFilter][i] * (filterBuffer[c][pos++] + filterBuffer[c][revpos--]);
 		}
 
-		outputSample += firCoeff[activeFilter][FIRTAPS / 2] * filterBuffer[c][pos];
+		outputSample += firCoeff[activeFilter][firTaps / 2] * filterBuffer[c][pos];
 	}
 
 	++filterBuffPos[c];		// FIXME - probably need only one position, incremented on right sample
 	return outputSample;
-}
-
-
-void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
-{
-	float arg;
-
-	// Kaiser window
-	for (uint8_t j = 0; j < FIRTAPS; j++) {
-		arg = beta * sqrt(1.0 - pow( ((float)(2 * j) + 1 - FIRTAPS) / (FIRTAPS + 1), 2.0) );
-		winCoeff[j] = Bessel(arg) / Bessel(beta);
-	}
 }
 
 float Filter::Sinc(float x)
@@ -87,6 +85,17 @@ float Filter::Sinc(float x)
 	if (x > -1.0E-5 && x < 1.0E-5)
 		return(1.0);
 	return (std::sin(x) / x);
+}
+
+void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
+{
+	float arg;
+
+	// Kaiser window
+	for (uint8_t j = 0; j < firTaps; j++) {
+		arg = beta * sqrt(1.0 - pow( ((float)(2 * j) + 1 - firTaps) / (firTaps + 1), 2.0) );
+		winCoeff[j] = Bessel(arg) / Bessel(beta);
+	}
 }
 
 // Used for Kaiser window calculations

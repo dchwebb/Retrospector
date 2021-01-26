@@ -9,6 +9,7 @@ extern uint32_t lastClock;
 extern uint32_t clockInterval;
 extern bool clockValid;
 extern int32_t samples[SAMPLE_BUFFER_LENGTH];
+extern uint16_t chorusSamples[2][65536];
 
 union StereoSample {
 	int32_t bothSamples;
@@ -18,8 +19,6 @@ union StereoSample {
 #define CHORUS_MIN 80.0f * 2.0f
 #define CHORUS_MAX 260.0f * 2.0f
 #define CHORUS_INC (CHORUS_MAX - CHORUS_MIN) / 48000
-
-extern uint16_t chorusSamples[2][65536];
 
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
@@ -39,11 +38,11 @@ public:
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 	bool pingPong = true;
 
-	bool chorusMode = true;
+	bool chorusMode = false;
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
-	IIRFilter chorusFilter[2] = {IIRFilter(4, LowPass), IIRFilter(4, LowPass)};
+	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

@@ -1,6 +1,5 @@
 #include "DigitalDelay.h"
 
-//extern uint16_t chorusRead[2];
 extern float DACLevel;
 
 uint32_t debugDuration = 0;
@@ -30,14 +29,14 @@ void DigitalDelay::calcSample(channel LR) {
 		}
 		uint16_t chorusRead = chorusWrite - static_cast<uint16_t>(chorusLFO[LR]) - 1;
 
+		// Low pass filter the LFO delayed sample
+		float filteredChorus = chorusFilter[LR].FilterSample(chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);
 
-
-		recordSample = 0.7f * (recordSample + chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);		// FIXME - scaling factor needs to be more scientific
-
+		recordSample = 0.8f * (recordSample + filteredChorus);		// FIXME - scaling factor needs to be more scientific
 	}
 
 
-	TIM3->CNT = 0;		// Debug
+//	TIM3->CNT = 0;		// Debug
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {

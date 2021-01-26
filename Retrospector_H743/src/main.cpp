@@ -65,11 +65,6 @@ int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH]
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
 
 
-// Debug
-char usbBuf[8 * FIRTAPS + 1];
-bool sendVals = false;
-
-
 extern "C" {
 #include "interrupts.h"
 }

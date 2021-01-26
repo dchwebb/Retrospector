@@ -13,7 +13,7 @@
 #include "USB.h"
 extern USB usb;
 
-#define FIRTAPS 101
+
 #define MAX_POLES 8		// For declaring IIR arrays
 #define MAX_SECTIONS (MAX_POLES + 1) / 2
 #define M_PI           3.14159265358979323846
@@ -21,7 +21,6 @@ extern USB usb;
 // For debugging
 extern bool activateFilter;
 extern bool calculatingFilter;
-extern bool debugSort;
 
 enum FilterControl {LP, HP, Both};
 enum PassType {FilterOff, LowPass, HighPass, BandPass};
@@ -58,8 +57,7 @@ struct IIRRegisters {
 	iirdouble_t Y2[MAX_SECTIONS];
 };
 
-class IIRPrototype
-{
+class IIRPrototype {
 public:
 	uint8_t numPoles;
 	uint8_t numSections;
@@ -103,6 +101,7 @@ private:
 
 // Filter with fixed cut off
 class FixedFilter {
+public:
 	IIRFilter filter;
 	IIRRegisters iirReg;
 
@@ -120,17 +119,19 @@ class FixedFilter {
 
 class Filter {
 public:
+	static constexpr uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
+
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
-	FilterType filterType = IIR;
+	FilterType filterType = FIR;
 	PassType passType;
-	FilterControl filterControl = LP;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
+	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
 	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 	float currentCutoff;
 
 	// FIR Settings
-	float firCoeff[2][FIRTAPS];
-	float winCoeff[FIRTAPS];
-	float filterBuffer[2][256];			// Ring buffer containing most recent playback samples for quicker filtering from SRAM (NB using 256 to speed up ring buffer navigation)
+	float firCoeff[2][firTaps];
+	float winCoeff[firTaps];
+	float filterBuffer[2][256];				// Ring buffer containing most recent playback samples for quicker filtering from SRAM (NB using 256 to speed up ring buffer navigation)
 	uint8_t filterBuffPos[2];
 
 	// IIR settings
@@ -152,3 +153,5 @@ public:
 
 
 extern Filter filter;
+
+

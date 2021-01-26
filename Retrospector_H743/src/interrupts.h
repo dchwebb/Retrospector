@@ -23,7 +23,7 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-//	if (calculatingFilter)
+	if (calculatingFilter)
 		GPIOC->ODR |= GPIO_ODR_OD12;			// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
