@@ -136,6 +136,19 @@ void Filter::InitIIRFilter(uint16_t tone)
 //	Take a new sample and return filtered value
 iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
+	if (passType == HighPass) {
+		return iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
+	} else {
+		return iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
+	}
+
+}
+
+
+/*
+//	Take a new sample and return filtered value
+iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
+{
 	const uint16_t crossfadeLength = 400;
 	static uint16_t crossfade = 0;
 	static PassType pt = LowPass;
@@ -171,10 +184,8 @@ iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 		}
 		return prevSample[c];
 	}
-
-
 }
-
+ */
 
 //	Take a new sample and return filtered value
 iirdouble_t IIRFilter::FilterSample(iirdouble_t sample, IIRRegisters& registers)
@@ -400,5 +411,9 @@ void IIRPrototype::GetFilterCoeff(std::array<complex_t, MAX_POLES> &Roots)
 			polyCount++;
 		}
 	}
+}
 
+iirdouble_t FixedFilter::FilterSample(iirdouble_t sample)
+{
+	return filter.FilterSample(sample, iirReg);
 }

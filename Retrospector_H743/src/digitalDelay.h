@@ -23,7 +23,7 @@ extern uint16_t chorusSamples[2][65536];
 
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
-struct digitalDelay {
+struct DigitalDelay {
 public:
 	int32_t readPos[2];
 	int32_t writePos[2] = {1, 1};
@@ -43,7 +43,7 @@ public:
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
-//	uint16_t chorusRead[2] = {0, 0};
+	IIRFilter chorusFilter[2] = {IIRFilter(4, LowPass), IIRFilter(4, LowPass)};
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

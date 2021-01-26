@@ -101,6 +101,23 @@ private:
 };
 
 
+// Filter with fixed cut off
+class FixedFilter {
+	IIRFilter filter;
+	IIRRegisters iirReg;
+
+	FixedFilter(uint8_t poles, PassType pass, iirdouble_t frequency) {
+		// FIXME should probably be an init method in the IIRFilter class
+		filter.numPoles = poles;
+		filter.passType = pass;
+		filter.iirProto = IIRPrototype(poles);
+		filter.CalcCoeff(frequency);
+	}
+
+	iirdouble_t FilterSample(iirdouble_t sample);
+};
+
+
 class Filter {
 public:
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration

@@ -1,7 +1,7 @@
 #include "initialisation.h"
-#include "digitalDelay.h"
 #include "USB.h"
 #include "CDCHandler.h"
+#include "DigitalDelay.h"
 #include "Filter.h"
 #include "sdram.h"
 
@@ -56,10 +56,10 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
 USB usb;
-digitalDelay DigitalDelay;
+DigitalDelay delay;
 Filter filter;
 
-// Place sample buffers in external SDRAM
+// Place delay sample buffers in external SDRAM
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
@@ -104,7 +104,7 @@ int main(void) {
 	DAC1->DHR12R2 = 2048;		// Pins 3 & 6 on VCA (MIX_WET_CTL)
 	DAC1->DHR12R1 = 2048; 		// Pins 11 & 14 on VCA (MIX_DRY_CTL)
 
-	DigitalDelay.init();
+	delay.init();
 	InitI2S();
 
 
@@ -131,7 +131,7 @@ int main(void) {
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
-		if (DigitalDelay.chorusMode) {
+		if (delay.chorusMode) {
 			// In chorus mode wet/dry mixing is handled in software
 			DAC1->DHR12R2 = 4095;								// Wet level
 			DAC1->DHR12R1 = 0;									// Dry level

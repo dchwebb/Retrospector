@@ -29,9 +29,9 @@ void SPI2_IRQHandler() {
 	sampleClock = !sampleClock;
 
 	if (sampleClock) {
-		DigitalDelay.calcSample(left);			// Left Channel
+		delay.calcSample(left);			// Left Channel
 	} else {
-		DigitalDelay.calcSample(right);			// Right Channel
+		delay.calcSample(right);			// Right Channel
 	}
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice

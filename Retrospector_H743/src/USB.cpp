@@ -764,7 +764,10 @@ void USB::SendData(const uint8_t* data, uint16_t len, uint8_t endpoint) {
 	}
 }
 void USB::SendString(const char* s) {
-	while (transmitting);
+	uint16_t counter = 0;
+	while (transmitting && counter < 10000) {
+		++counter;
+	}
 	SendData((uint8_t*)s, strlen(s), CDC_In);
 }
 void USB::SendString(std::string s) {

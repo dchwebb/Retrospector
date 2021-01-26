@@ -1,4 +1,4 @@
-#include "digitaldelay.h"
+#include "DigitalDelay.h"
 
 //extern uint16_t chorusRead[2];
 extern float DACLevel;
@@ -7,7 +7,7 @@ uint32_t debugDuration = 0;
 uint32_t filterDuration = 0;
 
 
-void digitalDelay::calcSample(channel LR) {
+void DigitalDelay::calcSample(channel LR) {
 	int32_t delayClkCV;
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	float nextSample, pingSample;									// nextSample is the delayed sample to be played (pingSample form the opposite side)
@@ -29,9 +29,11 @@ void digitalDelay::calcSample(channel LR) {
 			chorusAdd[LR] *= -1;
 		}
 		uint16_t chorusRead = chorusWrite - static_cast<uint16_t>(chorusLFO[LR]) - 1;
-		recordSample = (recordSample + chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);
 
-		//recordSample = recordSample;
+
+
+		recordSample = 0.7f * (recordSample + chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);		// FIXME - scaling factor needs to be more scientific
+
 	}
 
 
@@ -51,6 +53,7 @@ void digitalDelay::calcSample(channel LR) {
 
 	// Add in a scaled amount of the sample from the opposite stereo channel
 	if (pingPong) {
+		// FIXME need to sort out levels here
 		float ppLevel = ADC_array[ADC_Delay_CV_L] / 100000.0f;
 		//nextSample = (1 - ppLevel) * nextSample + ppLevel * pingSample;
 		nextSample = 0.6f * nextSample + ppLevel * pingSample;
@@ -337,7 +340,7 @@ void digitalDelay::calcSample(channel LR) {
 }
 */
 
-void digitalDelay::init() {
+void DigitalDelay::init() {
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
 	calcDelay[right] = ADC_array[ADC_Delay_Pot_R];
 	calcSample(left);
@@ -346,7 +349,7 @@ void digitalDelay::init() {
 	delayCrossfade[right] = 0;
 }
 
-void digitalDelay::updateLED(channel c) {
+void DigitalDelay::updateLED(channel c) {
 	// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
 	++ledCounter[c];
 	if (clockValid) {
@@ -375,7 +378,7 @@ void digitalDelay::updateLED(channel c) {
 }
 
 // Scale the LED so it fades in with the timing of the reverse delay
-void digitalDelay::reverseLED(channel c, int32_t remainingDelay)
+void DigitalDelay::reverseLED(channel c, int32_t remainingDelay)
 {
 	float rc = (float)remainingDelay / (calcDelay[c] * 2);
 	ledCounter[c]++;
@@ -387,7 +390,7 @@ void digitalDelay::reverseLED(channel c, int32_t remainingDelay)
 }
 
 // Switch LED on and set off time
-void digitalDelay::ledOn(channel c) {
+void DigitalDelay::ledOn(channel c) {
 	if (c == left) {
 		GPIOC->ODR |= GPIO_ODR_OD10;
 //		GPIOC->ODR |= GPIO_ODR_OD12;		// Debug
@@ -400,7 +403,7 @@ void digitalDelay::ledOn(channel c) {
 }
 
 // Directly switch LED on or off
-void digitalDelay::ledOff(channel c) {
+void DigitalDelay::ledOff(channel c) {
 	if (c == left) {
 		GPIOC->ODR &= ~GPIO_ODR_OD10;
 //		GPIOC->ODR &= ~GPIO_ODR_OD12;		// Debug
@@ -411,7 +414,7 @@ void digitalDelay::ledOff(channel c) {
 	ledOffTime[c] = 0;
 }
 
-delay_mode digitalDelay::mode() {
+delay_mode DigitalDelay::mode() {
 	// Return setting of mode switch
 	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
 		return modeReverse;
