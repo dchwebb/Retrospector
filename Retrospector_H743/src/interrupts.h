@@ -2,21 +2,6 @@ void OTG_FS_IRQHandler(void) {
 	usb.USBInterruptHandler();
 }
 
-/*// USART Decoder
-void USART3_IRQHandler() {
-	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
-	if (!uartCmdRdy) {
-		uartCmd[uartCmdPos] = USART3->RDR; 				// accessing RDR automatically resets the receive flag
-		if (uartCmd[uartCmdPos] == 10) {
-			uartCmdRdy = true;
-			uartCmdPos = 0;
-		} else {
-			uartCmdPos++;
-		}
-	}
-}*/
-
-
 void __attribute__((optimize("O0"))) TinyDelay() {
 	for (int x = 0; x < 2; ++x);
 }
@@ -82,3 +67,18 @@ void PendSV_Handler(void) {}
 void SysTick_Handler(void) {
 	++SysTickVal;
 }
+
+/*
+// USART Decoder
+void USART3_IRQHandler() {
+	//if ((USART3->ISR & USART_ISR_RXNE_RXFNE) != 0 && !uartCmdRdy) {
+	if (!uartCmdRdy) {
+		uartCmd[uartCmdPos] = USART3->RDR; 				// accessing RDR automatically resets the receive flag
+		if (uartCmd[uartCmdPos] == 10) {
+			uartCmdRdy = true;
+			uartCmdPos = 0;
+		} else {
+			uartCmdPos++;
+		}
+	}
+}*/

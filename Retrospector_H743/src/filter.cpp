@@ -4,8 +4,6 @@
 bool calculatingFilter = false;
 bool activateFilter = true;
 
-extern uint32_t debugDuration;
-
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
 {
@@ -27,9 +25,6 @@ void Filter::InitFIRFilter(uint16_t tone)
 	// cycle between two sets of coefficients so one can be changed without affecting the other
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 
-	TIM3->CNT = 0;		// Debug
-
-
 	if (passType == LowPass) {
 		for (int8_t j = 0; j < firTaps / 2 + 1; ++j) {
 			arg = j - firTaps / 2;
@@ -43,10 +38,6 @@ void Filter::InitFIRFilter(uint16_t tone)
 			sign = sign * -1;
 		}
 	}
-
-		uint32_t time = TIM3->CNT;
-//		if (time > debugDuration)
-			debugDuration = time;		// Debug
 
 	activeFilter = inactiveFilter;
 	currentCutoff = omega;
@@ -101,17 +92,17 @@ void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value betwe
 // Used for Kaiser window calculations
 float Filter::Bessel(float x)
 {
-	float Sum = 0.0, XtoIpower;
-	int Factorial;
+	float sum = 0.0, xPower;
+	int factorial;
 	for (uint8_t i = 1; i < 10; ++i) {
-		XtoIpower = pow(x / 2.0, (float)i);
-		Factorial = 1;
+		xPower = pow(x / 2.0, (float)i);
+		factorial = 1;
 		for (uint8_t j = 1; j <= i; ++j) {
-			Factorial *= j;
+			factorial *= j;
 		}
-		Sum += pow(XtoIpower / (float)Factorial, 2.0);
+		sum += pow(xPower / (float)factorial, 2.0);
 	}
-	return(1.0 + Sum);
+	return(1.0 + sum);
 }
 
 
@@ -120,8 +111,8 @@ float Filter::Bessel(float x)
 void Filter::InitIIRFilter(uint16_t tone)
 {
 	iirdouble_t cutoff;
-	const iirdouble_t LPMax = 0.995;
-	const iirdouble_t HPMin = 0.001;
+	constexpr iirdouble_t LPMax = 0.995;
+	constexpr iirdouble_t HPMin = 0.001;
 
 	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
 

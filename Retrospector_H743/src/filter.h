@@ -7,11 +7,7 @@
 #include "initialisation.h"
 #include <cmath>
 #include <complex>
-#include <map>
-
-// Debug
-#include "USB.h"
-extern USB usb;
+//#include <map>
 
 
 #define MAX_POLES 8		// For declaring IIR arrays

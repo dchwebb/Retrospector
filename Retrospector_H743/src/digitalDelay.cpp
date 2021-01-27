@@ -53,9 +53,9 @@ void DigitalDelay::calcSample(channel LR) {
 	// Add in a scaled amount of the sample from the opposite stereo channel
 	if (pingPong) {
 		// FIXME need to sort out levels here
-		float ppLevel = ADC_array[ADC_Delay_CV_L] / 100000.0f;
+		//float ppLevel = ADC_array[ADC_Delay_CV_L] / 100000.0f;
 		//nextSample = (1 - ppLevel) * nextSample + ppLevel * pingSample;
-		nextSample = 0.6f * nextSample + ppLevel * pingSample;
+		nextSample = 0.75f * nextSample + 0.4f * pingSample;
 	}
 
 

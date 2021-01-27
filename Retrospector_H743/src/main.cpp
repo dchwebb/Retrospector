@@ -29,7 +29,7 @@ bool USBDebug;
 void BootDFU() {
 	//SCB_DisableDCache();
 	__disable_irq();
-	*((unsigned long *)0x2407FFF0) = 0xDEADBEEF; // 512KB STM32H7xx
+	*((unsigned long *)0x2407FFF0) = 0xDEADBEEF; 	// 512KB STM32H7xx
 	__DSB();
 	NVIC_SystemReset();
 }
@@ -55,15 +55,13 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
+// Place delay sample buffers in external SDRAM
+int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
+uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
+
 USB usb;
 DigitalDelay delay;
 Filter filter;
-
-// Place delay sample buffers in external SDRAM
-int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
-
-uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
-
 
 extern "C" {
 #include "interrupts.h"
@@ -91,7 +89,7 @@ int main(void) {
 	filter.InitIIRFilter(currentTone);
 
 	usb.InitUSB();
-	usb.cdcDataHandler = std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
+	usb.cdcDataHandler = &CDCHandler; 	//std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
 
 	InitCache();				// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
 	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
@@ -121,8 +119,7 @@ int main(void) {
 			}
 		}
 
-
-		clockValid = (SysTickVal - lastClock < 1000);		// Valid clock interval is within a second
+		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
 
 		// Output mix level
 		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
@@ -134,9 +131,10 @@ int main(void) {
 			DAC1->DHR12R2 = (1.0f - DACLevel) * 4095.0f;		// Wet level
 			DAC1->DHR12R1 = DACLevel * 4095.0f;					// Dry level
 		}
+
 		// Check if filter coefficients need to be updated
-		//dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
-		dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+		dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+		//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
 
 		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
 			calculatingFilter = true;
