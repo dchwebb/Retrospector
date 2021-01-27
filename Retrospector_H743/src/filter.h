@@ -7,7 +7,6 @@
 #include "initialisation.h"
 #include <cmath>
 #include <complex>
-//#include <map>
 
 
 #define MAX_POLES 8		// For declaring IIR arrays
@@ -113,11 +112,15 @@ public:
 };
 
 
-class Filter {
+struct Filter {
 public:
 	static constexpr uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
 
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
+	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
+	FixedFilter filterADC = FixedFilter(4, LowPass, 0.005f);
+	static constexpr uint16_t hysteresis = 200;
+
 	FilterType filterType = FIR;
 	PassType passType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
@@ -138,12 +141,14 @@ public:
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
 	IIRRegisters iirHPReg[2];				// STore separate shift registers for high and low pass to allow smooth transition
 
+	void Init();
+	void Update(bool reset = false);
 	void InitFIRFilter(uint16_t tone);
 	void InitIIRFilter(uint16_t tone);
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
 	float CalcFIRFilter(float sample, channel c);
 	float Sinc(float x);
-	void FIRFilterWindow(float beta);
+	void FIRFilterWindow();
 	float Bessel(float x);
 };
 

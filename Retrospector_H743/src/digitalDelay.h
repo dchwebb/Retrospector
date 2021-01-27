@@ -52,12 +52,14 @@ public:
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
 
-	void calcSample(channel LOrR);
-	void init();
-	void updateLED(channel c);
-	void reverseLED(channel c, int32_t remainingDelay);
-	void ledOn(channel c);
-	void ledOff(channel c);
-	delay_mode mode();
+	void CalcSample(channel LOrR);
+	void Init();
+	void UpdateLED(channel c);
+	void ReverseLED(channel c, int32_t remainingDelay);
+	void LedOn(channel c);
+	void LedOff(channel c);
+	delay_mode Mode();
+	void ChorusMode(bool on);
+	int32_t OutputMix(float drySample, float wetSample);
 
 };

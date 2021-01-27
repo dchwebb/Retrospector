@@ -43,23 +43,18 @@ uint32_t lastClock = 0;
 uint32_t clockInterval = 0;
 bool clockValid;
 
-// Tone settings to control filter
-uint16_t currentTone = 0;
-int32_t dampedTone = 0;
-uint16_t toneHysteresis = 200;
-
-float DACLevel;							// Wet/Dry Cross fade value
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
 
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
-// Place delay sample buffers in external SDRAM
+// Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
 
 USB usb;
+CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
 
@@ -69,36 +64,21 @@ extern "C" {
 
 int main(void) {
 
-	SystemClock_Config();					// Configure the clock and PLL
-	SystemCoreClockUpdate();				// Update SystemCoreClock (system clock frequency)
+	SystemClock_Config();			// Configure the clock and PLL
+	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
-	InitADCAudio();
-	InitADCControls();
-	InitDAC();
-	InitTempoClock();
+	InitADCAudio();					// Initialise ADC to capture audio samples
+	InitADCControls();				// Initialise ADC to capture knob and CV data
+	InitDAC();						// DAC used to output Wet/Dry mix levels
+	InitTempoClock();				// Timer to handle incoming tempo clock
 	InitSDRAM();
-	InitIO();
-
+	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
+	InitIO();						// Initialise switches and LEDs
 	InitDebugTimer();
-
-	// Initialise filter
-	filter.FIRFilterWindow(4.0);
-	currentTone = ADC_array[ADC_Tone];
-	dampedTone = currentTone;
-	filter.InitFIRFilter(currentTone);
-	filter.InitIIRFilter(currentTone);
-
+	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();
-	usb.cdcDataHandler = &CDCHandler; 	//std::bind(CDCHandler, std::placeholders::_1, std::placeholders::_2);
-
-	InitCache();				// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
-	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
-
-	DAC1->DHR12R2 = 2048;		// Pins 3 & 6 on VCA (MIX_WET_CTL)
-	DAC1->DHR12R1 = 2048; 		// Pins 11 & 14 on VCA (MIX_DRY_CTL)
-
-	delay.init();
-	InitI2S();
+	delay.Init();					// clear sample buffers and preset delay timings
+	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 
 	while (1) {
@@ -120,40 +100,8 @@ int main(void) {
 		}
 
 		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
-
-		// Output mix level
-		DACLevel = (static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f);		// Convert 16 bit int to float 0 -> 1
-		if (delay.chorusMode) {
-			// In chorus mode wet/dry mixing is handled in software
-			DAC1->DHR12R2 = 4095;								// Wet level
-			DAC1->DHR12R1 = 0;									// Dry level
-		} else {
-			DAC1->DHR12R2 = (1.0f - DACLevel) * 4095.0f;		// Wet level
-			DAC1->DHR12R1 = DACLevel * 4095.0f;					// Dry level
-		}
-
-		// Check if filter coefficients need to be updated
-		dampedTone = std::max((31L * dampedTone + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
-		//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
-
-		if (std::abs(dampedTone - currentTone) > toneHysteresis) {
-			calculatingFilter = true;
-			currentTone = dampedTone;
-			if (filter.filterType == IIR) {
-				filter.InitIIRFilter(currentTone);
-			} else {
-				filter.InitFIRFilter(currentTone);
-			}
-			calculatingFilter = false;
-		}
-
-		// Check for incoming CDC commands
-		if (CmdPending) {
-			if (!CDCCommand(ComCmd)) {
-				usb.SendString("Unrecognised command:" + ComCmd + ". Type 'help' for supported commands\r\n");
-			}
-			CmdPending = false;
-		}
+		filter.Update();			// Check if filter coefficients need to be updated
+		cdc.Command();				// Check for incoming CDC commands
 
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {

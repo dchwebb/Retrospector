@@ -4,6 +4,57 @@
 bool calculatingFilter = false;
 bool activateFilter = true;
 
+void Filter::Init()
+{
+	filter.FIRFilterWindow();
+	filter.Update(true);
+}
+
+
+void Filter::Update(bool reset)
+{
+	// Debug: create tests of variation in damping techniques
+	static uint16_t testCounter;
+	static uint16_t dampMin[2], dampMax[2];
+	if (testCounter == 0) {
+		dampDiff[0] = dampMax[0] - dampMin[0];
+		dampMin[0] = dampedADC;
+		dampMax[0] = dampedADC;
+		dampDiff[1] = dampMax[1] - dampMin[1];
+		dampMin[1] = dampedADC2;
+		dampMax[1] = dampedADC2;
+	} else {
+		if (dampedADC > dampMax[0]) {
+			dampMax[0] = dampedADC;
+		} else if (dampedADC < dampMin[0]) {
+			dampMin[0] = dampedADC;
+		}
+		if (dampedADC2 > dampMax[1]) {
+			dampMax[1] = dampedADC2;
+		} else if (dampedADC2 < dampMin[1]) {
+			dampMin[1] = dampedADC2;
+		}
+	}
+	++testCounter;
+
+
+	dampedADC = std::max((31L * dampedADC + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+	dampedADC2 = filterADC.FilterSample(std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535));
+	//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+
+	if (reset || std::abs(dampedADC - previousADC) > hysteresis) {
+		calculatingFilter = true;
+		previousADC = dampedADC;
+		if (filterType == IIR) {
+			InitIIRFilter(dampedADC);
+		} else {
+			InitFIRFilter(dampedADC);
+		}
+		calculatingFilter = false;
+	}
+}
+
+
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
 {
@@ -71,6 +122,7 @@ float Filter::CalcFIRFilter(float sample, channel c)
 	return outputSample;
 }
 
+
 float Filter::Sinc(float x)
 {
 	if (x > -1.0E-5 && x < 1.0E-5)
@@ -78,9 +130,11 @@ float Filter::Sinc(float x)
 	return (std::sin(x) / x);
 }
 
-void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value between 0.0 and 10.0)
+
+void Filter::FIRFilterWindow()
 {
 	float arg;
+	constexpr float beta = 0.4f;			// between 0.0 and 10.0
 
 	// Kaiser window
 	for (uint8_t j = 0; j < firTaps; j++) {
@@ -88,6 +142,7 @@ void Filter::FIRFilterWindow(float beta)		// example has beta = 4.0 (value betwe
 		winCoeff[j] = Bessel(arg) / Bessel(beta);
 	}
 }
+
 
 // Used for Kaiser window calculations
 float Filter::Bessel(float x)
@@ -104,8 +159,6 @@ float Filter::Bessel(float x)
 	}
 	return(1.0 + sum);
 }
-
-
 
 
 void Filter::InitIIRFilter(uint16_t tone)
