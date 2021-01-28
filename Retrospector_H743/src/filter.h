@@ -118,8 +118,8 @@ public:
 
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
 	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
-	FixedFilter filterADC = FixedFilter(4, LowPass, 0.005f);
-	static constexpr uint16_t hysteresis = 200;
+	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
+	static constexpr uint16_t hysteresis = 30;
 
 	FilterType filterType = FIR;
 	PassType passType;

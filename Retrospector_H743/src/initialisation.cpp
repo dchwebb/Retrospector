@@ -500,7 +500,7 @@ void InitDebugTimer()
 	// Configure timer to use in internal debug timing
 	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
 	TIM3->ARR = 65535;
-	TIM3->PSC = 10;
+	TIM3->PSC = 1;
 	TIM3->CR1 |= TIM_CR1_CEN;
 }
 

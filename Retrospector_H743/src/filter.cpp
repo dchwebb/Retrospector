@@ -13,6 +13,7 @@ void Filter::Init()
 
 void Filter::Update(bool reset)
 {
+
 	// Debug: create tests of variation in damping techniques
 	static uint16_t testCounter;
 	static uint16_t dampMin[2], dampMax[2];
@@ -37,10 +38,14 @@ void Filter::Update(bool reset)
 	}
 	++testCounter;
 
+	TIM3->CNT = 0;		// Debug
 
-	dampedADC = std::max((31L * dampedADC + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
-	dampedADC2 = filterADC.FilterSample(std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535));
+	//dampedADC = std::max((127L * dampedADC + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 7, 0L);		// FIXME - don't yet have CV input for Filter
+	dampedADC = filterADC.FilterSample(std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535));
 	//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
+
+	extern uint32_t debugDuration;
+	debugDuration = TIM3->CNT;
 
 	if (reset || std::abs(dampedADC - previousADC) > hysteresis) {
 		calculatingFilter = true;

@@ -3108,7 +3108,7 @@ Connection ~ 10350 3600
 Wire Wire Line
 	14900 1750 14950 1750
 Text Label 7400 6700 0    50   ~ 0
-DELAY_CHORUS
+CHORUS
 Text Label 7400 6050 0    50   ~ 0
 MODE1
 Text Label 7400 6150 0    50   ~ 0
@@ -3566,7 +3566,7 @@ F 3 "" H 7400 5450 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 Text Label 4600 6550 0    50   ~ 0
-DELAY_CHORUS
+CHORUS
 Wire Wire Line
 	2450 1650 2550 1650
 Wire Wire Line
@@ -3790,7 +3790,7 @@ TONE_POT
 Wire Wire Line
 	4250 5450 4350 5450
 $Comp
-L Connector:USB_B_Micro J7
+L Retrospector_Components-rescue:USB_B_Micro-Connector J7
 U 1 1 5F7B1572
 P 7400 8350
 F 0 "J7" H 7457 8817 50  0000 C CNN
@@ -4671,4 +4671,16 @@ Wire Wire Line
 	16750 10300 16800 10300
 Text Notes 12300 9850 0    50   ~ 0
 FIXME: connect to earth for \nhigher latency but less ringing
+Text Label 8100 6350 0    50   ~ 0
+PINGPONG
+Text Label 8100 6250 0    50   ~ 0
+LP_MODE
+Text Label 8100 6150 0    50   ~ 0
+HP_MODE
+Text Label 8100 6450 0    50   ~ 0
+LED_I2C_CLK_PB8
+Text Label 8100 6550 0    50   ~ 0
+LED_I2C_DATA_PB7
+Text Label 8100 6650 0    50   ~ 0
+LED_5V
 $EndSCHEMATC

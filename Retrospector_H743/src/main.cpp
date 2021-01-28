@@ -12,6 +12,7 @@
  * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
  * Accuracy of tempo (add negative jitter?)
+ * Thump when activating chorus mode from startup with silence
  *
  * Electrical/Hardware
  * CV control for filter?
