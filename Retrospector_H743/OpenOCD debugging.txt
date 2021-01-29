@@ -9,3 +9,16 @@ C:\ST\STM32CubeIDE_1.0.2\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externalt
 At gdb prompt connect to OpenOCD (where 3333 is the port OpenOCD is listening on):
 
 target extended-remote :3333
+
+
+Commands:
+---------
+
+List breakpoints:
+maint info breakpoints
+
+Remove All Breakpoints:
+delete
+
+Continue Execution:
+c

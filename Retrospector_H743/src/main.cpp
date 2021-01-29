@@ -6,9 +6,7 @@
 #include "sdram.h"
 
 /* TODO
- * IIR Filters for ADC smoothing
  * Explore LED options for filter control
- * implement ADC CV controls
  * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
  * Accuracy of tempo (add negative jitter?)

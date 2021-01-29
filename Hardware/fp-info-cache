@@ -1,4 +1,4 @@
-392126359195286
+396877220415600
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19963,6 +19963,13 @@ mounting hole 6mm no annular
 0
 0
 0
+Custom_Footprints
+TDK_Inductor_6.9x7.2
+Choke, SMD, 6.3x6.3mm 3mm height
+Choke SMD
+0
+2
+2
 Custom_Footprints
 THONKICONN_hole
 
