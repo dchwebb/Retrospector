@@ -1175,4 +1175,35 @@ F 3 "" H 2550 6700 50  0001 C CNN
 $EndComp
 Text Notes 4950 7400 0    100  ~ 20
 LED Controller
+$Comp
+L power:+3.3V #PWR?
+U 1 1 6015D1C1
+P 4300 5050
+F 0 "#PWR?" H 4300 4900 50  0001 C CNN
+F 1 "+3.3V" V 4315 5178 50  0000 L CNN
+F 2 "" H 4300 5050 50  0001 C CNN
+F 3 "" H 4300 5050 50  0001 C CNN
+	1    4300 5050
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6015D81B
+P 4300 5150
+F 0 "#PWR?" H 4300 4900 50  0001 C CNN
+F 1 "GND" V 4300 4950 50  0000 C CNN
+F 2 "" H 4300 5150 50  0001 C CNN
+F 3 "" H 4300 5150 50  0001 C CNN
+	1    4300 5150
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4300 5150 4450 5150
+Wire Wire Line
+	4450 5250 4450 5150
+Connection ~ 4450 5150
+Wire Wire Line
+	4300 5050 4450 5050
+Text Notes 3550 5150 0    50   ~ 0
+Address 3
 $EndSCHEMATC

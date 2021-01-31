@@ -66,6 +66,8 @@ int main(void) {
 	SystemClock_Config();			// Configure the clock and PLL
 	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
+	InitI2C();
+/*
 	InitADCAudio();					// Initialise ADC to capture audio samples
 	InitADCControls();				// Initialise ADC to capture knob and CV data
 	InitDAC();						// DAC used to output Wet/Dry mix levels
@@ -78,11 +80,48 @@ int main(void) {
 	usb.InitUSB();
 	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
-
+*/
 
 	while (1) {
-		//MemoryTest();
+		volatile uint8_t i2cAddr;
 
+		// Test I2C Send
+		for (volatile uint8_t addr = 0x3C; addr < 255; ++addr) {
+
+			// In 7-bit addressing mode (ADD10 = 0):SADD[7:1] is 7-bit slave address. SADD[9],	SADD[8] and SADD[0] are don't care.
+			I2C1->CR2 |= I2C_CR2_STOP;
+
+			// Insert pause
+			volatile uint32_t oldVal = SysTickVal;
+			while (oldVal == SysTickVal) {};
+
+			I2C1->CR2 = addr << (I2C_CR2_SADD_Pos + 1);		// Set slave address 3
+			I2C1->CR2 &= ~I2C_CR2_RD_WRN;						// Set direction to write
+			I2C1->CR2 |= 0x1 << I2C_CR2_NBYTES_Pos;				// Number of bytes to send
+
+			// Insert pause
+			oldVal = SysTickVal;
+			while (oldVal + 2 < SysTickVal) {};
+
+			I2C1->CR2 |= I2C_CR2_START;
+
+			// Insert pause
+			oldVal = SysTickVal;
+			while (oldVal + 2 < SysTickVal) {};
+
+
+			// Check I2S_ISR_NACKF
+			if ((I2C1->ISR & I2C_ISR_NACKF) > 0) {
+				I2C1->ICR |= I2C_ICR_NACKCF;
+				I2C1->ICR |= I2C_ICR_STOPCF;
+			} else {
+				i2cAddr = addr;
+				break;
+			}
+		}
+
+		//MemoryTest();
+/*
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
  			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
@@ -101,7 +140,7 @@ int main(void) {
 		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
 		filter.Update();			// Check if filter coefficients need to be updated
 		cdc.Command();				// Check for incoming CDC commands
-
+*/
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
 			USBDebug = true;

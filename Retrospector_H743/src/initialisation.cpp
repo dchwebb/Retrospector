@@ -575,6 +575,47 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
+void InitI2C()
+{
+	//	Enable GPIO and I2C clocks
+	RCC->APB1LENR |= RCC_APB1LENR_I2C1EN;			// I2C1 Peripheral Clocks Enable
+	RCC->D2CCIP2R &= ~RCC_D2CCIP2R_I2C123SEL;		// Clock selection: 00: rcc_pclk1 (default); 01: pll3_r_ck; 10: hsi_ker_ck; 11: csi_ker_ck
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+
+	// PB7: I2C1_SDA [alternate function AF4]
+	GPIOB->OTYPER |= GPIO_OTYPER_OT7;				// Set pin output to Open Drain
+	GPIOB->MODER &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
+	GPIOB->AFR[0] |= 4 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 4 (I2C1)
+
+	// PB8: I2C1_SCL [alternate function AF4]
+	GPIOB->OTYPER |= GPIO_OTYPER_OT8;				// Set pin output to Open Drain
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_0;			// 10: Alternate function mode
+	GPIOB->AFR[1] |= 4 << GPIO_AFRH_AFSEL8_Pos;		// Alternate Function 4 (I2C1)
+
+	//I2C1->CR1 |= I2C_CR1_ANFOFF;					// Analog noise filter - on by default
+	//I2C1->CR1 |= I2C_CR1_DNF;						// Digital noise filter
+
+	// Timings taken from HAL for 100kHz:
+	//I2C1->TIMINGR = 0x10C0ECFF;
+	//0001 0000 1100 0000 1110 1100 1111 1111
+
+	// Fast mode: 0x009034B6
+	// Timing calculations: I2C frequency: 1 / ((SCLL + 1) + (SCLH + 1)) * (PRESC + 1) * 1/I2CCLK)
+	// [eg 1 / ((256 + 237) * 2 * 1/100MHz) = 100kHz] (Will actually be slightly slower as there are also sync times to be accounted for)
+	I2C1->TIMINGR |= 0x1 << I2C_TIMINGR_PRESC_Pos;	// Timing prescaler
+	I2C1->TIMINGR |= 0x2 << I2C_TIMINGR_SDADEL_Pos;	// Data Hold Time
+	I2C1->TIMINGR |= 0x4 << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time
+	//I2C1->TIMINGR |= 0xC << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time
+	I2C1->TIMINGR |= 0xFF << I2C_TIMINGR_SCLL_Pos;	// SCLL low period
+	I2C1->TIMINGR |= 0xEC << I2C_TIMINGR_SCLH_Pos;	// SCLH high period
+	//I2C1->TIMINGR |= 0x7C << I2C_TIMINGR_SCLL_Pos;	// SCLL low period
+	//I2C1->TIMINGR |= 0x7C << I2C_TIMINGR_SCLH_Pos;	// SCLH high period
+
+	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;				// Clock stretching disable: Must be cleared in master mode
+
+	I2C1->CR1 |= I2C_CR1_PE;						// Peripheral enable
+}
+
 #ifdef ITCMRAM
 void CopyToITCMRAM()
 {
