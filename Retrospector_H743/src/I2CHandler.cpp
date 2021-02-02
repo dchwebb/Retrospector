@@ -60,6 +60,32 @@ void I2C::Write(uint8_t byte) {
 }
 
 
+void I2C::DMATransfer(uint8_t* byte, uint8_t count) {
+	while (DMA1_Stream0->NDTR > 0 || (I2C1->ISR & I2C_ISR_BUSY) == I2C_ISR_BUSY);
+
+	I2C1->CR2 |= I2C_CR2_AUTOEND;
+	I2C1->CR2 &= ~I2C_CR2_NBYTES_Msk;					// Clear Number of bytes to send
+	I2C1->CR2 |= count << I2C_CR2_NBYTES_Pos;			// Number of bytes to send
+	I2C1->CR2 |= I2C_CR2_START;
+
+	while ((I2C1->ISR & I2C_ISR_STOPF) == 0);
+
+	if ((I2C1->ISR & I2C_ISR_NACKF) == I2C_ISR_NACKF) {
+		I2C1->ICR |= I2C_ICR_NACKCF;					// Clear NACK
+		I2C1->CR2 |= I2C_CR2_START;
+	}
+
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0;		// Channel 2 Clear synchronization overrun event flag
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF0_Pos;			// clear all five interrupts for this stream
+
+	DMA1_Stream0->NDTR |= count;						// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream0->PAR = (uint32_t)(&(I2C1->TXDR));		// Configure the peripheral data register address 0x40022040
+	DMA1_Stream0->M0AR = (uint32_t)(byte);				// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
+
+	DMA1_Stream0->CR |= DMA_SxCR_EN;					// Enable DMA and wait
+
+}
+
 void I2C::Write(uint8_t* byte, uint8_t count) {
 	while ((I2C1->ISR & I2C_ISR_BUSY) == I2C_ISR_BUSY);
 
@@ -85,6 +111,8 @@ void I2C::Write(uint8_t* byte, uint8_t count) {
 		I2C1->TXDR = byte[i];
 	}
 }
+
+
 
 void I2C::OLED_init(uint8_t addr) {
 	// keywords:
@@ -115,16 +143,8 @@ void I2C::OLED_init(uint8_t addr) {
 			OLED_CMD_SET_MEMORY_ADDR_MODE, 0x02,// Page addressing mode (0x00 = Horizonatal addressing mode)
 			OLED_CMD_DISPLAY_ON
 	};
-	Write(oledInit, sizeof(oledInit));
-
-//	// blank screen
-//	uint8_t oledData[] = {
-//			OLED_CONTROL_BYTE_CMD_STREAM,
-//			OLED_CMD_SET_MEMORY_ADDR_MODE, 0x00,
-//			OLED_CMD_SET_COLUMN_RANGE, 0x00, 0x7F,
-//			OLED_CMD_SET_PAGE_RANGE, 0x00, 0x07
-//	};
-//	Write(oledData, sizeof(oledData));
+	//Write(oledInit, sizeof(oledInit));
+	DMATransfer(oledInit, sizeof(oledInit));
 
 	// Write pattern
 	uint8_t oledPageTop[] = {
@@ -133,44 +153,57 @@ void I2C::OLED_init(uint8_t addr) {
 			0x00,		// set left most column lower nibble (ie start at column 0)
 			0x10		// set left most column higher nibble
 	};
-	Write(oledPageTop, sizeof(oledPageTop));
-
 
 	uint8_t blank[] = {
 			OLED_CONTROL_BYTE_DATA_STREAM,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
+	DMATransfer(oledPageTop, sizeof(oledPageTop));
 	for (uint8_t row = 0; row < 8; row++) { 			//row - top to bottom
 		uint8_t oledRow[] = {
 				OLED_CONTROL_BYTE_CMD_STREAM,
 				static_cast<uint8_t>(0xB0 + row)		// 0x00 - 0x07 row to start on (called 'page' in docs)
 		};
-		Write(oledRow, sizeof(oledRow));
+		DMATransfer(oledRow, sizeof(oledRow));
 		for (uint16_t i = 0; i < 8; i++) {				// column - left to right
-			Write(blank, sizeof(blank));
+			DMATransfer(blank, sizeof(blank));
 		}
 	}
+
 
 
 	// Cross weave pattern
 	uint8_t pattern2[] = {
 			OLED_CONTROL_BYTE_DATA_STREAM,
 			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
-			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
+			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
+			0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,
 	};
 
-	Write(oledPageTop, sizeof(oledPageTop));
+	DMATransfer(oledPageTop, sizeof(oledPageTop));
 	for (uint8_t row = 0; row < 8; row++) { 			//row - top to bottom
 		uint8_t oledRow[] = {
 				OLED_CONTROL_BYTE_CMD_STREAM,
 				static_cast<uint8_t>(0xB0 + row)		// 0x00 - 0x07 row to start on (called 'page' in docs)
 		};
-		Write(oledRow, sizeof(oledRow));
-		for (uint16_t i = 0; i < 8; i++) {				// column - left to right
-			Write(pattern2, sizeof(pattern2));
-		}
+		DMATransfer(oledRow, sizeof(oledRow));
+		DMATransfer(pattern2, sizeof(pattern2));
 	}
 
+	while (DMA1_Stream0->NDTR > 0 || (I2C1->ISR & I2C_ISR_BUSY) == I2C_ISR_BUSY);
 
 }

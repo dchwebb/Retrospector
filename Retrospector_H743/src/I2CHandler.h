@@ -55,4 +55,5 @@ public:
 	void OLED_init(uint8_t addr);
 	void Write(uint8_t byte);
 	void Write(uint8_t* byte, uint8_t count);
+	void DMATransfer(uint8_t* byte, uint8_t count);
 };

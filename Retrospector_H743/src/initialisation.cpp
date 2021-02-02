@@ -582,6 +582,24 @@ void InitI2C()
 	RCC->D2CCIP2R &= ~RCC_D2CCIP2R_I2C123SEL;		// Clock selection: 00: rcc_pclk1 (default); 01: pll3_r_ck; 10: hsi_ker_ck; 11: csi_ker_ck
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
 
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	// Initialize ADC peripheral
+	DMA1_Stream0->CR &= ~DMA_SxCR_EN;
+	DMA1_Stream0->CR &= ~DMA_SxCR_CIRC;				// Disable Circular mode to keep refilling buffer
+	DMA1_Stream0->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream0->CR &= ~DMA_SxCR_PSIZE_0;			// Peripheral size: 00 = 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream0->CR &= ~DMA_SxCR_MSIZE_0;			// Memory size: 00 = 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream0->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	DMA1_Stream0->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+
+	DMA1_Stream0->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF0_Pos;		// clear all five interrupts for this stream
+
+	DMAMUX1_Channel0->CCR |= 34; 					// DMA request MUX input 34 = i2c1_tx_dma (See p.695)
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 2 Clear synchronization overrun event flag
+
+
 	// PB7: I2C1_SDA [alternate function AF4]
 	GPIOB->OTYPER |= GPIO_OTYPER_OT7;				// Set pin output to Open Drain
 	GPIOB->MODER &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
@@ -596,22 +614,27 @@ void InitI2C()
 	//I2C1->CR1 |= I2C_CR1_DNF;						// Digital noise filter
 
 	// Timings taken from HAL for 100kHz:
-	//I2C1->TIMINGR = 0x10C0ECFF;
-	//0001 0000 1100 0000 1110 1100 1111 1111
-
-	// Fast mode: 0x009034B6
+	// I2C1->TIMINGR =     0x10 C0 EC FF;
+	// Fast mode (400kHz)  0x00 90 34 B6
 	// Timing calculations: I2C frequency: 1 / ((SCLL + 1) + (SCLH + 1)) * (PRESC + 1) * 1/I2CCLK)
 	// [eg 1 / ((256 + 237) * 2 * 1/100MHz) = 100kHz] (Will actually be slightly slower as there are also sync times to be accounted for)
+#ifndef I2C_FAST_MODE
 	I2C1->TIMINGR |= 0x1 << I2C_TIMINGR_PRESC_Pos;	// Timing prescaler
 	I2C1->TIMINGR |= 0x2 << I2C_TIMINGR_SDADEL_Pos;	// Data Hold Time
 	I2C1->TIMINGR |= 0x4 << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time
-	//I2C1->TIMINGR |= 0xC << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time
 	I2C1->TIMINGR |= 0xFF << I2C_TIMINGR_SCLL_Pos;	// SCLL low period
 	I2C1->TIMINGR |= 0xEC << I2C_TIMINGR_SCLH_Pos;	// SCLH high period
-	//I2C1->TIMINGR |= 0x7C << I2C_TIMINGR_SCLL_Pos;	// SCLL low period
-	//I2C1->TIMINGR |= 0x7C << I2C_TIMINGR_SCLH_Pos;	// SCLH high period
+#else
+	I2C1->TIMINGR |= 0x0 << I2C_TIMINGR_PRESC_Pos;	// Timing prescaler
+	I2C1->TIMINGR |= 0x0 << I2C_TIMINGR_SDADEL_Pos;	// Data Hold Time
+	I2C1->TIMINGR |= 0x9 << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time
+	I2C1->TIMINGR |= 0xB6 << I2C_TIMINGR_SCLL_Pos;	// SCLL low period
+	I2C1->TIMINGR |= 0x34 << I2C_TIMINGR_SCLH_Pos;	// SCLH high period
+#endif
 
 	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;				// Clock stretching disable: Must be cleared in master mode
+
+	I2C1->CR1 |= I2C_CR1_TXDMAEN;					// Enable DMA transmission
 
 	//I2C1->CR1 |= I2C_CR1_TXIE;						// Enable Transfer interrupt
 	NVIC_SetPriority(I2C1_EV_IRQn, 4);				// Lower is higher priority
