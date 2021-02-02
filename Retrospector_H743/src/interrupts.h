@@ -41,6 +41,11 @@ void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
 }
 
+void I2C1_EV_IRQHandler() {
+//	I2C1->TXIS
+	volatile int txint = 0;
+	txint++;
+}
 
 // System interrupts
 void NMI_Handler(void) {}

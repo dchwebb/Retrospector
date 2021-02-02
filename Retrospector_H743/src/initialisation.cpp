@@ -613,6 +613,11 @@ void InitI2C()
 
 	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;				// Clock stretching disable: Must be cleared in master mode
 
+	//I2C1->CR1 |= I2C_CR1_TXIE;						// Enable Transfer interrupt
+	NVIC_SetPriority(I2C1_EV_IRQn, 4);				// Lower is higher priority
+	NVIC_EnableIRQ(I2C1_EV_IRQn);
+
+
 	I2C1->CR1 |= I2C_CR1_PE;						// Peripheral enable
 }
 
