@@ -12,6 +12,7 @@
  * USB hangs when sending over CDC and client disconnects
  * Accuracy of tempo (add negative jitter?)
  * Thump when activating chorus mode from startup with silence
+ * DFU
  *
  * Electrical/Hardware
  * CV control for filter?

@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name Retrospector_Components-rescue)(type Legacy)(uri ${KIPRJMOD}/Retrospector_Components-rescue.lib)(options "")(descr ""))
+)

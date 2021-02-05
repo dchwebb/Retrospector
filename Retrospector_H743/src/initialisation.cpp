@@ -618,7 +618,8 @@ void InitI2C()
 	// Fast mode (400kHz)  0x00 90 34 B6
 	// Timing calculations: I2C frequency: 1 / ((SCLL + 1) + (SCLH + 1)) * (PRESC + 1) * 1/I2CCLK)
 	// [eg 1 / ((256 + 237) * 2 * 1/100MHz) = 100kHz] (Will actually be slightly slower as there are also sync times to be accounted for)
-#ifndef I2C_FAST_MODE
+
+#ifdef I2C_100KHZ
 	I2C1->TIMINGR |= 0x1 << I2C_TIMINGR_PRESC_Pos;	// Timing prescaler
 	I2C1->TIMINGR |= 0x2 << I2C_TIMINGR_SDADEL_Pos;	// Data Hold Time
 	I2C1->TIMINGR |= 0x4 << I2C_TIMINGR_SCLDEL_Pos;	// Data Setup Time

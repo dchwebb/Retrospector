@@ -17,7 +17,6 @@ uint8_t I2C::SetAddress(uint8_t addr) {
 		I2C1->ICR |= I2C_ICR_STOPCF;					// Clear stop bit
 	} else {
 		return addr;
-		//break;
 	}
 
 	return 0;
@@ -43,7 +42,6 @@ uint8_t I2C::FindAddress() {
 			I2C1->ICR |= I2C_ICR_STOPCF;					// Clear stop bit
 		} else {
 			return addr;
-			//break;
 		}
 	}
 	return 0;
@@ -75,7 +73,7 @@ void I2C::DMATransfer(uint8_t* byte, uint8_t count) {
 		I2C1->CR2 |= I2C_CR2_START;
 	}
 
-	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0;		// Channel 2 Clear synchronization overrun event flag
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0;		// Channel 0 Clear synchronization overrun event flag
 	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF0_Pos;			// clear all five interrupts for this stream
 
 	DMA1_Stream0->NDTR |= count;						// Number of data items to transfer (ie size of ADC buffer)
@@ -103,10 +101,6 @@ void I2C::Write(uint8_t* byte, uint8_t count) {
 	I2C1->TXDR = byte[0];
 
 	for (uint8_t i = 1; i < count; ++i) {
-//		while ((I2C1->ISR & I2C_ISR_TXE) == 0) {
-////			I2C1->ICR |= I2C_ICR_NACKCF;					// Clear NACK
-////			I2C1->CR2 |= I2C_CR2_START;
-//		}
 		while ((I2C1->ISR & I2C_ISR_TXE) == 0);
 		I2C1->TXDR = byte[i];
 	}
@@ -173,7 +167,7 @@ void I2C::OLED_init(uint8_t addr) {
 
 
 
-	// Cross weave pattern
+	// Cross weave pattern (duplicated 8 times to fill a whole row)
 	uint8_t pattern2[] = {
 			OLED_CONTROL_BYTE_DATA_STREAM,
 			0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81,
@@ -204,6 +198,7 @@ void I2C::OLED_init(uint8_t addr) {
 		DMATransfer(pattern2, sizeof(pattern2));
 	}
 
+	// As patterns are on stack need to wait until finished or memory will be corrupted before DMA as finished
 	while (DMA1_Stream0->NDTR > 0 || (I2C1->ISR & I2C_ISR_BUSY) == I2C_ISR_BUSY);
 
 }
