@@ -52,6 +52,7 @@ class I2C {
 public:
 	uint8_t FindAddress();
 	uint8_t SetAddress(uint8_t addr);
+	void LEDTest();
 	void OLED_init(uint8_t addr);
 	void Write(uint8_t byte);
 	void Write(uint8_t* byte, uint8_t count);

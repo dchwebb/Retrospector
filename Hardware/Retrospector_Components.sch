@@ -170,14 +170,14 @@ Wire Wire Line
 	9200 4800 9300 4800
 $Comp
 L Amplifier_Operational:MCP6004 U6
-U 2 1 5C76CA95
+U 4 1 5C76CA95
 P 12450 3650
 F 0 "U6" H 12500 3450 50  0000 C CNN
 F 1 "MCP6004" H 12500 3900 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12400 3750 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12500 3850 50  0001 C CNN
 F 4 "C7378" H 12450 3650 50  0001 C CNN "Part_Number"
-	2    12450 3650
+	4    12450 3650
 	1    0    0    1   
 $EndComp
 $Comp
@@ -270,7 +270,7 @@ F 5 "90" H 4650 11700 50  0001 C CNN "Rotation"
 $EndComp
 $Comp
 L Amplifier_Operational:MCP6004 U5
-U 1 1 5C83D6BA
+U 2 1 5C83D6BA
 P 9950 1950
 F 0 "U5" H 9950 1750 50  0000 C CNN
 F 1 "MCP6004" H 9950 2200 50  0000 C CNN
@@ -278,7 +278,7 @@ F 2 "SMD_Packages:SOIC-14_N" H 9900 2050 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10000 2150 50  0001 C CNN
 F 4 "C7378" H 9950 1950 50  0001 C CNN "Part_Number"
 F 5 "" H 9950 1950 50  0001 C CNN "Rotation"
-	1    9950 1950
+	2    9950 1950
 	1    0    0    1   
 $EndComp
 $Comp
@@ -356,14 +356,14 @@ Wire Wire Line
 	9200 1500 9250 1500
 $Comp
 L Amplifier_Operational:MCP6004 U5
-U 2 1 5C8457C9
+U 1 1 5C8457C9
 P 10000 3600
 F 0 "U5" H 10000 3400 50  0000 C CNN
 F 1 "MCP6004" H 10050 3800 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9950 3700 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10050 3800 50  0001 C CNN
 F 4 "C7378" H 10000 3600 50  0001 C CNN "Part_Number"
-	2    10000 3600
+	1    10000 3600
 	1    0    0    1   
 $EndComp
 $Comp
@@ -1305,18 +1305,6 @@ FMC_D14
 Text Label 4350 8050 0    50   ~ 0
 FMC_D15
 Wire Wire Line
-	2550 8850 2650 8850
-Connection ~ 2550 1650
-Wire Wire Line
-	2550 1650 2650 1650
-Connection ~ 2650 1650
-Wire Wire Line
-	2650 1650 2750 1650
-Connection ~ 2750 1650
-Wire Wire Line
-	2750 1650 2850 1650
-Connection ~ 2850 1650
-Wire Wire Line
 	3600 1300 3600 1400
 Wire Wire Line
 	4900 1300 4900 1400
@@ -1408,43 +1396,7 @@ F 4 "C14663" H 3000 1200 50  0001 C CNN "Part_Number"
 	1    3000 1200
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	2850 1650 2950 1650
-Connection ~ 2950 1650
-Wire Wire Line
-	2950 1650 3050 1650
-Connection ~ 3050 1650
-Wire Wire Line
-	3050 1650 3150 1650
-Connection ~ 3150 1650
-Wire Wire Line
-	3150 1650 3250 1650
-Connection ~ 3250 1650
-Wire Wire Line
-	3250 1650 3350 1650
-Connection ~ 3350 1650
-Wire Wire Line
-	3350 1650 3450 1650
-Connection ~ 2650 8850
-Wire Wire Line
-	2650 8850 2750 8850
-Connection ~ 2750 8850
-Connection ~ 2850 8850
-Wire Wire Line
-	2850 8850 2950 8850
 Connection ~ 2950 8850
-Wire Wire Line
-	2750 8850 2850 8850
-Connection ~ 3050 8850
-Wire Wire Line
-	3050 8850 3150 8850
-Connection ~ 3150 8850
-Wire Wire Line
-	3150 8850 3250 8850
-Connection ~ 3250 8850
-Wire Wire Line
-	3250 8850 3350 8850
-Connection ~ 3450 1650
 Wire Wire Line
 	8100 2450 7750 2450
 Wire Wire Line
@@ -1778,8 +1730,6 @@ FMC_A0
 Wire Wire Line
 	5800 2250 6150 2250
 Wire Wire Line
-	3450 1650 3550 1650
-Wire Wire Line
 	4350 2450 4250 2450
 Wire Wire Line
 	4350 2050 4250 2050
@@ -1816,7 +1766,6 @@ NoConn ~ 1750 7650
 NoConn ~ 4250 2750
 NoConn ~ 4250 2950
 NoConn ~ 4250 3450
-NoConn ~ 4250 3850
 NoConn ~ 4250 3950
 NoConn ~ 4250 4050
 NoConn ~ 4250 4750
@@ -1867,15 +1816,13 @@ Connection ~ 1050 10600
 Wire Wire Line
 	1050 10600 1200 10600
 Wire Wire Line
-	2950 8850 3050 8850
-Wire Wire Line
 	2950 8850 2950 9000
 $Comp
 L Audio:SSI2164 U4
 U 1 1 5F599442
 P 11200 9600
 F 0 "U4" H 10900 10350 50  0000 C CNN
-F 1 "SSI2164" H 11450 10350 50  0000 C CNN
+F 1 "AS3364" H 11450 10350 50  0000 C CNN
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 12000 9500 50  0001 C CNN
 F 3 "http://www.soundsemiconductor.com/downloads/ssi2164datasheet.pdf" H 11800 9150 50  0001 C CNN
 	1    11200 9600
@@ -1979,14 +1926,14 @@ Wire Wire Line
 Connection ~ 12800 1850
 $Comp
 L Amplifier_Operational:MCP6004 U6
-U 1 1 6005F1C4
+U 2 1 6005F1C4
 P 12450 1850
 F 0 "U6" H 12500 1700 50  0000 C CNN
 F 1 "MCP6004" H 12550 2100 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12400 1950 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12500 2050 50  0001 C CNN
 F 4 "C7378" H 12450 1850 50  0001 C CNN "Part_Number"
-	1    12450 1850
+	2    12450 1850
 	1    0    0    1   
 $EndComp
 $Comp
@@ -3009,11 +2956,11 @@ Text Label 5850 5850 0    50   ~ 0
 DELAY_CV_L
 Text Label 5850 5950 0    50   ~ 0
 DELAY_CV_R
-Text Label 5850 7100 0    50   ~ 0
+Text Label 5850 7300 0    50   ~ 0
 FEEDBACK_CV
-Text Label 5850 6800 0    50   ~ 0
-MIX_CV
 Text Label 5850 6900 0    50   ~ 0
+MIX_CV
+Text Label 5850 6800 0    50   ~ 0
 MIX_POT
 $Comp
 L Amplifier_Operational:MCP6004 U6
@@ -3039,7 +2986,7 @@ Wire Wire Line
 	12200 6500 12800 6500
 Wire Wire Line
 	12050 7050 12200 7050
-Text Label 5850 7300 0    50   ~ 0
+Text Label 5850 6700 0    50   ~ 0
 CLOCK
 Text Label 5850 7200 0    50   ~ 0
 DELAY_POT_L
@@ -3057,11 +3004,11 @@ Text Label 4350 3150 0    50   ~ 0
 USB_DP
 Wire Wire Line
 	4350 3150 4250 3150
-Text Label 16750 10750 0    50   ~ 0
+Text Label 16700 10600 0    50   ~ 0
 USB_VBUS
-Text Label 16750 10550 0    50   ~ 0
+Text Label 16700 10400 0    50   ~ 0
 USB_DM
-Text Label 16750 10350 0    50   ~ 0
+Text Label 16700 10200 0    50   ~ 0
 USB_DP
 Text Label 4350 4550 0    50   ~ 0
 DAC_LRCLK
@@ -3120,7 +3067,7 @@ F 3 "~" H 7200 5750 50  0001 C CNN
 	1    7200 5750
 	1    0    0    -1  
 $EndComp
-Text Label 4350 1950 0    50   ~ 0
+Text Label 4350 2550 0    50   ~ 0
 DELAY_CV_SCALED_L
 Text Label 4350 2150 0    50   ~ 0
 AUDIO_IN_L
@@ -3185,19 +3132,16 @@ F 3 "" H 9600 7150 50  0001 C CNN
 	1    9600 7150
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	3350 8850 3450 8850
-Connection ~ 3350 8850
 $Comp
 L Amplifier_Operational:MCP6004 U6
-U 4 1 6222E051
+U 1 1 6222E051
 P 12500 5300
 F 0 "U6" H 12550 5100 50  0000 C CNN
 F 1 "MCP6004" H 12550 5550 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12450 5400 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12550 5500 50  0001 C CNN
 F 4 "C7378" H 12500 5300 50  0001 C CNN "Part_Number"
-	4    12500 5300
+	1    12500 5300
 	1    0    0    -1  
 $EndComp
 Connection ~ 1200 1000
@@ -3454,7 +3398,7 @@ Wire Wire Line
 	4250 6450 4350 6450
 Text Label 4350 3650 0    50   ~ 0
 FEEDBACK_POT
-Text Label 4350 2550 0    50   ~ 0
+Text Label 4350 1950 0    50   ~ 0
 DELAY_CV_SCALED_R
 Text Label 4350 2650 0    50   ~ 0
 FEEDBACK_CV_SCALED
@@ -3491,37 +3435,18 @@ Connection ~ 4200 1000
 Wire Wire Line
 	4200 1000 3900 1000
 NoConn ~ 4250 4650
-Text Label 1600 4850 2    50   ~ 0
+Text Label 4350 3850 0    50   ~ 0
 CLOCK_SCALED
 Wire Wire Line
 	4350 2150 4250 2150
 Text Label 4350 6550 0    50   ~ 0
 CHORUS
 Wire Wire Line
-	2450 1650 2550 1650
-Wire Wire Line
 	4250 6550 4350 6550
 NoConn ~ 4250 6050
 NoConn ~ 4250 6150
-Connection ~ 3550 1650
 Wire Wire Line
 	1750 3350 1750 3150
-$Comp
-L MCU_ST_STM32H7:STM32H743ZITx U1
-U 1 1 602FD32C
-P 3050 5250
-F 0 "U1" H 4050 1650 50  0000 C CNN
-F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
-F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
-F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
-F 4 "C114408" H 3050 5250 50  0001 C CNN "Part_Number"
-F 5 "180" H 3050 5250 50  0001 C CNN "Rotation"
-	1    3050 5250
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2350 1650 2450 1650
-Connection ~ 2450 1650
 $Comp
 L Connector:Conn_01x08_Male J6
 U 1 1 60832E97
@@ -3558,122 +3483,122 @@ $EndComp
 $Comp
 L Connector:TestPoint TP1
 U 1 1 5FBC76F3
-P 16750 8550
-F 0 "TP1" V 16750 8800 50  0000 C CNN
-F 1 "TestPoint" V 16750 9100 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 8550 50  0001 C CNN
-F 3 "~" H 16950 8550 50  0001 C CNN
-	1    16750 8550
+P 16700 8400
+F 0 "TP1" V 16700 8650 50  0000 C CNN
+F 1 "TestPoint" V 16700 8950 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 8400 50  0001 C CNN
+F 3 "~" H 16900 8400 50  0001 C CNN
+	1    16700 8400
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:GND #PWR010
 U 1 1 5FBC7DF8
-P 16750 8550
-F 0 "#PWR010" H 16750 8300 50  0001 C CNN
-F 1 "GND" V 16755 8422 50  0000 R CNN
-F 2 "" H 16750 8550 50  0001 C CNN
-F 3 "" H 16750 8550 50  0001 C CNN
-	1    16750 8550
+P 16700 8400
+F 0 "#PWR010" H 16700 8150 50  0001 C CNN
+F 1 "GND" V 16705 8272 50  0000 R CNN
+F 2 "" H 16700 8400 50  0001 C CNN
+F 3 "" H 16700 8400 50  0001 C CNN
+	1    16700 8400
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP2
 U 1 1 5FBC80EE
-P 16750 8750
-F 0 "TP2" V 16750 9000 50  0000 C CNN
-F 1 "TestPoint" V 16750 9300 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 8750 50  0001 C CNN
-F 3 "~" H 16950 8750 50  0001 C CNN
-	1    16750 8750
+P 16700 8600
+F 0 "TP2" V 16700 8850 50  0000 C CNN
+F 1 "TestPoint" V 16700 9150 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 8600 50  0001 C CNN
+F 3 "~" H 16900 8600 50  0001 C CNN
+	1    16700 8600
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3V #PWR011
 U 1 1 5FBC8425
-P 16750 8750
-F 0 "#PWR011" H 16750 8600 50  0001 C CNN
-F 1 "+3.3V" V 16750 8850 50  0000 L CNN
-F 2 "" H 16750 8750 50  0001 C CNN
-F 3 "" H 16750 8750 50  0001 C CNN
-	1    16750 8750
+P 16700 8600
+F 0 "#PWR011" H 16700 8450 50  0001 C CNN
+F 1 "+3.3V" V 16700 8700 50  0000 L CNN
+F 2 "" H 16700 8600 50  0001 C CNN
+F 3 "" H 16700 8600 50  0001 C CNN
+	1    16700 8600
 	0    1    1    0   
 $EndComp
 $Comp
 L Connector:TestPoint TP3
 U 1 1 5FBC8AAF
-P 16750 8950
-F 0 "TP3" V 16750 9200 50  0000 C CNN
-F 1 "TestPoint" V 16750 9500 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 8950 50  0001 C CNN
-F 3 "~" H 16950 8950 50  0001 C CNN
-	1    16750 8950
+P 16700 8800
+F 0 "TP3" V 16700 9050 50  0000 C CNN
+F 1 "TestPoint" V 16700 9350 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 8800 50  0001 C CNN
+F 3 "~" H 16900 8800 50  0001 C CNN
+	1    16700 8800
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR013
 U 1 1 5FBC8BDD
-P 16750 8950
-F 0 "#PWR013" H 16750 8800 50  0001 C CNN
-F 1 "+3.3VA" V 16750 9050 50  0000 L CNN
-F 2 "" H 16750 8950 50  0001 C CNN
-F 3 "" H 16750 8950 50  0001 C CNN
-	1    16750 8950
+P 16700 8800
+F 0 "#PWR013" H 16700 8650 50  0001 C CNN
+F 1 "+3.3VA" V 16700 8900 50  0000 L CNN
+F 2 "" H 16700 8800 50  0001 C CNN
+F 3 "" H 16700 8800 50  0001 C CNN
+	1    16700 8800
 	0    1    1    0   
 $EndComp
 $Comp
 L Connector:TestPoint TP4
 U 1 1 5FBC8F33
-P 16750 9150
-F 0 "TP4" V 16750 9400 50  0000 C CNN
-F 1 "TestPoint" V 16750 9700 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 9150 50  0001 C CNN
-F 3 "~" H 16950 9150 50  0001 C CNN
-	1    16750 9150
+P 16700 9000
+F 0 "TP4" V 16700 9250 50  0000 C CNN
+F 1 "TestPoint" V 16700 9550 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 9000 50  0001 C CNN
+F 3 "~" H 16900 9000 50  0001 C CNN
+	1    16700 9000
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP5
 U 1 1 5FBC912F
-P 16750 9350
-F 0 "TP5" V 16750 9600 50  0000 C CNN
-F 1 "TestPoint" V 16750 9900 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 9350 50  0001 C CNN
-F 3 "~" H 16950 9350 50  0001 C CNN
-	1    16750 9350
+P 16700 9200
+F 0 "TP5" V 16700 9450 50  0000 C CNN
+F 1 "TestPoint" V 16700 9750 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 9200 50  0001 C CNN
+F 3 "~" H 16900 9200 50  0001 C CNN
+	1    16700 9200
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP6
 U 1 1 5FBC9283
-P 16750 9550
-F 0 "TP6" V 16750 9800 50  0000 C CNN
-F 1 "TestPoint" V 16750 10100 50  0000 C CNN
-F 2 "Custom_Footprints:1.3mm_Test_Point" H 16950 9550 50  0001 C CNN
-F 3 "~" H 16950 9550 50  0001 C CNN
-	1    16750 9550
+P 16700 9400
+F 0 "TP6" V 16700 9650 50  0000 C CNN
+F 1 "TestPoint" V 16700 9950 50  0000 C CNN
+F 2 "Custom_Footprints:1.3mm_Test_Point" H 16900 9400 50  0001 C CNN
+F 3 "~" H 16900 9400 50  0001 C CNN
+	1    16700 9400
 	0    -1   -1   0   
 $EndComp
 $Comp
 L power:VEE #PWR019
 U 1 1 5FBC93A3
-P 16750 9550
-F 0 "#PWR019" H 16750 9400 50  0001 C CNN
-F 1 "VEE" V 16750 9750 50  0000 C CNN
-F 2 "" H 16750 9550 50  0001 C CNN
-F 3 "" H 16750 9550 50  0001 C CNN
-	1    16750 9550
+P 16700 9400
+F 0 "#PWR019" H 16700 9250 50  0001 C CNN
+F 1 "VEE" V 16700 9600 50  0000 C CNN
+F 2 "" H 16700 9400 50  0001 C CNN
+F 3 "" H 16700 9400 50  0001 C CNN
+	1    16700 9400
 	0    1    1    0   
 $EndComp
 $Comp
 L power:VCC #PWR018
 U 1 1 5FBC9909
-P 16750 9350
-F 0 "#PWR018" H 16750 9200 50  0001 C CNN
-F 1 "VCC" V 16750 9550 50  0000 C CNN
-F 2 "" H 16750 9350 50  0001 C CNN
-F 3 "" H 16750 9350 50  0001 C CNN
-	1    16750 9350
+P 16700 9200
+F 0 "#PWR018" H 16700 9050 50  0001 C CNN
+F 1 "VCC" V 16700 9400 50  0000 C CNN
+F 2 "" H 16700 9200 50  0001 C CNN
+F 3 "" H 16700 9200 50  0001 C CNN
+	1    16700 9200
 	0    1    1    0   
 $EndComp
 $Comp
@@ -3839,23 +3764,23 @@ Wire Wire Line
 $Comp
 L Connector:TestPoint TP7
 U 1 1 6D82907D
-P 16750 9750
-F 0 "TP7" V 16750 10000 50  0000 C CNN
-F 1 "TestPoint" V 16750 10300 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 9750 50  0001 C CNN
-F 3 "~" H 16950 9750 50  0001 C CNN
-	1    16750 9750
+P 16700 9600
+F 0 "TP7" V 16700 9850 50  0000 C CNN
+F 1 "TestPoint" V 16700 10150 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 9600 50  0001 C CNN
+F 3 "~" H 16900 9600 50  0001 C CNN
+	1    16700 9600
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP8
 U 1 1 6D829087
-P 16750 9950
-F 0 "TP8" V 16750 10200 50  0000 C CNN
-F 1 "TestPoint" V 16750 10500 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 9950 50  0001 C CNN
-F 3 "~" H 16950 9950 50  0001 C CNN
-	1    16750 9950
+P 16700 9800
+F 0 "TP8" V 16700 10050 50  0000 C CNN
+F 1 "TestPoint" V 16700 10350 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 9800 50  0001 C CNN
+F 3 "~" H 16900 9800 50  0001 C CNN
+	1    16700 9800
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -4365,16 +4290,16 @@ Text Label 11700 3200 2    50   ~ 0
 -5V_REF
 Text Notes 15900 11100 0    100  ~ 20
 Test Points
-Text Label 16800 9150 0    50   ~ 0
+Text Label 16750 9000 0    50   ~ 0
 -5V_REF
 Wire Wire Line
-	16750 9150 16800 9150
+	16700 9000 16750 9000
 Text Label 4500 10450 0    50   ~ 0
 VSW
 Wire Wire Line
 	4150 11850 4150 11900
 Text Notes 9500 11350 0    50   ~ 0
-Can use AS3364D (linerar VCA) with R43 and C56 in place;\nRemove for SSI2164
+AS3364D (linear VCA) with R43 and C56 in place;\nRemove for SSI2164 (exponential)
 $Comp
 L Amplifier_Operational:TL072 U11
 U 1 1 6214A05D
@@ -4492,21 +4417,21 @@ Wire Wire Line
 	8100 11250 8100 11300
 Wire Wire Line
 	8100 11900 8100 11950
-Text Label 16750 9950 0    50   ~ 0
+Text Label 16700 9800 0    50   ~ 0
 DAC_DATA
-Text Label 16750 10150 0    50   ~ 0
+Text Label 16700 10000 0    50   ~ 0
 DAC_BCLK
-Text Label 16750 9750 0    50   ~ 0
+Text Label 16700 9600 0    50   ~ 0
 DAC_LRCLK
 $Comp
 L Connector:TestPoint TP9
 U 1 1 6006BF37
-P 16750 10150
-F 0 "TP9" V 16750 10400 50  0000 C CNN
-F 1 "TestPoint" V 16750 10700 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10150 50  0001 C CNN
-F 3 "~" H 16950 10150 50  0001 C CNN
-	1    16750 10150
+P 16700 10000
+F 0 "TP9" V 16700 10250 50  0000 C CNN
+F 1 "TestPoint" V 16700 10550 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 10000 50  0001 C CNN
+F 3 "~" H 16900 10000 50  0001 C CNN
+	1    16700 10000
 	0    -1   -1   0   
 $EndComp
 Text Notes 13650 11050 0    50   ~ 0
@@ -4540,7 +4465,7 @@ Wire Wire Line
 	4250 4350 4350 4350
 Wire Wire Line
 	4250 4450 4350 4450
-Text Label 5850 6700 0    50   ~ 0
+Text Label 5850 7100 0    50   ~ 0
 FILTER_CV
 $Comp
 L power:+5V #PWR0127
@@ -4797,38 +4722,38 @@ $EndComp
 Wire Wire Line
 	1600 4650 1750 4650
 Wire Wire Line
-	1600 4850 1750 4850
+	4350 3850 4250 3850
 $Comp
 L Connector:TestPoint TP10
 U 1 1 60660166
-P 16750 10350
-F 0 "TP10" V 16750 10600 50  0000 C CNN
-F 1 "TestPoint" V 16750 10900 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10350 50  0001 C CNN
-F 3 "~" H 16950 10350 50  0001 C CNN
-	1    16750 10350
+P 16700 10200
+F 0 "TP10" V 16700 10450 50  0000 C CNN
+F 1 "TestPoint" V 16700 10750 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 10200 50  0001 C CNN
+F 3 "~" H 16900 10200 50  0001 C CNN
+	1    16700 10200
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP11
 U 1 1 606619DA
-P 16750 10550
-F 0 "TP11" V 16750 10800 50  0000 C CNN
-F 1 "TestPoint" V 16750 11100 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10550 50  0001 C CNN
-F 3 "~" H 16950 10550 50  0001 C CNN
-	1    16750 10550
+P 16700 10400
+F 0 "TP11" V 16700 10650 50  0000 C CNN
+F 1 "TestPoint" V 16700 10950 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 10400 50  0001 C CNN
+F 3 "~" H 16900 10400 50  0001 C CNN
+	1    16700 10400
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Connector:TestPoint TP12
 U 1 1 606619E4
-P 16750 10750
-F 0 "TP12" V 16750 11000 50  0000 C CNN
-F 1 "TestPoint" V 16750 11300 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10750 50  0001 C CNN
-F 3 "~" H 16950 10750 50  0001 C CNN
-	1    16750 10750
+P 16700 10600
+F 0 "TP12" V 16700 10850 50  0000 C CNN
+F 1 "TestPoint" V 16700 11150 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16900 10600 50  0001 C CNN
+F 3 "~" H 16900 10600 50  0001 C CNN
+	1    16700 10600
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -4945,4 +4870,79 @@ F 3 "http://www.diodes.com/datasheets/AP1117.pdf" H 4250 11300 50  0001 C CNN
 	1    4150 11550
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	2950 8850 3050 8850
+Connection ~ 3050 8850
+Wire Wire Line
+	2850 8850 2950 8850
+Connection ~ 2850 8850
+Wire Wire Line
+	2750 8850 2850 8850
+Connection ~ 2750 8850
+Wire Wire Line
+	2650 8850 2750 8850
+Wire Wire Line
+	2550 8850 2650 8850
+Connection ~ 2650 8850
+Wire Wire Line
+	3350 8850 3450 8850
+Connection ~ 3350 8850
+Wire Wire Line
+	3250 8850 3350 8850
+Connection ~ 3250 8850
+Wire Wire Line
+	3150 8850 3250 8850
+Wire Wire Line
+	3050 8850 3150 8850
+Connection ~ 3150 8850
+Connection ~ 3550 1650
+Connection ~ 3050 1650
+Wire Wire Line
+	2950 1650 3050 1650
+Connection ~ 2950 1650
+Wire Wire Line
+	2850 1650 2950 1650
+Connection ~ 2850 1650
+Wire Wire Line
+	2750 1650 2850 1650
+Connection ~ 2750 1650
+Wire Wire Line
+	2650 1650 2750 1650
+Connection ~ 2650 1650
+Wire Wire Line
+	2550 1650 2650 1650
+Connection ~ 2550 1650
+Wire Wire Line
+	2350 1650 2450 1650
+Wire Wire Line
+	2450 1650 2550 1650
+Connection ~ 2450 1650
+Wire Wire Line
+	3450 1650 3550 1650
+Connection ~ 3450 1650
+Wire Wire Line
+	3350 1650 3450 1650
+Connection ~ 3350 1650
+Wire Wire Line
+	3250 1650 3350 1650
+Connection ~ 3250 1650
+Wire Wire Line
+	3150 1650 3250 1650
+Wire Wire Line
+	3050 1650 3150 1650
+Connection ~ 3150 1650
+$Comp
+L MCU_ST_STM32H7:STM32H743ZITx U1
+U 1 1 602FD32C
+P 3050 5250
+F 0 "U1" H 4050 1650 50  0000 C CNN
+F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
+F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
+F 4 "C114408" H 3050 5250 50  0001 C CNN "Part_Number"
+F 5 "180" H 3050 5250 50  0001 C CNN "Rotation"
+	1    3050 5250
+	1    0    0    -1  
+$EndComp
+NoConn ~ 1750 4850
 $EndSCHEMATC

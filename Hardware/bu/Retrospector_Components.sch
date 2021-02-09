@@ -1305,18 +1305,6 @@ FMC_D14
 Text Label 4350 8050 0    50   ~ 0
 FMC_D15
 Wire Wire Line
-	2550 8850 2650 8850
-Connection ~ 2550 1650
-Wire Wire Line
-	2550 1650 2650 1650
-Connection ~ 2650 1650
-Wire Wire Line
-	2650 1650 2750 1650
-Connection ~ 2750 1650
-Wire Wire Line
-	2750 1650 2850 1650
-Connection ~ 2850 1650
-Wire Wire Line
 	3600 1300 3600 1400
 Wire Wire Line
 	4900 1300 4900 1400
@@ -1408,43 +1396,7 @@ F 4 "C14663" H 3000 1200 50  0001 C CNN "Part_Number"
 	1    3000 1200
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	2850 1650 2950 1650
-Connection ~ 2950 1650
-Wire Wire Line
-	2950 1650 3050 1650
-Connection ~ 3050 1650
-Wire Wire Line
-	3050 1650 3150 1650
-Connection ~ 3150 1650
-Wire Wire Line
-	3150 1650 3250 1650
-Connection ~ 3250 1650
-Wire Wire Line
-	3250 1650 3350 1650
-Connection ~ 3350 1650
-Wire Wire Line
-	3350 1650 3450 1650
-Connection ~ 2650 8850
-Wire Wire Line
-	2650 8850 2750 8850
-Connection ~ 2750 8850
-Connection ~ 2850 8850
-Wire Wire Line
-	2850 8850 2950 8850
 Connection ~ 2950 8850
-Wire Wire Line
-	2750 8850 2850 8850
-Connection ~ 3050 8850
-Wire Wire Line
-	3050 8850 3150 8850
-Connection ~ 3150 8850
-Wire Wire Line
-	3150 8850 3250 8850
-Connection ~ 3250 8850
-Wire Wire Line
-	3250 8850 3350 8850
-Connection ~ 3450 1650
 Wire Wire Line
 	8100 2450 7750 2450
 Wire Wire Line
@@ -1778,8 +1730,6 @@ FMC_A0
 Wire Wire Line
 	5800 2250 6150 2250
 Wire Wire Line
-	3450 1650 3550 1650
-Wire Wire Line
 	4350 2450 4250 2450
 Wire Wire Line
 	4350 2050 4250 2050
@@ -1816,7 +1766,6 @@ NoConn ~ 1750 7650
 NoConn ~ 4250 2750
 NoConn ~ 4250 2950
 NoConn ~ 4250 3450
-NoConn ~ 4250 3850
 NoConn ~ 4250 3950
 NoConn ~ 4250 4050
 NoConn ~ 4250 4750
@@ -1866,8 +1815,6 @@ Wire Wire Line
 Connection ~ 1050 10600
 Wire Wire Line
 	1050 10600 1200 10600
-Wire Wire Line
-	2950 8850 3050 8850
 Wire Wire Line
 	2950 8850 2950 9000
 $Comp
@@ -3185,9 +3132,6 @@ F 3 "" H 9600 7150 50  0001 C CNN
 	1    9600 7150
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	3350 8850 3450 8850
-Connection ~ 3350 8850
 $Comp
 L Amplifier_Operational:MCP6004 U6
 U 4 1 6222E051
@@ -3491,37 +3435,18 @@ Connection ~ 4200 1000
 Wire Wire Line
 	4200 1000 3900 1000
 NoConn ~ 4250 4650
-Text Label 1600 4850 2    50   ~ 0
+Text Label 4350 3850 0    50   ~ 0
 CLOCK_SCALED
 Wire Wire Line
 	4350 2150 4250 2150
 Text Label 4350 6550 0    50   ~ 0
 CHORUS
 Wire Wire Line
-	2450 1650 2550 1650
-Wire Wire Line
 	4250 6550 4350 6550
 NoConn ~ 4250 6050
 NoConn ~ 4250 6150
-Connection ~ 3550 1650
 Wire Wire Line
 	1750 3350 1750 3150
-$Comp
-L MCU_ST_STM32H7:STM32H743ZITx U1
-U 1 1 602FD32C
-P 3050 5250
-F 0 "U1" H 4050 1650 50  0000 C CNN
-F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
-F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
-F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
-F 4 "C114408" H 3050 5250 50  0001 C CNN "Part_Number"
-F 5 "180" H 3050 5250 50  0001 C CNN "Rotation"
-	1    3050 5250
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2350 1650 2450 1650
-Connection ~ 2450 1650
 $Comp
 L Connector:Conn_01x08_Male J6
 U 1 1 60832E97
@@ -4797,7 +4722,7 @@ $EndComp
 Wire Wire Line
 	1600 4650 1750 4650
 Wire Wire Line
-	1600 4850 1750 4850
+	4350 3850 4250 3850
 $Comp
 L Connector:TestPoint TP10
 U 1 1 60660166
@@ -4945,4 +4870,79 @@ F 3 "http://www.diodes.com/datasheets/AP1117.pdf" H 4250 11300 50  0001 C CNN
 	1    4150 11550
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	2950 8850 3050 8850
+Connection ~ 3050 8850
+Wire Wire Line
+	2850 8850 2950 8850
+Connection ~ 2850 8850
+Wire Wire Line
+	2750 8850 2850 8850
+Connection ~ 2750 8850
+Wire Wire Line
+	2650 8850 2750 8850
+Wire Wire Line
+	2550 8850 2650 8850
+Connection ~ 2650 8850
+Wire Wire Line
+	3350 8850 3450 8850
+Connection ~ 3350 8850
+Wire Wire Line
+	3250 8850 3350 8850
+Connection ~ 3250 8850
+Wire Wire Line
+	3150 8850 3250 8850
+Wire Wire Line
+	3050 8850 3150 8850
+Connection ~ 3150 8850
+Connection ~ 3550 1650
+Connection ~ 3050 1650
+Wire Wire Line
+	2950 1650 3050 1650
+Connection ~ 2950 1650
+Wire Wire Line
+	2850 1650 2950 1650
+Connection ~ 2850 1650
+Wire Wire Line
+	2750 1650 2850 1650
+Connection ~ 2750 1650
+Wire Wire Line
+	2650 1650 2750 1650
+Connection ~ 2650 1650
+Wire Wire Line
+	2550 1650 2650 1650
+Connection ~ 2550 1650
+Wire Wire Line
+	2350 1650 2450 1650
+Wire Wire Line
+	2450 1650 2550 1650
+Connection ~ 2450 1650
+Wire Wire Line
+	3450 1650 3550 1650
+Connection ~ 3450 1650
+Wire Wire Line
+	3350 1650 3450 1650
+Connection ~ 3350 1650
+Wire Wire Line
+	3250 1650 3350 1650
+Connection ~ 3250 1650
+Wire Wire Line
+	3150 1650 3250 1650
+Wire Wire Line
+	3050 1650 3150 1650
+Connection ~ 3150 1650
+$Comp
+L MCU_ST_STM32H7:STM32H743ZITx U1
+U 1 1 602FD32C
+P 3050 5250
+F 0 "U1" H 4050 1650 50  0000 C CNN
+F 1 "STM32H743ZITx" H 4100 1500 50  0000 C CNN
+F 2 "Package_QFP:LQFP-144_20x20mm_P0.5mm" H 1950 1850 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 3050 5250 50  0001 C CNN
+F 4 "C114408" H 3050 5250 50  0001 C CNN "Part_Number"
+F 5 "180" H 3050 5250 50  0001 C CNN "Rotation"
+	1    3050 5250
+	1    0    0    -1  
+$EndComp
+NoConn ~ 1750 4850
 $EndSCHEMATC

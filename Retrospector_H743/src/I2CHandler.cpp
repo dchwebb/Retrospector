@@ -1,5 +1,18 @@
 #include "I2CHandler.h"
 
+/* SPI Pins:
+ * Preferred:
+ * PG14 (129) SPI6_MOSI
+ * PG13 (128) SPI6_SCK
+ *
+ * PF7 (19) SPI5_SCK
+ * PF9 (21) SPI5_MOSI
+ *
+ * PE2  SPI4_SCK (Currently mode pin)
+ * PE5  SPI4_ MOSI
+ *
+ */
+
 uint8_t I2C::SetAddress(uint8_t addr) {
 
 	// In 7-bit addressing mode (ADD10 = 0):SADD[7:1] is 7-bit slave address. SADD[9],	SADD[8] and SADD[0] are don't care.
@@ -45,6 +58,47 @@ uint8_t I2C::FindAddress() {
 		}
 	}
 	return 0;
+}
+
+
+void I2C::LEDTest() {
+
+	// Test I2C Send
+	// In 7-bit addressing mode (ADD10 = 0):SADD[7:1] is 7-bit slave address. SADD[9],	SADD[8] and SADD[0] are don't care.
+
+	// First packet must be all ones - send a dummy read to address 255
+	I2C1->CR2 |= I2C_CR2_STOP;
+	I2C1->CR2 = 255 << (I2C_CR2_SADD_Pos + 1);			// Set slave address
+	//I2C1->CR2 &= ~I2C_CR2_RD_WRN;						// Set direction to write
+	I2C1->CR2 |= I2C_CR2_RD_WRN;						// Set direction to read
+	I2C1->CR2 |= 0x1 << I2C_CR2_NBYTES_Pos;				// Number of bytes to send
+	I2C1->CR2 |= I2C_CR2_START;
+
+	while ((I2C1->ISR & I2C_ICR_STOPCF) == 0);
+
+	// Check I2S_ISR_NACKF
+	if ((I2C1->ISR & I2C_ISR_NACKF) > 0) {
+		I2C1->ICR |= I2C_ICR_NACKCF;					// Clear NACK
+		I2C1->ICR |= I2C_ICR_STOPCF;					// Clear stop bit
+	}
+
+
+	// Second packet is slave address - set to 3
+	I2C1->CR2 |= I2C_CR2_STOP;
+	I2C1->CR2 = 3 << (I2C_CR2_SADD_Pos + 1);			// Set slave address
+	I2C1->CR2 &= ~I2C_CR2_RD_WRN;						// Set direction to write
+	//I2C1->CR2 |= I2C_CR2_RD_WRN;						// Set direction to read
+	I2C1->CR2 |= 0x1 << I2C_CR2_NBYTES_Pos;				// Number of bytes to send
+	I2C1->CR2 |= I2C_CR2_START;
+
+	while ((I2C1->ISR & I2C_ICR_STOPCF) == 0);
+
+	// Check I2S_ISR_NACKF
+	if ((I2C1->ISR & I2C_ISR_NACKF) > 0) {
+		I2C1->ICR |= I2C_ICR_NACKCF;					// Clear NACK
+		I2C1->ICR |= I2C_ICR_STOPCF;					// Clear stop bit
+	}
+
 }
 
 void I2C::Write(uint8_t byte) {

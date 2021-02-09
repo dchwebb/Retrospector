@@ -575,6 +575,56 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
+void InitSPI()
+{
+	// PF7 (19) SPI5_SCK
+	// PF9 (21) SPI5_MOSI
+	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
+	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// GPIO port clock
+
+	// PF7 (19) SPI5_SCK
+	GPIOF->MODER  &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
+	GPIOF->AFR[0] |= 5 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 5 (SPI5)
+
+	// PF9 (21) SPI5_MOSI
+	GPIOF->MODER  &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
+	GPIOF->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (SPI5)
+
+	// Configure SPI
+	SPI5->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
+
+	//SS pin is not used on master side at this configuration. It has to be managed internally (SSM=1, SSI=1) to prevent MODF error
+	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management: When SSM bit is set, NSS pin input is replaced with the value from the SSI bit
+	SPI5->CR1 |= SPI_CR1_SSI;						// Internal slave select
+	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
+	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
+	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+
+	SPI5->CR1 |= SPI_CR1_SPE;
+
+/*
+	// Configure DMA
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	// Initialise TX stream - Stream 5 = SPI3_TX; Channel 0; Manual p207
+	DMA1_Stream5->CR &= ~DMA_SxCR_CHSEL;			// 0 is DMA_Channel_0
+	DMA1_Stream5->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
+	DMA1_Stream5->CR |= DMA_SxCR_PL_1;				// Set to high priority
+	DMA1_Stream5->PAR = (uint32_t) &(SPI3->DR);		// Configure the peripheral data register address
+*/
+
+	// Test send
+	SPI5->TXDR = (uint32_t)0x0603FF00;
+	SPI5->TXDR = (uint32_t)0x8180;
+	SPI5->CR1 |= SPI_CR1_CSTART;
+
+
+
+}
+
 void InitI2C()
 {
 	//	Enable GPIO and I2C clocks
@@ -584,7 +634,7 @@ void InitI2C()
 
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
-	// Initialize ADC peripheral
+	// Initialize I2C DMA peripheral
 	DMA1_Stream0->CR &= ~DMA_SxCR_EN;
 	DMA1_Stream0->CR &= ~DMA_SxCR_CIRC;				// Disable Circular mode to keep refilling buffer
 	DMA1_Stream0->CR |= DMA_SxCR_MINC;				// Memory in increment mode
@@ -618,7 +668,7 @@ void InitI2C()
 	// Fast mode (400kHz)  0x00 90 34 B6
 	// Timing calculations: I2C frequency: 1 / ((SCLL + 1) + (SCLH + 1)) * (PRESC + 1) * 1/I2CCLK)
 	// [eg 1 / ((256 + 237) * 2 * 1/100MHz) = 100kHz] (Will actually be slightly slower as there are also sync times to be accounted for)
-
+//#define I2C_100KHZ
 #ifdef I2C_100KHZ
 	I2C1->TIMINGR |= 0x1 << I2C_TIMINGR_PRESC_Pos;	// Timing prescaler
 	I2C1->TIMINGR |= 0x2 << I2C_TIMINGR_SDADEL_Pos;	// Data Hold Time

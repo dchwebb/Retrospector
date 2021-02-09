@@ -14,6 +14,7 @@
  * Thump when activating chorus mode from startup with silence
  * DFU
  *
+ *
  * Electrical/Hardware
  * CV control for filter?
  * Power supply ripple and current final tests
@@ -84,11 +85,12 @@ int main(void) {
 	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
-
-	InitI2C();
-	//volatile uint8_t i2cAddr = i2c.FindAddress();
+	InitSPI();
+	//InitI2C();
+	//i2c.LEDTest();
 	//volatile uint8_t i2cAddr = i2c.SetAddress(OLED_I2C_ADDRESS);
-	i2c.OLED_init(OLED_I2C_ADDRESS);
+	//i2c.OLED_init(OLED_I2C_ADDRESS);
+
 	while (1) {
 
 		//MemoryTest();

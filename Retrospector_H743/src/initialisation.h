@@ -45,3 +45,4 @@ void InitIO();
 //void LED(channel c, bool on);
 void InitDebugTimer();
 void InitI2C();
+void InitSPI();

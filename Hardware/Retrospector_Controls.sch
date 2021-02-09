@@ -1031,9 +1031,9 @@ Wire Wire Line
 	4350 5750 4350 5650
 Wire Wire Line
 	4350 5650 4450 5650
-Text Label 4300 4850 2    50   ~ 0
+Text Label 4150 4850 2    50   ~ 0
 LED_I2C_DATA
-Text Label 4300 4950 2    50   ~ 0
+Text Label 4150 4950 2    50   ~ 0
 LED_I2C_CLK
 Text Label 2550 6400 0    50   ~ 0
 LED_I2C_DATA
@@ -1051,9 +1051,9 @@ Wire Wire Line
 Wire Wire Line
 	6700 6250 6650 6250
 Wire Wire Line
-	4300 4850 4450 4850
+	4150 4850 4450 4850
 Wire Wire Line
-	4300 4950 4450 4950
+	4150 4950 4450 4950
 $Comp
 L Device:R_Small R1
 U 1 1 601AE819
@@ -1206,4 +1206,15 @@ Wire Wire Line
 	4300 5050 4450 5050
 Text Notes 3550 5150 0    50   ~ 0
 Address 3
+$Comp
+L power:GND #PWR?
+U 1 1 6022D36C
+P 4450 4750
+F 0 "#PWR?" H 4450 4500 50  0001 C CNN
+F 1 "GND" V 4450 4550 50  0000 C CNN
+F 2 "" H 4450 4750 50  0001 C CNN
+F 3 "" H 4450 4750 50  0001 C CNN
+	1    4450 4750
+	0    1    1    0   
+$EndComp
 $EndSCHEMATC
