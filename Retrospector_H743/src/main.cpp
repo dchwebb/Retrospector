@@ -4,7 +4,8 @@
 #include "DigitalDelay.h"
 #include "Filter.h"
 #include "sdram.h"
-#include "I2CHandler.h"
+//#include "I2CHandler.h"
+#include "LEDHandler.h"
 
 /* TODO
  * Explore LED options for filter control
@@ -59,11 +60,15 @@ USB usb;
 CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
-I2C i2c;
+//I2C i2c;
 
 extern "C" {
 #include "interrupts.h"
 }
+
+uint32_t lastLED = 0;
+uint8_t ledBrightness = 60;
+int8_t ledDirection = 1;
 
 int main(void) {
 
@@ -86,12 +91,28 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
 	InitSPI();
+
 	//InitI2C();
 	//i2c.LEDTest();
 	//volatile uint8_t i2cAddr = i2c.SetAddress(OLED_I2C_ADDRESS);
 	//i2c.OLED_init(OLED_I2C_ADDRESS);
 
 	while (1) {
+		// LED Test
+		if (SysTickVal > lastLED + 3) {
+			if (ledBrightness > 127 || ledBrightness == 0)
+				ledDirection *= -1;
+			ledBrightness += ledDirection;
+			LEDPacket(ledR0, ledBrightness);
+			lastLED = SysTickVal;
+			while (SysTickVal < lastLED + 1) {};
+			LEDPacket(ledG0, 127 - ledBrightness);
+//			if ((ledBrightness & 1) == 0)
+//				LEDPacket(ledR0, ledBrightness);
+//			else
+//				LEDPacket(ledG0, 127 - ledBrightness);
+			lastLED = SysTickVal;
+		}
 
 		//MemoryTest();
 /*
