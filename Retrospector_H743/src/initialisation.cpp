@@ -600,6 +600,8 @@ void InitSPI()
 	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
 	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+//	SPI5->CFG1 |= SPI_CFG1_DSIZE;					// Set data size to 32 bits
+//	SPI5->CR2 |= (4 << SPI_CR2_TSIZE_Pos);			// Set transfer count to 4 32 bit words
 
 	SPI5->CR1 |= SPI_CR1_SPE;
 
@@ -617,9 +619,9 @@ void InitSPI()
 */
 
 	// Test send
-	SPI5->TXDR = (uint32_t)0x0603FF00;
-	SPI5->TXDR = (uint32_t)0x8180;
-	SPI5->CR1 |= SPI_CR1_CSTART;
+//	SPI5->TXDR = (uint32_t)0x0603FF00;
+//	SPI5->TXDR = (uint32_t)0x8180;
+//	SPI5->CR1 |= SPI_CR1_CSTART;
 
 
 

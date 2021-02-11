@@ -61,6 +61,7 @@ CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
 //I2C i2c;
+LEDHandler led;
 
 extern "C" {
 #include "interrupts.h"
@@ -103,14 +104,11 @@ int main(void) {
 			if (ledBrightness > 127 || ledBrightness == 0)
 				ledDirection *= -1;
 			ledBrightness += ledDirection;
-			LEDPacket(ledR0, ledBrightness);
-			lastLED = SysTickVal;
-			while (SysTickVal < lastLED + 1) {};
-			LEDPacket(ledG0, 127 - ledBrightness);
-//			if ((ledBrightness & 1) == 0)
-//				LEDPacket(ledR0, ledBrightness);
-//			else
-//				LEDPacket(ledG0, 127 - ledBrightness);
+			led.LEDSet(ledR0, ledBrightness);
+			led.LEDSet(ledG0, 127 - ledBrightness);
+			led.LEDSet(ledB0, 255 - ledBrightness);
+			led.LEDSend();
+
 			lastLED = SysTickVal;
 		}
 
