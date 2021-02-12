@@ -91,7 +91,7 @@ int main(void) {
 	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
-	InitSPI();
+	InitSPI(reinterpret_cast<uint32_t*>(&(led.control)));
 
 	//InitI2C();
 	//i2c.LEDTest();
@@ -106,7 +106,7 @@ int main(void) {
 			ledBrightness += ledDirection;
 			led.LEDSet(ledR0, ledBrightness);
 			led.LEDSet(ledG0, 127 - ledBrightness);
-			led.LEDSet(ledB0, 255 - ledBrightness);
+			led.LEDSet(ledB0, ledBrightness);
 			led.LEDSend();
 
 			lastLED = SysTickVal;

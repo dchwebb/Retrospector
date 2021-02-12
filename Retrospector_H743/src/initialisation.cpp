@@ -575,7 +575,7 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-void InitSPI()
+void InitSPI(uint32_t* ledAddr)
 {
 	// PF7 (19) SPI5_SCK
 	// PF9 (21) SPI5_MOSI
@@ -600,30 +600,30 @@ void InitSPI()
 	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
 	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
-//	SPI5->CFG1 |= SPI_CFG1_DSIZE;					// Set data size to 32 bits
+
+	SPI5->CFG1 &= ~SPI_CFG1_CRCSIZE;
+	//	SPI5->CFG1 |= SPI_CFG1_DSIZE;					// Set data size to 16 bits
 //	SPI5->CR2 |= (4 << SPI_CR2_TSIZE_Pos);			// Set transfer count to 4 32 bit words
 
-	SPI5->CR1 |= SPI_CR1_SPE;
-
-/*
 	// Configure DMA
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
-	// Initialise TX stream - Stream 5 = SPI3_TX; Channel 0; Manual p207
-	DMA1_Stream5->CR &= ~DMA_SxCR_CHSEL;			// 0 is DMA_Channel_0
-	DMA1_Stream5->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	DMA1_Stream5->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR &= ~DMA_SxCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	//DMA1_Stream5->CR |= DMA_SxCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
 	DMA1_Stream5->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
-	DMA1_Stream5->CR |= DMA_SxCR_PL_1;				// Set to high priority
-	DMA1_Stream5->PAR = (uint32_t) &(SPI3->DR);		// Configure the peripheral data register address
-*/
+	DMA1_Stream5->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	DMA1_Stream5->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
 
-	// Test send
-//	SPI5->TXDR = (uint32_t)0x0603FF00;
-//	SPI5->TXDR = (uint32_t)0x8180;
-//	SPI5->CR1 |= SPI_CR1_CSTART;
+	//	DMA1_Stream5->NDTR = 14;						// Number of data items to transfer (ie size of LED sequence control)
+	DMA1_Stream5->PAR = (uint32_t)(&(SPI5->TXDR));	// Configure the peripheral data register address
+	//DMA1_Stream5->M0AR = (uint32_t)(ledAddr);		// Configure the memory data register address
 
+	DMAMUX1_Channel5->CCR |= 86; 					// DMA request MUX input 86 = spi5_tx_dma (See p.695) NB If using SPI6 need DMAMux2
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 
+//	SPI5->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
+	//SPI5->CR1 |= SPI_CR1_SPE;
 
 }
 
@@ -649,7 +649,7 @@ void InitI2C()
 	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF0_Pos;		// clear all five interrupts for this stream
 
 	DMAMUX1_Channel0->CCR |= 34; 					// DMA request MUX input 34 = i2c1_tx_dma (See p.695)
-	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 2 Clear synchronization overrun event flag
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 0 Clear synchronization overrun event flag
 
 
 	// PB7: I2C1_SDA [alternate function AF4]
