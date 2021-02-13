@@ -575,7 +575,7 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-void InitSPI(uint32_t* ledAddr)
+void InitSPI()
 {
 	// PF7 (19) SPI5_SCK
 	// PF9 (21) SPI5_MOSI
@@ -592,39 +592,27 @@ void InitSPI(uint32_t* ledAddr)
 	GPIOF->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (SPI5)
 
 	// Configure SPI
-	SPI5->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
-
-	//SS pin is not used on master side at this configuration. It has to be managed internally (SSM=1, SSI=1) to prevent MODF error
-	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management: When SSM bit is set, NSS pin input is replaced with the value from the SSI bit
 	SPI5->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
+	SPI5->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
+	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
+	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
-
-	SPI5->CFG1 &= ~SPI_CFG1_CRCSIZE;
-	//	SPI5->CFG1 |= SPI_CFG1_DSIZE;					// Set data size to 16 bits
-//	SPI5->CR2 |= (4 << SPI_CR2_TSIZE_Pos);			// Set transfer count to 4 32 bit words
 
 	// Configure DMA
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
 	DMA1_Stream5->CR &= ~DMA_SxCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	//DMA1_Stream5->CR |= DMA_SxCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR &= ~DMA_SxCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
 	DMA1_Stream5->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
 	DMA1_Stream5->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 	DMA1_Stream5->CR |= DMA_SxCR_MINC;				// Memory in increment mode
 	DMA1_Stream5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
 
-	//	DMA1_Stream5->NDTR = 14;						// Number of data items to transfer (ie size of LED sequence control)
 	DMA1_Stream5->PAR = (uint32_t)(&(SPI5->TXDR));	// Configure the peripheral data register address
-	//DMA1_Stream5->M0AR = (uint32_t)(ledAddr);		// Configure the memory data register address
 
 	DMAMUX1_Channel5->CCR |= 86; 					// DMA request MUX input 86 = spi5_tx_dma (See p.695) NB If using SPI6 need DMAMux2
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
-
-//	SPI5->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
-	//SPI5->CR1 |= SPI_CR1_SPE;
-
 }
 
 void InitI2C()
@@ -686,10 +674,8 @@ void InitI2C()
 #endif
 
 	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;				// Clock stretching disable: Must be cleared in master mode
-
 	I2C1->CR1 |= I2C_CR1_TXDMAEN;					// Enable DMA transmission
 
-	//I2C1->CR1 |= I2C_CR1_TXIE;						// Enable Transfer interrupt
 	NVIC_SetPriority(I2C1_EV_IRQn, 4);				// Lower is higher priority
 	NVIC_EnableIRQ(I2C1_EV_IRQn);
 

@@ -52,6 +52,8 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
+__attribute__((section (".dma_buffer"))) LEDHandler led;			// led handler in dma section as DMA cannot operate with DTCMRAM
+
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
@@ -60,8 +62,6 @@ USB usb;
 CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
-//I2C i2c;
-LEDHandler led;
 
 extern "C" {
 #include "interrupts.h"
@@ -91,12 +91,8 @@ int main(void) {
 	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
-	InitSPI(reinterpret_cast<uint32_t*>(&(led.control)));
-
-	//InitI2C();
-	//i2c.LEDTest();
-	//volatile uint8_t i2cAddr = i2c.SetAddress(OLED_I2C_ADDRESS);
-	//i2c.OLED_init(OLED_I2C_ADDRESS);
+	InitSPI();
+	led.Init();
 
 	while (1) {
 		// LED Test

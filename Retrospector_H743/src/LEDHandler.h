@@ -1,6 +1,8 @@
 #pragma once
 #include "initialisation.h"
 
+// LED Handler class used with Toshiba 9 channel LED IC TB62781FNG. All 9 values transmitted as SPI using DMA
+
 enum ledSelection {
 	ledR0  = 0b00000010,
 	ledG0  = 0b00000100,
@@ -15,23 +17,20 @@ enum ledSelection {
 	ledSeq = 0b01100000,
 };
 
-union LEDControl {
-	uint8_t data[14];
-	struct {
-		const uint8_t spacer = 0;			// See Errata in data sheet - does not work correctly without spacer
-		const uint8_t start = 0xFF;
-		const uint8_t slaveAddress = 3;
-		ledSelection led = ledSeq;
-		uint8_t brightness[9];
-		const uint8_t stop = 0x81;
-		//const uint16_t padding = 0;
-	};
-};
 
 class LEDHandler {
 public:
-	LEDControl control;
+	uint8_t spacer = 0;			// See Errata in data sheet - does not work correctly without spacer
+	uint8_t start = 0xFF;
+	uint8_t slaveAddress = 3;
+	ledSelection led = ledSeq;
+	uint8_t brightness[9];
+	uint8_t stop = 0x81;
+
+	void Init();
 	void LEDSet(ledSelection l, uint8_t b);
 	void LEDSend();
 };
+
+
 
