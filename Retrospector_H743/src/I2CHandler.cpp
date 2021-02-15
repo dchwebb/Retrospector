@@ -1,18 +1,5 @@
 #include "I2CHandler.h"
 
-/* SPI Pins:
- * Preferred:
- * PG14 (129) SPI6_MOSI
- * PG13 (128) SPI6_SCK
- *
- * PF7 (19) SPI5_SCK
- * PF9 (21) SPI5_MOSI
- *
- * PE2  SPI4_SCK (Currently mode pin)
- * PE5  SPI4_ MOSI
- *
- */
-
 uint8_t I2C::SetAddress(uint8_t addr) {
 
 	// In 7-bit addressing mode (ADD10 = 0):SADD[7:1] is 7-bit slave address. SADD[9],	SADD[8] and SADD[0] are don't care.

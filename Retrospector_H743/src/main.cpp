@@ -100,7 +100,7 @@ int main(void) {
 			if (ledBrightness > 127 || ledBrightness == 0)
 				ledDirection *= -1;
 			ledBrightness += ledDirection;
-			led.LEDSet(ledR0, ledBrightness);
+			led.LEDSet(ledR2, ledBrightness);
 			led.LEDSet(ledG0, 127 - ledBrightness);
 			led.LEDSet(ledB0, ledBrightness);
 			led.LEDSend();
