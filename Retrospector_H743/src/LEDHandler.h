@@ -29,6 +29,7 @@ public:
 
 	void Init();
 	void LEDSet(ledSelection l, uint8_t b);
+	void LEDColour(uint8_t g, uint32_t b);
 	void LEDSend();
 };
 

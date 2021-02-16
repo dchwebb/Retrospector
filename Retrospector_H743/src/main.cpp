@@ -52,7 +52,8 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
-__attribute__((section (".dma_buffer"))) LEDHandler led;			// led handler in dma section as DMA cannot operate with DTCMRAM
+//__attribute__((section (".dma_buffer"))) LEDHandler led;			// led handler in dma section as DMA cannot operate with DTCMRAM
+__attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
@@ -68,8 +69,10 @@ extern "C" {
 }
 
 uint32_t lastLED = 0;
-uint8_t ledBrightness = 60;
-int8_t ledDirection = 1;
+uint16_t ledCounter = 0;
+uint32_t ledTarg = 0xAABBCC;
+uint32_t ledPrev = 0x000000;
+const uint16_t transition = 500;
 
 int main(void) {
 
@@ -87,8 +90,9 @@ int main(void) {
 	InitIO();						// Initialise switches and LEDs
 	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
+*/
 	usb.InitUSB();
-	delay.Init();					// clear sample buffers and preset delay timings
+/*	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
 	InitSPI();
@@ -97,13 +101,34 @@ int main(void) {
 	while (1) {
 		// LED Test
 		if (SysTickVal > lastLED + 3) {
-			if (ledBrightness > 127 || ledBrightness == 0)
-				ledDirection *= -1;
-			ledBrightness += ledDirection;
-			led.LEDSet(ledR2, ledBrightness);
-			led.LEDSet(ledG0, 127 - ledBrightness);
-			led.LEDSet(ledB0, ledBrightness);
-			led.LEDSend();
+			if (ledTarg != ledPrev) {
+				++ledCounter;
+
+				float mult = (float)ledCounter / transition;
+
+
+				// Interpolate colours between previous and target
+				uint8_t oldR = ledPrev >> 16;
+				uint8_t newR = ledTarg >> 16;
+				uint8_t oldG = (ledPrev >> 8) & 0xFF;
+				uint8_t newG = (ledTarg >> 8) & 0xFF;
+				uint8_t oldB = ledPrev & 0xFF;
+				uint8_t newB = ledTarg & 0xFF;
+
+				newR = (oldR + (float)(newR - oldR) * mult);
+				newG = (oldG + (float)(newG - oldG) * mult);
+				newB = (oldB + (float)(newB - oldB) * mult);
+				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
+
+
+				led.LEDColour(2, setColour);
+				led.LEDSend();
+
+				if (setColour == ledTarg) {
+					ledPrev = ledTarg;
+					ledCounter = 0;
+				}
+			}
 
 			lastLED = SysTickVal;
 		}
@@ -127,8 +152,9 @@ int main(void) {
 
 		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
 		filter.Update();			// Check if filter coefficients need to be updated
-		cdc.Command();				// Check for incoming CDC commands
 */
+		cdc.Command();				// Check for incoming CDC commands
+
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
 			USBDebug = true;

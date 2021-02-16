@@ -577,8 +577,72 @@ void InitIO()
 
 void InitSPI()
 {
-	// PF7 (19) SPI5_SCK
-	// PF9 (21) SPI5_MOSI
+	/* SPI Pins:
+	 * Preferred:
+	 * PG14 (129) SPI6_MOSI
+	 * PG13 (128) SPI6_SCK
+	 *
+	 * PF7 (19) SPI5_SCK
+	 * PF9 (21) SPI5_MOSI
+	 *
+	 * PE2  SPI4_SCK (Currently mode pin)
+	 * PE5  SPI4_ MOSI
+	 *
+	 */
+
+	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
+	RCC->APB4ENR |= RCC_APB4ENR_SPI6EN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;			// GPIO port clock
+
+	// PG13 (128) SPI6_SCK
+	GPIOG->MODER  &= ~GPIO_MODER_MODE13_0;			// 10: Alternate function mode
+	GPIOG->AFR[1] |= 5 << GPIO_AFRH_AFSEL13_Pos;	// Alternate Function 5 (SPI6)
+
+	// PG14 (219) SPI6_MOSI
+	GPIOG->MODER  &= ~GPIO_MODER_MODE14_0;			// 10: Alternate function mode
+	GPIOG->AFR[1] |= 5 << GPIO_AFRH_AFSEL14_Pos;	// Alternate Function 5 (SPI6)
+
+	// Configure SPI
+	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
+	SPI6->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
+	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
+	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
+	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
+	SPI6->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+
+	// Configure DMA
+	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
+
+	BDMA_Channel5->CCR &= ~BDMA_CCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	BDMA_Channel5->CCR &= ~BDMA_CCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	BDMA_Channel5->CCR |= BDMA_CCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
+	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	BDMA_Channel5->CCR |= BDMA_CCR_MINC;				// Memory in increment mode
+	//BDMA_Channel5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
+
+	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));	// Configure the peripheral data register address
+
+	DMAMUX2_Channel5->CCR |= 12; 					// DMA request MUX input 86 = spi6_tx_dma (See p.697)
+	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
+}
+
+
+/*
+void InitSPI()
+{
+	 SPI Pins:
+	 * Preferred:
+	 * PG14 (129) SPI6_MOSI
+	 * PG13 (128) SPI6_SCK
+	 *
+	 * PF7 (19) SPI5_SCK
+	 * PF9 (21) SPI5_MOSI
+	 *
+	 * PE2  SPI4_SCK (Currently mode pin)
+	 * PE5  SPI4_ MOSI
+	 *
+
+
 	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
 	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// GPIO port clock
@@ -614,6 +678,7 @@ void InitSPI()
 	DMAMUX1_Channel5->CCR |= 86; 					// DMA request MUX input 86 = spi5_tx_dma (See p.695) NB If using SPI6 need DMAMux2
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 }
+*/
 
 void InitI2C()
 {

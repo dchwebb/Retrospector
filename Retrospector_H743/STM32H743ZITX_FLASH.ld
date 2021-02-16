@@ -208,6 +208,12 @@ SECTIONS
     *(.dma_buffer)
   } >RAM_D2
   
+  /* DW RAM Area for SPI6 BDMA buffers (LED Controller) */
+  .led_buffer :
+  {
+    *(.led_buffer)
+  } >RAM_D3
+
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {

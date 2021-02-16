@@ -1,24 +1,37 @@
 #include "LEDHandler.h"
 
+// Set an individual led brightness
 void LEDHandler::LEDSet(ledSelection l, uint8_t b) {
 	// Brightness is from 0 to 127, left shifted one
 	brightness[(l >> 1) - 1] = b << 1;
 }
 
+// Set colour of RGB led group
+void LEDHandler::LEDColour(uint8_t g, uint32_t rgb) {
+	// Brightness is from 0 to 255, with lowest bit cleared
+	rgb &= ~0x010101;
+//	*(uint32_t*)(&brightness[g * 3]) = b;
+	brightness[g * 3] = rgb >> 16;
+	brightness[g * 3 + 1] = (rgb >> 8) & 0xFF;
+	brightness[g * 3 + 2] = rgb & 0xFF;
+}
+
 void LEDHandler::LEDSend() {
 
 	// Clear DMA errors and transfer complete status flags
-	DMA1->HIFCR = DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTCIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CFEIF5;
-	SPI5->IFCR |= SPI_IFCR_TXTFC;
+	//DMA1->HIFCR = DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTCIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CFEIF5;
+//	BDMA->IFCR |= BDMA_IFCR_CGIF5 | BDMA_IFCR_CTCIF5 | BDMA_IFCR_CHTIF5;
+	SPI6->IFCR |= SPI_IFCR_TXTFC;
 
 	// Check SPI is not sending
-	while ((SPI5->SR & SPI_SR_TXP) == 0 && (SPI5->SR & SPI_SR_TXC) == 0) {};
+	while ((SPI6->SR & SPI_SR_TXP) == 0 && (SPI6->SR & SPI_SR_TXC) == 0) {};
 
-	SPI5->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
-	DMA1_Stream5->NDTR = 14;						// Number of data items to transfer (ie size of LED sequence control)
-	DMA1_Stream5->CR |= DMA_SxCR_EN;				// Enable DMA and wait
-	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
-	SPI5->CR1 |= SPI_CR1_CSTART;					// Start SPI
+	SPI6->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
+	BDMA_Channel5->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
+	BDMA_Channel5->CNDTR = 14;						// Number of data items to transfer (ie size of LED sequence control)
+	BDMA_Channel5->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
+	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
+	SPI6->CR1 |= SPI_CR1_CSTART;					// Start SPI
 }
 
 void LEDHandler::Init() {
@@ -30,9 +43,9 @@ void LEDHandler::Init() {
 	std::fill(std::begin(brightness), std::begin(brightness) + 9, 0);
 	stop = 0x81;
 
-	SPI5->CR2 |= 14;								// Set the number of items to transfer
-	SPI5->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
-	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
-	DMA1_Stream5->M0AR = (uint32_t)(this);			// Configure the memory data register address
+	SPI6->CR2 |= 14;								// Set the number of items to transfer
+	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
+	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
+	BDMA_Channel5->CM0AR = (uint32_t)(this);			// Configure the memory data register address
 
 }

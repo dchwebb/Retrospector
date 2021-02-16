@@ -59,26 +59,33 @@ bool CDCHandler::Command()
 		}
 
 		usb->SendString("\r\nSupported commands:\r\n"
-				"help      -  Shows this information\r\n"
-				"f         -  Filter on/off\r\n"
-				"lp        -  Filter is low pass\r\n"
-				"hp        -  Filter is high pass\r\n"
-				"both      -  Filter sweeps from low pass to high pass\r\n"
-				"pp        -  Turn ping pong mode on/off\r\n"
-				"c         -  Chorus on/off\r\n"
-				"resume    -  Resume I2S after debugging\r\n"
+				"help       -  Shows this information\r\n"
+				"f          -  Filter on/off\r\n"
+				"lp         -  Filter is low pass\r\n"
+				"hp         -  Filter is high pass\r\n"
+				"both       -  Filter sweeps from low pass to high pass\r\n"
+				"pp         -  Turn ping pong mode on/off\r\n"
+				"c          -  Chorus on/off\r\n"
+				"resume     -  Resume I2S after debugging\r\n"
 				"\r\nDebug Data Dump:\r\n"
-				"dl        -  Left delay samples\r\n"
-				"dr        -  Right delay samples\r\n"
-				"fir       -  FIR coefficients\r\n"
-				"iir       -  IIR coefficients\r\n"
-				"fdl       -  Left filter buffer\r\n"
-				"wd        -  FIR window coefficients\r\n"
-				"imp       -  IIR impulse response\r\n"
-				"iirs      -  IIR square wave test\r\n"
-				"cb        -  Chorus samples\r\n"
+				"dl         -  Left delay samples\r\n"
+				"dr         -  Right delay samples\r\n"
+				"fir        -  FIR coefficients\r\n"
+				"iir        -  IIR coefficients\r\n"
+				"fdl        -  Left filter buffer\r\n"
+				"wd         -  FIR window coefficients\r\n"
+				"imp        -  IIR impulse response\r\n"
+				"iirs       -  IIR square wave test\r\n"
+				"cb         -  Chorus samples\r\n"
+				"led:RRGGBB -  Set LED to hex RGB value supplied\r\n"
 		);
 
+
+	} else if (ComCmd.compare(0, 4, "led:") == 0) {		// set LED target colour
+		std::string rgb = ComCmd.substr(4, 6);
+		extern uint32_t ledTarg;
+		ledTarg = std::stoul(rgb, nullptr, 16);
+		usb->SendString("LED Val: " + std::to_string(ledTarg) + "\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();
