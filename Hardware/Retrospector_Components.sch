@@ -3004,7 +3004,7 @@ Wire Wire Line
 Connection ~ 10350 3600
 Wire Wire Line
 	14900 1750 14950 1750
-Text Label 7400 7000 0    50   ~ 0
+Text Label 7400 7100 0    50   ~ 0
 CHORUS
 $Comp
 L Connector:Conn_01x08_Male J3
@@ -3070,17 +3070,6 @@ F 2 "" H 7400 7400 50  0001 C CNN
 F 3 "" H 7400 7400 50  0001 C CNN
 	1    7400 7400
 	0    -1   -1   0   
-$EndComp
-$Comp
-L power:+3.3VA #PWR09
-U 1 1 619635CF
-P 7400 7300
-F 0 "#PWR09" H 7400 7150 50  0001 C CNN
-F 1 "+3.3VA" V 7400 7400 50  0000 L CNN
-F 2 "" H 7400 7300 50  0001 C CNN
-F 3 "" H 7400 7300 50  0001 C CNN
-	1    7400 7300
-	0    1    1    0   
 $EndComp
 $Comp
 L power:+3.3VA #PWR03
@@ -4384,11 +4373,11 @@ F 3 "~" H 16900 10000 50  0001 C CNN
 $EndComp
 Text Notes 13650 11050 0    50   ~ 0
 FLT: connect to earth for \nhigher latency but less ringing
-Text Label 7400 6900 0    50   ~ 0
+Text Label 7400 7000 0    50   ~ 0
 PINGPONG
-Text Label 7400 7200 0    50   ~ 0
+Text Label 7400 7300 0    50   ~ 0
 LP_MODE
-Text Label 7400 7100 0    50   ~ 0
+Text Label 7400 7200 0    50   ~ 0
 HP_MODE
 Text Label 7400 6800 0    50   ~ 0
 LED_SPI_CLK
@@ -4869,4 +4858,15 @@ Wire Wire Line
 	1600 5050 1750 5050
 NoConn ~ 1750 6050
 NoConn ~ 1750 6250
+$Comp
+L power:GND #PWR?
+U 1 1 60F0DC60
+P 7400 6900
+F 0 "#PWR?" H 7400 6650 50  0001 C CNN
+F 1 "GND" V 7400 6700 50  0000 C CNN
+F 2 "" H 7400 6900 50  0001 C CNN
+F 3 "" H 7400 6900 50  0001 C CNN
+	1    7400 6900
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC
