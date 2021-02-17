@@ -95,7 +95,7 @@ int main(void) {
 /*	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
-	InitSPI();
+	InitLEDSPI();
 	led.Init();
 
 	while (1) {
@@ -105,7 +105,6 @@ int main(void) {
 				++ledCounter;
 
 				float mult = (float)ledCounter / transition;
-
 
 				// Interpolate colours between previous and target
 				uint8_t oldR = ledPrev >> 16;
@@ -119,7 +118,6 @@ int main(void) {
 				newG = (oldG + (float)(newG - oldG) * mult);
 				newB = (oldB + (float)(newB - oldB) * mult);
 				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
-
 
 				led.LEDColour(2, setColour);
 				led.LEDSend();

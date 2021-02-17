@@ -1729,8 +1729,6 @@ NoConn ~ 1750 3850
 NoConn ~ 1750 3950
 NoConn ~ 1750 4250
 NoConn ~ 1750 4350
-NoConn ~ 1750 4950
-NoConn ~ 1750 5050
 NoConn ~ 1750 5950
 NoConn ~ 1750 6150
 NoConn ~ 1750 6350
@@ -1958,9 +1956,9 @@ Text Label 10500 3600 0    50   ~ 0
 AUDIO_IN_R
 Text Label 10450 1950 0    50   ~ 0
 AUDIO_IN_L
-Text Label 5850 5750 0    50   ~ 0
+Text Label 5850 5950 0    50   ~ 0
 EXT_AUDIO_IN_R
-Text Label 5850 5650 0    50   ~ 0
+Text Label 5850 5850 0    50   ~ 0
 EXT_AUDIO_IN_L
 Text Label 7400 6150 0    50   ~ 0
 EXT_AUDIO_OUT_R
@@ -2924,11 +2922,11 @@ Text Label 1650 1950 2    50   ~ 0
 RESET
 Wire Wire Line
 	1650 1950 1750 1950
-Text Label 5850 6050 0    50   ~ 0
+Text Label 7400 5950 0    50   ~ 0
 RESET
-Text Label 5850 5850 0    50   ~ 0
+Text Label 5850 5650 0    50   ~ 0
 DELAY_CV_L
-Text Label 5850 5950 0    50   ~ 0
+Text Label 5850 5750 0    50   ~ 0
 DELAY_CV_R
 Text Label 5850 7300 0    50   ~ 0
 FEEDBACK_CV
@@ -3043,9 +3041,9 @@ F 3 "~" H 7200 5750 50  0001 C CNN
 $EndComp
 Text Label 4350 2550 0    50   ~ 0
 DELAY_CV_SCALED_L
-Text Label 4350 2150 0    50   ~ 0
-AUDIO_IN_L
 Text Label 4350 2250 0    50   ~ 0
+AUDIO_IN_L
+Text Label 4350 2150 0    50   ~ 0
 AUDIO_IN_R
 Text Label 4350 3750 0    50   ~ 0
 DELAY_POT_L
@@ -4392,9 +4390,9 @@ Text Label 7400 7200 0    50   ~ 0
 LP_MODE
 Text Label 7400 7100 0    50   ~ 0
 HP_MODE
-Text Label 7400 6700 0    50   ~ 0
-LED_SPI_CLK
 Text Label 7400 6800 0    50   ~ 0
+LED_SPI_CLK
+Text Label 7400 6700 0    50   ~ 0
 LED_SPI_DATA
 $Comp
 L power:+3.3V #PWR0126
@@ -4407,14 +4405,10 @@ F 3 "" H 7400 5550 50  0001 C CNN
 	1    7400 5550
 	0    1    1    0   
 $EndComp
-Text Label 1650 6050 2    50   ~ 0
+Text Label 1600 4950 2    50   ~ 0
 LED_SPI_CLK
-Text Label 1650 6250 2    50   ~ 0
+Text Label 1600 5050 2    50   ~ 0
 LED_SPI_DATA
-Wire Wire Line
-	1750 6250 1650 6250
-Wire Wire Line
-	1750 6050 1650 6050
 Text Label 5850 7100 0    50   ~ 0
 FILTER_CV
 $Comp
@@ -4777,7 +4771,7 @@ Text Label 7400 5850 0    50   ~ 0
 MODE2
 Text Label 7400 5750 0    50   ~ 0
 MODE1
-Text Label 7400 5950 0    50   ~ 0
+Text Label 5850 6050 0    50   ~ 0
 DELAY_POT_R
 NoConn ~ 1750 4550
 NoConn ~ 1750 4750
@@ -4869,4 +4863,10 @@ $EndComp
 NoConn ~ 1750 4850
 NoConn ~ 4250 4350
 NoConn ~ 4250 4450
+Wire Wire Line
+	1600 4950 1750 4950
+Wire Wire Line
+	1600 5050 1750 5050
+NoConn ~ 1750 6050
+NoConn ~ 1750 6250
 $EndSCHEMATC

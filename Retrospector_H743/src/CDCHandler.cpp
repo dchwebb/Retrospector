@@ -85,7 +85,8 @@ bool CDCHandler::Command()
 		std::string rgb = ComCmd.substr(4, 6);
 		extern uint32_t ledTarg;
 		ledTarg = std::stoul(rgb, nullptr, 16);
-		usb->SendString("LED Val: " + std::to_string(ledTarg) + "\r\n");
+
+		usb->SendString("LED R: " + std::to_string(ledTarg >> 16) + " G: " + std::to_string((ledTarg >> 8) & 0xFF) + " B: " + std::to_string(ledTarg & 0xFF) + "\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();

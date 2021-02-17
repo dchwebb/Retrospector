@@ -575,20 +575,11 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
-void InitSPI()
+void InitLEDSPI()
 {
-	/* SPI Pins:
-	 * Preferred:
-	 * PG14 (129) SPI6_MOSI
-	 * PG13 (128) SPI6_SCK
-	 *
-	 * PF7 (19) SPI5_SCK
-	 * PF9 (21) SPI5_MOSI
-	 *
-	 * PE2  SPI4_SCK (Currently mode pin)
-	 * PE5  SPI4_ MOSI
-	 *
-	 */
+	// SPI Pins:
+	// PG14 (129) SPI6_MOSI
+	// PG13 (128) SPI6_SCK
 
 	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
 	RCC->APB4ENR |= RCC_APB4ENR_SPI6EN;
@@ -630,18 +621,9 @@ void InitSPI()
 /*
 void InitSPI()
 {
-	 SPI Pins:
-	 * Preferred:
-	 * PG14 (129) SPI6_MOSI
-	 * PG13 (128) SPI6_SCK
-	 *
-	 * PF7 (19) SPI5_SCK
-	 * PF9 (21) SPI5_MOSI
-	 *
-	 * PE2  SPI4_SCK (Currently mode pin)
-	 * PE5  SPI4_ MOSI
-	 *
-
+	// SPI Pins:
+	// PF7 (19) SPI5_SCK
+	// PF9 (21) SPI5_MOSI
 
 	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
 	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
