@@ -82,11 +82,20 @@ bool CDCHandler::Command()
 
 
 	} else if (ComCmd.compare(0, 4, "led:") == 0) {		// set LED target colour
-		std::string rgb = ComCmd.substr(4, 6);
 		extern uint32_t ledTarg;
-		ledTarg = std::stoul(rgb, nullptr, 16);
+		if (ComCmd.compare("led:auto\n") == 0) {
+			extern bool ledCycle;
+			ledCycle = !ledCycle;
+			ledTarg = ledTarg + 1;
+			usb->SendString(ledCycle ? "LED: Auto on\r\n" : "LED: Auto off\r\n");
+		} else {
+			std::string rgb = ComCmd.substr(4, 6);
 
-		usb->SendString("LED R: " + std::to_string(ledTarg >> 16) + " G: " + std::to_string((ledTarg >> 8) & 0xFF) + " B: " + std::to_string(ledTarg & 0xFF) + "\r\n");
+			ledTarg = std::stoul(rgb, nullptr, 16);
+			usb->SendString("LED R: " + std::to_string(ledTarg >> 16) + " G: " + std::to_string((ledTarg >> 8) & 0xFF) + " B: " + std::to_string(ledTarg & 0xFF) + "\r\n");
+		}
+
+
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();

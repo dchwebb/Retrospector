@@ -1,4 +1,4 @@
-393717786867347
+400283023839060
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19712,6 +19712,13 @@ Custom_Footprints
 1
 1
 Custom_Footprints
+4_Layer_Markers
+
+
+0
+0
+0
+Custom_Footprints
 4pin_header
 http://www.farnell.com/datasheets/1520732.pdf
 connector multicomp MC9A MC9A12
@@ -19872,6 +19879,27 @@ resistor 0805
 0
 2
 2
+Custom_Footprints
+Layer_1_4_Marker
+
+
+0
+0
+0
+Custom_Footprints
+Layer_2_Marker
+
+
+0
+0
+0
+Custom_Footprints
+Layer_3_Marker
+
+
+0
+0
+0
 Custom_Footprints
 MIDISocket_Hole_15mm
 Mounting Hole 15mm

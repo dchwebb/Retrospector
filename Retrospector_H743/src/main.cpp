@@ -72,7 +72,8 @@ uint32_t lastLED = 0;
 uint16_t ledCounter = 0;
 uint32_t ledTarg = 0xAABBCC;
 uint32_t ledPrev = 0x000000;
-const uint16_t transition = 500;
+bool ledCycle = true;
+const uint16_t transition = 1000;
 
 int main(void) {
 
@@ -119,11 +120,33 @@ int main(void) {
 				newB = (oldB + (float)(newB - oldB) * mult);
 				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
 
-				led.LEDColour(2, setColour);
+				led.LEDColour(1, setColour);
 				led.LEDSend();
 
 				if (setColour == ledTarg) {
 					ledPrev = ledTarg;
+
+					if (ledCycle) {
+						switch (ledPrev) {
+						case 0xFF0000:
+							ledTarg = 0x00FF00;
+							break;
+						case 0x00FF00:
+							ledTarg = 0x0000FF;
+							break;
+						case 0x0000FF:
+							ledTarg = 0xFF3300;
+							break;
+						case 0xFF3300:
+							ledTarg = 0x555555;
+							break;
+						case 0x555555:
+							ledTarg = 0xFF0000;
+							break;
+						default:
+							ledTarg = 0x0000FF;
+						}
+					}
 					ledCounter = 0;
 				}
 			}
