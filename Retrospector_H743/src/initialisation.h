@@ -46,3 +46,4 @@ void InitIO();
 void InitDebugTimer();
 void InitI2C();
 void InitLEDSPI();
+void Init_WS2812_SPI();

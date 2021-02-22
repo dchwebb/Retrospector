@@ -618,6 +618,49 @@ void InitLEDSPI()
 }
 
 
+
+void Init_WS2812_SPI()
+{
+	// SPI Pins:
+	// PF7 (19) SPI5_SCK
+	// PF9 (21) SPI5_MOSI
+
+	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
+	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// GPIO port clock
+
+//	// PF7 (19) SPI5_SCK
+//	GPIOF->MODER  &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
+//	GPIOF->AFR[0] |= 5 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 5 (SPI5)
+
+	// PF9 (21) SPI5_MOSI
+	GPIOF->MODER  &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
+	GPIOF->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (SPI5)
+
+	// Configure SPI
+	SPI5->CR1 |= SPI_CR1_SSI;						// Internal slave select
+	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
+	SPI5->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
+	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
+	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
+	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+
+	// Configure DMA
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	DMA1_Stream5->CR &= ~DMA_SxCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR &= ~DMA_SxCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream5->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
+	DMA1_Stream5->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	DMA1_Stream5->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
+
+	DMA1_Stream5->PAR = (uint32_t)(&(SPI5->TXDR));	// Configure the peripheral data register address
+
+	DMAMUX1_Channel5->CCR |= 86; 					// DMA request MUX input 86 = spi5_tx_dma (See p.695) NB If using SPI6 need DMAMux2
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
+}
+
 /*
 void InitSPI()
 {

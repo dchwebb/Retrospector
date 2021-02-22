@@ -46,5 +46,7 @@ void LEDHandler::Init()
 	SPI6->CR2 |= 14;								// Set the number of items to transfer
 	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
-	BDMA_Channel5->CM0AR = (uint32_t)(this);			// Configure the memory data register address
+	BDMA_Channel5->CM0AR = (uint32_t)(this);		// Configure the memory data register address
 }
+
+

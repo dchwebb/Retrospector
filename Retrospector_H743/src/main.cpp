@@ -96,6 +96,7 @@ int main(void) {
 /*	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
+	Init_WS2812_SPI();
 	InitLEDSPI();
 	led.Init();
 
@@ -120,10 +121,11 @@ int main(void) {
 				newB = (oldB + (float)(newB - oldB) * mult);
 				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
 
-				led.LEDColour(1, setColour);
-				led.LEDSend();
 
-				if (setColour == ledTarg) {
+				if (setColour != ledTarg) {
+					led.LEDColour(1, setColour);
+					led.LEDSend();
+				} else {
 					ledPrev = ledTarg;
 
 					if (ledCycle) {
