@@ -629,9 +629,9 @@ void Init_WS2812_SPI()
 	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// GPIO port clock
 
-//	// PF7 (19) SPI5_SCK
-//	GPIOF->MODER  &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
-//	GPIOF->AFR[0] |= 5 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 5 (SPI5)
+	// PF7 (19) SPI5_SCK
+	GPIOF->MODER  &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
+	GPIOF->AFR[0] |= 5 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 5 (SPI5)
 
 	// PF9 (21) SPI5_MOSI
 	GPIOF->MODER  &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode

@@ -6,6 +6,7 @@
 #include "sdram.h"
 //#include "I2CHandler.h"
 #include "LEDHandler.h"
+#include "WS2812Handler.h"
 
 /* TODO
  * Explore LED options for filter control
@@ -52,7 +53,7 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
-//__attribute__((section (".dma_buffer"))) LEDHandler led;			// led handler in dma section as DMA cannot operate with DTCMRAM
+__attribute__((section (".dma_buffer"))) WS2812Handler ledWS;			// led handler in dma section as DMA cannot operate with DTCMRAM
 __attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
@@ -63,10 +64,14 @@ USB usb;
 CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
+//WS2812Handler ledWS;
 
 extern "C" {
 #include "interrupts.h"
 }
+
+
+extern "C" int myadd(int a, int b);
 
 uint32_t lastLED = 0;
 uint16_t ledCounter = 0;
@@ -92,13 +97,15 @@ int main(void) {
 	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
 */
-	usb.InitUSB();
+//	usb.InitUSB();
 /*	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
 	Init_WS2812_SPI();
 	InitLEDSPI();
 	led.Init();
+	ledWS.Init();
+	//int c = myadd(12, 14);			// Assembly test
 
 	while (1) {
 		// LED Test
@@ -123,6 +130,8 @@ int main(void) {
 
 
 				if (setColour != ledTarg) {
+					ledWS.LEDColour(1, setColour);
+					ledWS.LEDSend();
 					led.LEDColour(1, setColour);
 					led.LEDSend();
 				} else {
