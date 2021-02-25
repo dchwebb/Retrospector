@@ -4939,28 +4939,17 @@ Wire Wire Line
 	4250 4450 4350 4450
 Text Label 16750 10650 0    50   ~ 0
 I2C1_SDA
-Text Label 16750 10850 0    50   ~ 0
+Text Label 16750 10750 0    50   ~ 0
 I2C1_SCL
 $Comp
-L Connector:TestPoint TP13
-U 1 1 6068145B
-P 16750 10650
-F 0 "TP13" V 16750 10900 50  0000 C CNN
-F 1 "TestPoint" V 16750 11200 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10650 50  0001 C CNN
-F 3 "~" H 16950 10650 50  0001 C CNN
-	1    16750 10650
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Connector:TestPoint TP14
-U 1 1 606816C0
-P 16750 10850
-F 0 "TP14" V 16750 11100 50  0000 C CNN
-F 1 "TestPoint" V 16750 11400 50  0000 C CNN
-F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 16950 10850 50  0001 C CNN
-F 3 "~" H 16950 10850 50  0001 C CNN
-	1    16750 10850
-	0    -1   -1   0   
+L Connector:Conn_01x02_Female J8
+U 1 1 6065A2AA
+P 16550 10650
+F 0 "J8" H 16650 10550 50  0000 C CNN
+F 1 "I2C_TestPoint" H 16850 10650 50  0000 C CNN
+F 2 "Pin_Headers:Pin_Header_Straight_1x02_Pitch2.54mm" H 16550 10650 50  0001 C CNN
+F 3 "~" H 16550 10650 50  0001 C CNN
+	1    16550 10650
+	-1   0    0    -1  
 $EndComp
 $EndSCHEMATC

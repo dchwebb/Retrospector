@@ -132,7 +132,8 @@ int main(void) {
 				if (setColour != ledTarg) {
 					ledWS.LEDColour(1, setColour);
 					ledWS.LEDSend();
-					led.LEDColour(1, setColour);
+					//led.LEDColour(1, setColour);
+					led.LEDColour(2, setColour);
 					led.LEDSend();
 				} else {
 					ledPrev = ledTarg;
