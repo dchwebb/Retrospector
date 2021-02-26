@@ -41,17 +41,17 @@ void WS2812Handler::LEDColour(uint8_t leds, uint32_t rgb)
 	uint8_t red = encoded >> 8;
 	uint8_t blue = encoded >> 24;
 
-	transmit[leds + 3] = (green & 0x92) | 0x24;
-	transmit[leds + 2] = (green & 0x24) | 0x49;
-	transmit[leds + 1] = (green & 0x49) | 0x92;
+	transmit[leds * 9 + 3] = (green & 0x92) | 0x24;
+	transmit[leds * 9 + 2] = (green & 0x24) | 0x49;
+	transmit[leds * 9 + 1] = (green & 0x49) | 0x92;
 
-	transmit[leds + 6] = (red & 0x92) | 0x24;
-	transmit[leds + 5] = (red & 0x24) | 0x49;
-	transmit[leds + 4] = (red & 0x49) | 0x92;
+	transmit[leds * 9 + 6] = (red & 0x92) | 0x24;
+	transmit[leds * 9 + 5] = (red & 0x24) | 0x49;
+	transmit[leds * 9 + 4] = (red & 0x49) | 0x92;
 
-	transmit[leds + 9] = (blue & 0x92) | 0x24;
-	transmit[leds + 8] = (blue & 0x24) | 0x49;
-	transmit[leds + 7] = (blue & 0x49) | 0x92;
+	transmit[leds * 9 + 9] = (blue & 0x92) | 0x24;
+	transmit[leds * 9 + 8] = (blue & 0x24) | 0x49;
+	transmit[leds * 9 + 7] = (blue & 0x49) | 0x92;
 
 }
 
@@ -64,7 +64,7 @@ void WS2812Handler::LEDSend()
 	// Check SPI is not sending
 	while ((SPI5->SR & SPI_SR_TXP) == 0 && (SPI5->SR & SPI_SR_TXC) == 0) {};
 	SPI5->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
-	DMA1_Stream5->NDTR = 27;						// Number of data items to transfer (ie size of LED sequence control)
+	DMA1_Stream5->NDTR = 29;						// Number of data items to transfer (ie size of LED sequence control)
 	DMA1_Stream5->CR |= DMA_SxCR_EN;				// Enable DMA and wait
 	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI5->CR1 |= SPI_CR1_CSTART;					// Start SPI
@@ -72,9 +72,9 @@ void WS2812Handler::LEDSend()
 
 void WS2812Handler::Init()
 {
-	std::fill(std::begin(transmit), std::begin(transmit) + 27, 0);
+	std::fill(std::begin(transmit), std::begin(transmit) + 29, 0);
 
-	SPI5->CR2 |= 27;								// Set the number of items to transfer
+	SPI5->CR2 |= 29;								// Set the number of items to transfer
 	SPI5->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	DMA1_Stream5->M0AR = (uint32_t)(this);			// Configure the memory data register address

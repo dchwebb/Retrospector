@@ -74,11 +74,22 @@ extern "C" {
 extern "C" int myadd(int a, int b);
 
 uint32_t lastLED = 0;
-uint16_t ledCounter = 0;
-uint32_t ledTarg = 0xAABBCC;
-uint32_t ledPrev = 0x000000;
+uint16_t ledCounter[3];
+uint32_t ledTarg[3] = {0xFF0000, 0x00FF00, 0x0000FF};
+uint32_t ledPrev[3];
+uint8_t ledPos[3] = {0, 2, 4};
+
+
 bool ledCycle = true;
 const uint16_t transition = 1000;
+const uint32_t colourCycle[] = {
+		0xFF0000,
+		0x00FF00,
+		0x0000FF,
+		0xFF3300,
+		0x0000FF,
+		0x555555 };
+
 
 int main(void) {
 
@@ -110,18 +121,19 @@ int main(void) {
 	while (1) {
 		// LED Test
 		if (SysTickVal > lastLED + 3) {
-			if (ledTarg != ledPrev) {
-				++ledCounter;
+			for (uint8_t i = 0; i < 3; ++i) {
 
-				float mult = (float)ledCounter / transition;
+				++ledCounter[i];
+
+				float mult = (float)ledCounter[i] / transition;
 
 				// Interpolate colours between previous and target
-				uint8_t oldR = ledPrev >> 16;
-				uint8_t newR = ledTarg >> 16;
-				uint8_t oldG = (ledPrev >> 8) & 0xFF;
-				uint8_t newG = (ledTarg >> 8) & 0xFF;
-				uint8_t oldB = ledPrev & 0xFF;
-				uint8_t newB = ledTarg & 0xFF;
+				uint8_t oldR = ledPrev[i] >> 16;
+				uint8_t newR = ledTarg[i] >> 16;
+				uint8_t oldG = (ledPrev[i] >> 8) & 0xFF;
+				uint8_t newG = (ledTarg[i] >> 8) & 0xFF;
+				uint8_t oldB = ledPrev[i] & 0xFF;
+				uint8_t newB = ledTarg[i] & 0xFF;
 
 				newR = (oldR + (float)(newR - oldR) * mult);
 				newG = (oldG + (float)(newG - oldG) * mult);
@@ -129,41 +141,25 @@ int main(void) {
 				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
 
 
-				if (setColour != ledTarg) {
-					ledWS.LEDColour(1, setColour);
-					ledWS.LEDSend();
-					//led.LEDColour(1, setColour);
-					led.LEDColour(2, setColour);
-					led.LEDSend();
+				if (ledCounter[i] < transition) {
+					if (i == 2) {
+						ledWS.LEDColour(i, 0);
+					} else {
+						ledWS.LEDColour(i, setColour);
+					}
 				} else {
-					ledPrev = ledTarg;
+					ledPrev[i] = ledTarg[i];
 
 					if (ledCycle) {
-						switch (ledPrev) {
-						case 0xFF0000:
-							ledTarg = 0x00FF00;
-							break;
-						case 0x00FF00:
-							ledTarg = 0x0000FF;
-							break;
-						case 0x0000FF:
-							ledTarg = 0xFF3300;
-							break;
-						case 0xFF3300:
-							ledTarg = 0x555555;
-							break;
-						case 0x555555:
-							ledTarg = 0xFF0000;
-							break;
-						default:
-							ledTarg = 0x0000FF;
-						}
+						ledTarg[i] = colourCycle[++ledPos[i]];
+						if (ledPos[i] == 5)
+							ledPos[i] = 0;
 					}
-					ledCounter = 0;
+					ledCounter[i] = 0;
 				}
 			}
-
 			lastLED = SysTickVal;
+			ledWS.LEDSend();
 		}
 
 		//MemoryTest();
