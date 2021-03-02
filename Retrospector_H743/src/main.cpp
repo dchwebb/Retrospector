@@ -119,6 +119,7 @@ int main(void) {
 	//int c = myadd(12, 14);			// Assembly test
 
 	while (1) {
+
 		// LED Test
 		if (SysTickVal > lastLED + 3) {
 			for (uint8_t i = 0; i < 3; ++i) {
@@ -142,8 +143,11 @@ int main(void) {
 
 
 				if (ledCounter[i] < transition) {
-					if (i == 2) {
-						ledWS.LEDColour(i, 0);
+					if (i == 5) {
+						// Idle High: 0x545455
+						// Idle Glitch: 0x540000
+						// Idle Low: 0x500000
+						ledWS.LEDColour(i, 0x545455);		// 0x545456
 					} else {
 						ledWS.LEDColour(i, setColour);
 					}

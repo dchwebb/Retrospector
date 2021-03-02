@@ -64,7 +64,7 @@ void WS2812Handler::LEDSend()
 	// Check SPI is not sending
 	while ((SPI5->SR & SPI_SR_TXP) == 0 && (SPI5->SR & SPI_SR_TXC) == 0) {};
 	SPI5->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
-	DMA1_Stream5->NDTR = 29;						// Number of data items to transfer (ie size of LED sequence control)
+	DMA1_Stream5->NDTR = TRANSMIT_SIZE;						// Number of data items to transfer (ie size of LED sequence control)
 	DMA1_Stream5->CR |= DMA_SxCR_EN;				// Enable DMA and wait
 	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI5->CR1 |= SPI_CR1_CSTART;					// Start SPI
@@ -72,9 +72,10 @@ void WS2812Handler::LEDSend()
 
 void WS2812Handler::Init()
 {
-	std::fill(std::begin(transmit), std::begin(transmit) + 29, 0);
+	// SPI MOSI line can idle high or low so add a load of padding bits to the end of the transmit sequence as workaround
+	std::fill(std::begin(transmit), std::begin(transmit) + TRANSMIT_SIZE, 0);
 
-	SPI5->CR2 |= 29;								// Set the number of items to transfer
+	SPI5->CR2 |= TRANSMIT_SIZE;								// Set the number of items to transfer
 	SPI5->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI5->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	DMA1_Stream5->M0AR = (uint32_t)(this);			// Configure the memory data register address
