@@ -1,4 +1,4 @@
-400328661915060
+406845107038397
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19747,6 +19747,13 @@ Potentiometer horizontal  Omeg PC16PU  Omeg PC16PU  Omeg PC16PU  Vishay/Spectrol
 3
 3
 Custom_Footprints
+Alpha_9mm_Potentiometer_Aligned
+Potentiometer 9mm
+Potentiometer 9mm
+0
+3
+3
+Custom_Footprints
 Alpha_9mm_pot_hole
 Mounting Hole 7mm
 mounting hole 7mm
@@ -19873,6 +19880,13 @@ mounting hole 6mm no annular
 0
 0
 Custom_Footprints
+LED_RGB_PLCC4
+RGB LED PLCC4 Broadcom
+LED 3227
+0
+4
+4
+Custom_Footprints
 L_0806
 Resistor SMD 0805, reflow soldering, Vishay (see dcrcw.pdf)
 resistor 0805
@@ -19936,6 +19950,13 @@ Switch SPDT
 3
 3
 Custom_Footprints
+SPDT_SubMiniature_Aligned
+SPDT Sub Miniature Switch
+Switch SPDT
+0
+3
+3
+Custom_Footprints
 SSOP-20_4.4x6.5mm_Pitch0.65mm_Round_Pads
 SSOP20: plastic shrink small outline package; 20 leads; body width 4.4 mm; (see NXP SSOP-TSSOP-VSO-REFLOW.pdf and sot266-1_po.pdf)
 SSOP 0.65
@@ -19949,6 +19970,13 @@ SWD ARM Header Programmer
 0
 4
 4
+Custom_Footprints
+SW_PUSH_6mm_aligned
+https://www.omron.com/ecb/products/pdf/en-b3f.pdf
+tact sw push 6mm
+0
+4
+2
 Custom_Footprints
 SW_Rotary_2x5
 

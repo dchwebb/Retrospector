@@ -53,7 +53,7 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
-__attribute__((section (".dma_buffer"))) WS2812Handler ledWS;			// led handler in dma section as DMA cannot operate with DTCMRAM
+//__attribute__((section (".dma_buffer"))) WS2812Handler ledWS;			// led handler in dma section as DMA cannot operate with DTCMRAM
 __attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
@@ -64,7 +64,6 @@ USB usb;
 CDCHandler cdc(usb);
 DigitalDelay delay;
 Filter filter;
-//WS2812Handler ledWS;
 
 extern "C" {
 #include "interrupts.h"
@@ -112,10 +111,10 @@ int main(void) {
 /*	delay.Init();					// clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 */
-	Init_WS2812_SPI();
+//	Init_WS2812_SPI();
 	InitLEDSPI();
 	led.Init();
-	ledWS.Init();
+//	ledWS.Init();
 	//int c = myadd(12, 14);			// Assembly test
 
 	while (1) {
@@ -143,14 +142,7 @@ int main(void) {
 
 
 				if (ledCounter[i] < transition) {
-					if (i == 5) {
-						// Idle High: 0x545455
-						// Idle Glitch: 0x540000
-						// Idle Low: 0x500000
-						ledWS.LEDColour(i, 0x545455);		// 0x545456
-					} else {
-						ledWS.LEDColour(i, setColour);
-					}
+					led.LEDColour(i, setColour);
 				} else {
 					ledPrev[i] = ledTarg[i];
 
@@ -163,7 +155,7 @@ int main(void) {
 				}
 			}
 			lastLED = SysTickVal;
-			ledWS.LEDSend();
+			led.LEDSend();
 		}
 
 		//MemoryTest();

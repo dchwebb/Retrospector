@@ -595,11 +595,13 @@ void InitLEDSPI()
 
 	// Configure SPI
 	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI6->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
+	SPI6->CFG1 |= SPI_CFG1_MBR_2;	// Master Baud rate p2238:  100: SPI master clock/32; 101: SPI master clock/64
+	//SPI6->CFG1 |= SPI_CFG1_MBR_2 | SPI_CFG1_MBR_0;	// Master Baud rate p2238:  101: SPI master clock/64
 	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI6->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+//	SPI6->CFG2 |= SPI_CFG2_CPHA;					// Clock phase
 
 	// Configure DMA
 	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
@@ -607,8 +609,8 @@ void InitLEDSPI()
 	BDMA_Channel5->CCR &= ~BDMA_CCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
 	BDMA_Channel5->CCR &= ~BDMA_CCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
 	BDMA_Channel5->CCR |= BDMA_CCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
-	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
-	BDMA_Channel5->CCR |= BDMA_CCR_MINC;				// Memory in increment mode
+	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;			// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	BDMA_Channel5->CCR |= BDMA_CCR_MINC;			// Memory in increment mode
 	//BDMA_Channel5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
 
 	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));	// Configure the peripheral data register address

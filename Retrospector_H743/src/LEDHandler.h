@@ -20,12 +20,14 @@ enum ledSelection {
 
 class LEDHandler {
 public:
+	//uint8_t spacer0 = 0;			// See Errata in data sheet - does not work correctly without spacer
 	uint8_t spacer = 0;			// See Errata in data sheet - does not work correctly without spacer
 	uint8_t start = 0xFF;
 	uint8_t slaveAddress = 3;
 	ledSelection led = ledSeq;
 	uint8_t brightness[9];
 	uint8_t stop = 0x81;
+	uint8_t stopSpacer = 0xFF;
 
 	void Init();
 	void LEDSet(ledSelection l, uint8_t b);

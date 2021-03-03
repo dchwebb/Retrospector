@@ -27,7 +27,7 @@ void LEDHandler::LEDSend()
 
 	SPI6->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
 	BDMA_Channel5->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
-	BDMA_Channel5->CNDTR = 14;						// Number of data items to transfer (ie size of LED sequence control)
+	BDMA_Channel5->CNDTR = 15;						// Number of data items to transfer (ie size of LED sequence control)
 	BDMA_Channel5->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI6->CR1 |= SPI_CR1_CSTART;					// Start SPI
@@ -36,14 +36,16 @@ void LEDHandler::LEDSend()
 void LEDHandler::Init()
 {
 	// Need to initialise values here as placing object in non-default RAM means initial values not being set on object
-	spacer = 0;			// See Errata in data sheet - does not work correctly without spacer
+	//spacer0 = 0x0;
+	spacer = 0x0;			// See Errata in data sheet - does not work correctly without spacer
 	start = 0xFF;
 	slaveAddress = 3;
 	led = ledSeq;
 	std::fill(std::begin(brightness), std::begin(brightness) + 9, 0);
 	stop = 0x81;
+	stopSpacer = 0x0;
 
-	SPI6->CR2 |= 14;								// Set the number of items to transfer
+	SPI6->CR2 |= 15;								// Set the number of items to transfer
 	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	BDMA_Channel5->CM0AR = (uint32_t)(this);		// Configure the memory data register address
