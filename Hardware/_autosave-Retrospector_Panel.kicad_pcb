@@ -2,10 +2,10 @@
 
   (general
     (thickness 1.6)
-    (drawings 62)
+    (drawings 63)
     (tracks 0)
     (zones 0)
-    (modules 27)
+    (modules 28)
     (nets 1)
   )
 
@@ -105,6 +105,25 @@
     (via_drill 0.4)
     (uvia_dia 0.3)
     (uvia_drill 0.1)
+  )
+
+  (module Custom_Footprints:Small_Pushbutton_Hole_3.5mm (layer B.Cu) (tedit 5F7CC77F) (tstamp 603FF4C1)
+    (at 130 64.5)
+    (descr "Button Hole 3.5mm")
+    (fp_text reference RESET (at 0 5.4) (layer B.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_text value Subminiature_Switch (at 0 -5.1) (layer B.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
+    )
+    (fp_circle (center 0 0) (end 1.6 0) (layer B.CrtYd) (width 0.05))
+    (fp_circle (center 0 0) (end 1.5 0) (layer Cmts.User) (width 0.15))
+    (pad "" np_thru_hole circle (at 0 0) (size 3.5 3.5) (drill 3.5) (layers *.Cu *.Mask))
+    (model ${KISYS3DMOD}/Button_Switch_THT.3dshapes/SW_PUSH_6mm_H13mm.wrl
+      (offset (xyz -3.15 2.25 -11.5))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
   )
 
   (module Custom_Footprints:LED_Hole_3mm (layer B.Cu) (tedit 5F7CCA4A) (tstamp 603FCE07)
@@ -862,6 +881,9 @@
     (pad "" np_thru_hole oval (at 0 0) (size 5 3.2) (drill oval 5 3.2) (layers *.Cu *.Mask))
   )
 
+  (gr_text Link (at 130 59.6) (layer B.Mask) (tstamp 603FF4E4)
+    (effects (font (size 2 2) (thickness 0.3)) (justify mirror))
+  )
   (gr_text Wide (at 149.9 92.9) (layer B.Mask) (tstamp 603FD217)
     (effects (font (size 2 2) (thickness 0.3)) (justify mirror))
   )

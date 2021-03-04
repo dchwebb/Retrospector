@@ -523,41 +523,6 @@ void InitChorusTimer()
 	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
 
-/*
-void InitClockTimer()
-{
-	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
-
-	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
-	// See manual page 1670 for info on Capture and Compare Input mode
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
-	GPIOB->MODER &= ~GPIO_MODER_MODE5_0;			// Alternate function is Mode 0b10 (defaults to 0b11)
-	GPIOB->AFR[0] |= 2 << GPIO_AFRL_AFSEL5_Pos;		// Alternate Function 2 for TIM3_CH2 on PB5 and PA7
-	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
-	TIM3->ARR = 65535;
-	TIM3->PSC = 2000;
-
-	// TISEL Register is used to select which channel is routed to TI1, TI2, TI3 and TI4 inputs. By default CH2 is routed to TI2 so use that
-	// TIM3->TISEL |= 0 << TIM_TISEL_TI2SEL_Pos;
-
-	// There are two capture and compare registers. Configure the input to CCR1 to be CH2
-	TIM3->CCMR1 |= TIM_CCMR1_CC1S_1;				// 10: CC1 channel is configured as input, IC1 is mapped on TI2
-
-	// Configure the digital filter to allow time for the input signal to stabilise - initially set to 0
-	// Note that the number of units depends on the filter clock - this is either the main timer or a subdivision set by the DTS (See CKD in CR1)
-	TIM3->CCMR1 |= TIM_CCMR1_IC1F_0 & TIM_CCMR1_IC1F_1;
-
-	// TIMx_CCER register controls detection on rising (default) or falling edge of input
-	TIM3->CCER |= TIM_CCER_CC1E;					// Enable capture on 1
-
-	// Configure the timer to reset when a rising edge is detected
-	TIM3->SMCR |= 0b110 << TIM_SMCR_TS_Pos;			// 00110: Filtered Timer Input 2 (TI2FP2)
-	TIM3->SMCR |= TIM_SMCR_SMS_2;					// 0100: Reset Mode - Rising edge of the selected trigger input (TRGI) reinitializes the counter
-
-	TIM3->CR1 |= TIM_CR1_CEN;
-
-}
-*/
 
 void InitIO()
 {
@@ -575,8 +540,10 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 }
 
+
 void InitLEDSPI()
 {
+	// Initialises SPI and DMA for controlling 3 RGB LEDs with Toshiba TB62781 9-way LED control (with 3k3 ohm resistors draws aroung 17mA from 5V)
 	// SPI Pins:
 	// PG14 (129) SPI6_MOSI
 	// PG13 (128) SPI6_SCK
@@ -596,12 +563,10 @@ void InitLEDSPI()
 	// Configure SPI
 	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
 	SPI6->CFG1 |= SPI_CFG1_MBR_2;	// Master Baud rate p2238:  100: SPI master clock/32; 101: SPI master clock/64
-	//SPI6->CFG1 |= SPI_CFG1_MBR_2 | SPI_CFG1_MBR_0;	// Master Baud rate p2238:  101: SPI master clock/64
 	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI6->CFG2 |= SPI_CFG2_MASTER;					// Master mode
-//	SPI6->CFG2 |= SPI_CFG2_CPHA;					// Clock phase
 
 	// Configure DMA
 	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
@@ -620,11 +585,13 @@ void InitLEDSPI()
 }
 
 
-
+// Unused
 void Init_WS2812_SPI()
 {
+	// Initialises SPI with DMA to send data to string of WS2812B smart RGB LEDs. This uses a hacky SPI format to send serial data in NRZ format.
+	// Note this requires 3x bit padding + extra dummy bytes to workaround MOSI line idling high (draws around 40mA at 5V)
 	// SPI Pins:
-	// PF7 (19) SPI5_SCK
+	// PF7 (19) SPI5_SCK (only required for debugging)
 	// PF9 (21) SPI5_MOSI
 
 	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
@@ -646,6 +613,7 @@ void Init_WS2812_SPI()
 	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+	SPI5->CFG2 |= SPI_CFG2_CPHA;					// Clock phase - this setting potentially reduces risk of MOSI line idling high (See p9 of dm00725181)
 
 	// Configure DMA
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -663,50 +631,7 @@ void Init_WS2812_SPI()
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 }
 
-/*
-void InitSPI()
-{
-	// SPI Pins:
-	// PF7 (19) SPI5_SCK
-	// PF9 (21) SPI5_MOSI
-
-	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
-	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;			// GPIO port clock
-
-	// PF7 (19) SPI5_SCK
-	GPIOF->MODER  &= ~GPIO_MODER_MODE7_0;			// 10: Alternate function mode
-	GPIOF->AFR[0] |= 5 << GPIO_AFRL_AFSEL7_Pos;		// Alternate Function 5 (SPI5)
-
-	// PF9 (21) SPI5_MOSI
-	GPIOF->MODER  &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
-	GPIOF->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (SPI5)
-
-	// Configure SPI
-	SPI5->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI5->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32
-	SPI5->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
-	SPI5->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
-	SPI5->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
-	SPI5->CFG2 |= SPI_CFG2_MASTER;					// Master mode
-
-	// Configure DMA
-	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-
-	DMA1_Stream5->CR &= ~DMA_SxCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	DMA1_Stream5->CR &= ~DMA_SxCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	DMA1_Stream5->CR |= DMA_SxCR_DIR_0;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
-	DMA1_Stream5->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
-	DMA1_Stream5->CR |= DMA_SxCR_MINC;				// Memory in increment mode
-	DMA1_Stream5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
-
-	DMA1_Stream5->PAR = (uint32_t)(&(SPI5->TXDR));	// Configure the peripheral data register address
-
-	DMAMUX1_Channel5->CCR |= 86; 					// DMA request MUX input 86 = spi5_tx_dma (See p.695) NB If using SPI6 need DMAMux2
-	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
-}
-*/
-
+// Unused
 void InitI2C()
 {
 	//	Enable GPIO and I2C clocks
@@ -775,6 +700,41 @@ void InitI2C()
 	I2C1->CR1 |= I2C_CR1_PE;						// Peripheral enable
 }
 
+// Unused
+void InitClockTimer()
+{
+	// Configure timer to use Capture and Compare mode on external clock to time duration between pulses (not using as limited in duration)
+
+	// FIXME Production will use PA7 - temporarily using PB5 as also configured as TIM3_CH2
+	// See manual page 1670 for info on Capture and Compare Input mode
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
+	GPIOB->MODER &= ~GPIO_MODER_MODE5_0;			// Alternate function is Mode 0b10 (defaults to 0b11)
+	GPIOB->AFR[0] |= 2 << GPIO_AFRL_AFSEL5_Pos;		// Alternate Function 2 for TIM3_CH2 on PB5 and PA7
+	RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
+	TIM3->ARR = 65535;
+	TIM3->PSC = 2000;
+
+	// TISEL Register is used to select which channel is routed to TI1, TI2, TI3 and TI4 inputs. By default CH2 is routed to TI2 so use that
+	// TIM3->TISEL |= 0 << TIM_TISEL_TI2SEL_Pos;
+
+	// There are two capture and compare registers. Configure the input to CCR1 to be CH2
+	TIM3->CCMR1 |= TIM_CCMR1_CC1S_1;				// 10: CC1 channel is configured as input, IC1 is mapped on TI2
+
+	// Configure the digital filter to allow time for the input signal to stabilise - initially set to 0
+	// Note that the number of units depends on the filter clock - this is either the main timer or a subdivision set by the DTS (See CKD in CR1)
+	TIM3->CCMR1 |= TIM_CCMR1_IC1F_0 & TIM_CCMR1_IC1F_1;
+
+	// TIMx_CCER register controls detection on rising (default) or falling edge of input
+	TIM3->CCER |= TIM_CCER_CC1E;					// Enable capture on 1
+
+	// Configure the timer to reset when a rising edge is detected
+	TIM3->SMCR |= 0b110 << TIM_SMCR_TS_Pos;			// 00110: Filtered Timer Input 2 (TI2FP2)
+	TIM3->SMCR |= TIM_SMCR_SMS_2;					// 0100: Reset Mode - Rising edge of the selected trigger input (TRGI) reinitializes the counter
+
+	TIM3->CR1 |= TIM_CR1_CEN;
+
+}
+
 #ifdef ITCMRAM
 void CopyToITCMRAM()
 {
@@ -803,4 +763,5 @@ void CopyToITCMRAM()
 	memcpy(&itcm_text_start, &itcm_data, (int) (&itcm_text_end - &itcm_text_start));
 }
 #endif
+
 

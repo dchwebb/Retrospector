@@ -1125,7 +1125,7 @@
   )
 
   (module Custom_Footprints:SW_PUSH_6mm_aligned (layer B.Cu) (tedit 603FB5F1) (tstamp 603F6B37)
-    (at 130.1 65.6)
+    (at 130 64.5)
     (descr https://www.omron.com/ecb/products/pdf/en-b3f.pdf)
     (tags "tact sw push 6mm")
     (path /603B0AD6)
