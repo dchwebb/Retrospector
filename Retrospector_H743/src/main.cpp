@@ -53,7 +53,6 @@ volatile bool sampleClock = false;		// Records whether outputting left or right 
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 
-__attribute__((section (".dma_buffer"))) WS2812Handler ledWS;			// led handler in dma section as DMA cannot operate with DTCMRAM
 __attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
@@ -72,22 +71,7 @@ extern "C" {
 
 extern "C" int myadd(int a, int b);
 
-uint32_t lastLED = 0;
-uint16_t ledCounter[3];
-uint32_t ledTarg[3] = {0xFF0000, 0x00FF00, 0x0000FF};
-uint32_t ledPrev[3];
-uint8_t ledPos[3] = {0, 2, 4};
 
-
-bool ledCycle = true;
-const uint16_t transition = 1000;
-const uint32_t colourCycle[] = {
-		0xFF0000,
-		0x00FF00,
-		0x0000FF,
-		0xFF3300,
-		0x0000FF,
-		0x555555 };
 
 
 int main(void) {
@@ -114,52 +98,10 @@ int main(void) {
 	InitLEDSPI();
 	led.Init();
 
-	Init_WS2812_SPI();
-	ledWS.Init();
-	//int c = myadd(12, 14);			// Assembly test
 
 	while (1) {
 
-		// LED Test
-		if (SysTickVal > lastLED + 3) {
-			for (uint8_t i = 0; i < 3; ++i) {
 
-				++ledCounter[i];
-
-				float mult = (float)ledCounter[i] / transition;
-
-				// Interpolate colours between previous and target
-				uint8_t oldR = ledPrev[i] >> 16;
-				uint8_t newR = ledTarg[i] >> 16;
-				uint8_t oldG = (ledPrev[i] >> 8) & 0xFF;
-				uint8_t newG = (ledTarg[i] >> 8) & 0xFF;
-				uint8_t oldB = ledPrev[i] & 0xFF;
-				uint8_t newB = ledTarg[i] & 0xFF;
-
-				newR = (oldR + (float)(newR - oldR) * mult);
-				newG = (oldG + (float)(newG - oldG) * mult);
-				newB = (oldB + (float)(newB - oldB) * mult);
-				uint32_t setColour = (newR << 16) + (newG << 8) + newB;
-
-
-				if (ledCounter[i] < transition) {
-					led.LEDColour(i, setColour);
-					ledWS.LEDColour(i, setColour);
-				} else {
-					ledPrev[i] = ledTarg[i];
-
-					if (ledCycle) {
-						ledTarg[i] = colourCycle[++ledPos[i]];
-						if (ledPos[i] == 5)
-							ledPos[i] = 0;
-					}
-					ledCounter[i] = 0;
-				}
-			}
-			lastLED = SysTickVal;
-			led.LEDSend();
-			ledWS.LEDSend();
-		}
 
 		//MemoryTest();
 /*

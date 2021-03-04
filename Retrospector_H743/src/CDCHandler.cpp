@@ -77,23 +77,7 @@ bool CDCHandler::Command()
 				"imp        -  IIR impulse response\r\n"
 				"iirs       -  IIR square wave test\r\n"
 				"cb         -  Chorus samples\r\n"
-				"led:RRGGBB -  Set LED to hex RGB value supplied\r\n"
 		);
-
-
-	} else if (ComCmd.compare(0, 4, "led:") == 0) {		// set LED target colour
-		extern uint32_t ledTarg;
-		if (ComCmd.compare("led:auto\n") == 0) {
-			extern bool ledCycle;
-			ledCycle = !ledCycle;
-			ledTarg = ledTarg + 1;
-			usb->SendString(ledCycle ? "LED: Auto on\r\n" : "LED: Auto off\r\n");
-		} else {
-			std::string rgb = ComCmd.substr(4, 6);
-
-			ledTarg = std::stoul(rgb, nullptr, 16);
-			usb->SendString("LED R: " + std::to_string(ledTarg >> 16) + " G: " + std::to_string((ledTarg >> 8) & 0xFF) + " B: " + std::to_string(ledTarg & 0xFF) + "\r\n");
-		}
 
 
 

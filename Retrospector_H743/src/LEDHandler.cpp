@@ -52,3 +52,62 @@ void LEDHandler::Init()
 }
 
 
+void LEDHandler::TestPattern()
+{
+
+
+	static uint32_t lastLED = 0;
+	static uint16_t ledCounter[3];
+	static uint32_t ledTarg[3] = {0xFF0000, 0x00FF00, 0x0000FF};
+	static uint32_t ledPrev[3];
+	static uint8_t ledPos[3] = {0, 2, 4};
+
+
+	static bool ledCycle = true;
+	static const uint16_t transition = 1000;
+	static const uint32_t colourCycle[] = {
+			0xFF0000,
+			0x00FF00,
+			0x0000FF,
+			0xFF3300,
+			0x0000FF,
+			0x555555 };
+
+	if (SysTickVal > lastLED + 3) {
+		for (uint8_t i = 0; i < 3; ++i) {
+
+			++ledCounter[i];
+
+			float mult = (float)ledCounter[i] / transition;
+
+			// Interpolate colours between previous and target
+			uint8_t oldR = ledPrev[i] >> 16;
+			uint8_t newR = ledTarg[i] >> 16;
+			uint8_t oldG = (ledPrev[i] >> 8) & 0xFF;
+			uint8_t newG = (ledTarg[i] >> 8) & 0xFF;
+			uint8_t oldB = ledPrev[i] & 0xFF;
+			uint8_t newB = ledTarg[i] & 0xFF;
+
+			newR = (oldR + (float)(newR - oldR) * mult);
+			newG = (oldG + (float)(newG - oldG) * mult);
+			newB = (oldB + (float)(newB - oldB) * mult);
+			uint32_t setColour = (newR << 16) + (newG << 8) + newB;
+
+
+			if (ledCounter[i] < transition) {
+				LEDColour(i, setColour);
+			} else {
+				ledPrev[i] = ledTarg[i];
+
+				if (ledCycle) {
+					ledTarg[i] = colourCycle[++ledPos[i]];
+					if (ledPos[i] == 5)
+						ledPos[i] = 0;
+				}
+				ledCounter[i] = 0;
+			}
+		}
+		lastLED = SysTickVal;
+		LEDSend();
+	}
+}
