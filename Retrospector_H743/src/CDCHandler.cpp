@@ -58,6 +58,10 @@ bool CDCHandler::Command()
 			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + ";  Cutoff: " + std::string(buf).append("\r\n"));
 		}
 
+		extern uint16_t adcZeroOffset[2];
+		usb->SendString("Zero offset L:" + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n");
+
+
 		usb->SendString("\r\nSupported commands:\r\n"
 				"help       -  Shows this information\r\n"
 				"f          -  Filter on/off\r\n"

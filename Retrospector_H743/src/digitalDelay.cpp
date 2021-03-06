@@ -34,6 +34,7 @@ void DigitalDelay::CalcSample(channel LR)
 		recordSample = 0.8f * (recordSample + filteredChorus);		// FIXME - scaling factor needs to be more scientific
 	}
 
+
 //	TIM3->CNT = 0;		// Debug
 
 	// Cross fade if moving playback position
@@ -200,8 +201,8 @@ void DigitalDelay::Init()
 {
 	// Clear sample buffers
 	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
-	std::fill_n(chorusSamples[left], 65536, 0);
-	std::fill_n(chorusSamples[right], 65536, 0);
+	std::fill_n(chorusSamples[left], 65536, adcZeroOffset[left]);
+	std::fill_n(chorusSamples[right], 65536, adcZeroOffset[right]);
 
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
