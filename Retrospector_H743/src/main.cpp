@@ -9,7 +9,6 @@
 #include "WS2812Handler.h"
 
 /* TODO
- * Explore LED options for filter control
  * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
  * Accuracy of tempo (add negative jitter?)
@@ -80,7 +79,6 @@ int main(void) {
 	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
 
-/*
 	InitADCAudio();					// Initialise ADC to capture audio samples
 	InitADCControls();				// Initialise ADC to capture knob and CV data
 	InitDAC();						// DAC used to output Wet/Dry mix levels
@@ -90,21 +88,19 @@ int main(void) {
 	InitIO();						// Initialise switches and LEDs
 	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
-*/
-//	usb.InitUSB();
-/*	delay.Init();					// clear sample buffers and preset delay timings
-	InitI2S();						// Initialise I2S which will start main sample interrupts
-*/
-	InitLEDSPI();
+	usb.InitUSB();
+	delay.Init();					// clear sample buffers and preset delay timings
+	InitLEDSPI();					// Initialise SPI/DAM for LED controller
+	//Init_WS2812_SPI();
 	led.Init();
-
+	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
 
 
 
 		//MemoryTest();
-/*
+
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
  			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
@@ -122,7 +118,7 @@ int main(void) {
 
 		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
 		filter.Update();			// Check if filter coefficients need to be updated
-*/
+
 		cdc.Command();				// Check for incoming CDC commands
 
 #if (USB_DEBUG)

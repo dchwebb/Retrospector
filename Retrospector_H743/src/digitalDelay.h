@@ -1,7 +1,7 @@
 #pragma once
 
 #include "initialisation.h"
-#include <map>
+//#include <map>
 #include "Filter.h"
 
 extern uint16_t adcZeroOffset[2];
@@ -36,7 +36,7 @@ public:
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
-	bool pingPong = true;
+	bool pingPong = false;
 
 	bool chorusMode = false;
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};

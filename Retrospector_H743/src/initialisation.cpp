@@ -576,7 +576,6 @@ void InitLEDSPI()
 	BDMA_Channel5->CCR |= BDMA_CCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
 	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;			// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 	BDMA_Channel5->CCR |= BDMA_CCR_MINC;			// Memory in increment mode
-	//BDMA_Channel5->FCR &= ~DMA_SxFCR_FTH;			// FIFO threshold selection
 
 	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));	// Configure the peripheral data register address
 
