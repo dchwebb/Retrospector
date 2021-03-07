@@ -33,11 +33,18 @@ public:
 	volatile int16_t delayPotVal[2];
 	volatile float delayMult[2];
 	delay_mode delayMode;
+
+	uint32_t delayCounter;					// Counter used to calculate clock times
+	uint32_t lastClock;
+	uint32_t clockInterval;
+	bool clockValid = false;
+	bool clockHigh = false;;
+
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
-	bool pingPong = false;
 
+	bool pingPong = false;
 	bool chorusMode = false;
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)

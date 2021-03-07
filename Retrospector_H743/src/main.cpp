@@ -16,9 +16,7 @@
  *
  *
  * Electrical/Hardware
- * CV control for filter?
  * Power supply ripple and current final tests
- * Control for panoramic mode
  */
 
 volatile uint32_t SysTickVal;
@@ -41,9 +39,9 @@ uint32_t newOffset[2] = {33800, 33800};
 uint32_t offsetCounter[2];
 
 // Settings for tempo clock input
-uint32_t lastClock = 0;
-uint32_t clockInterval = 0;
-bool clockValid;
+//uint32_t lastClock = 0;
+//uint32_t clockInterval = 0;
+//bool clockValid;
 
 volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
 
@@ -115,7 +113,7 @@ int main(void) {
 			}
 		}
 
-		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
+//		clockValid = (SysTickVal - lastClock < 1000);			// Valid clock interval is within a second
 		filter.Update();			// Check if filter coefficients need to be updated
 
 		cdc.Command();				// Check for incoming CDC commands

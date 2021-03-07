@@ -9,8 +9,8 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	if (calculatingFilter)
-		GPIOC->ODR |= GPIO_ODR_OD12;		// Toggle LED for debugging
+//	if (calculatingFilter)
+//		GPIOC->ODR |= GPIO_ODR_OD12;		// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
 
@@ -23,18 +23,18 @@ void SPI2_IRQHandler() {
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-	GPIOC->ODR &= ~GPIO_ODR_OD12;
+//	GPIOC->ODR &= ~GPIO_ODR_OD12;
 }
 
 
 // Handle incoming clock pulse
-void EXTI9_5_IRQHandler(void) {
-	if (EXTI->PR1 & EXTI_PR1_PR7) {
-		clockInterval = SysTickVal - lastClock;
-		lastClock = SysTickVal;
-		EXTI->PR1 |= EXTI_PR1_PR7;			// Clear interrupt pending
-	}
-}
+//void EXTI9_5_IRQHandler(void) {
+//	if (EXTI->PR1 & EXTI_PR1_PR7) {
+//		clockInterval = SysTickVal - lastClock;
+//		lastClock = SysTickVal;
+//		EXTI->PR1 |= EXTI_PR1_PR7;			// Clear interrupt pending
+//	}
+//}
 
 
 void TIM2_IRQHandler() {

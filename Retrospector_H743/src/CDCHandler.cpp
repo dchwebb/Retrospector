@@ -70,6 +70,7 @@ bool CDCHandler::Command()
 				"both       -  Filter sweeps from low pass to high pass\r\n"
 				"pp         -  Turn ping pong mode on/off\r\n"
 				"c          -  Chorus on/off\r\n"
+				"clk        -  Clock timings\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"\r\nDebug Data Dump:\r\n"
 				"dl         -  Left delay samples\r\n"
@@ -84,6 +85,9 @@ bool CDCHandler::Command()
 		);
 
 
+
+	} else if (ComCmd.compare("clk\n") == 0) {		// Clock timing info
+		usb->SendString("Delay interval: " + std::to_string(delay.clockInterval) + " Mult L: " + std::to_string(delay.delayMult[left]) + "\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();

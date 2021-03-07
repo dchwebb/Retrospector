@@ -102,6 +102,18 @@ void DigitalDelay::CalcSample(channel LR)
 		if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
 	}
 
+	// Check if clock received
+	if ((GPIOA->IDR & GPIO_IDR_ID7) == GPIO_IDR_ID7) {
+		if (!clockHigh) {
+			clockInterval = delayCounter - lastClock - 80;			// FIXME constant 40 found by trial and error - possibly GPIO pin is slightly slow registering on value
+			lastClock = delayCounter;
+			clockHigh = true;
+		}
+	} else {
+		clockHigh = false;
+	}
+	clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));			// Valid clock interval is within a second
+	++delayCounter;
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
 	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
@@ -110,7 +122,8 @@ void DigitalDelay::CalcSample(channel LR)
 			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
 		}
-		calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
+		calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
+		//calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
 
 	} else {
 		if (Mode() != modeShort)
@@ -221,14 +234,14 @@ void DigitalDelay::UpdateLED(channel c)
 	if (clockValid) {
 		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
 		if (delayMult[c] < 1.0f) {
-			if (SysTickVal - lastClock < 1 && ledOffTime[c] < SysTickVal) {		// Always trigger on the clock, unless LED already on
-				ledFraction[c] = 0;
+			if (delayCounter - lastClock < 1000 && ledOffTime[c] < SysTickVal) {		// Always trigger on the clock, unless LED already on
+				ledFraction[c] = 1;
 				LedOn(c);
-			} else if (delayMult[c] * ledFraction[c] < 1 && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
+			} else if (delayMult[c] * ledFraction[c] < 1.0f && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
 				ledFraction[c]++;
 				LedOn(c);
 			}
-		} else if (SysTickVal - lastClock < 5 && ledCounter[c] > calcDelay[c] - 1000) { 		// 1000 ~= 20.8ms: handle tempos slower than 1
+		} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 		// 1000 ~= 20.8ms: handle tempos slower than 1
 			LedOn(c);
 		}
 	} else if (ledCounter[c] > calcDelay[c]) {

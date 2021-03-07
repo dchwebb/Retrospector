@@ -487,12 +487,14 @@ void InitTempoClock()
 	// Fire interrupt when clock pulse is received on PA7 - See manual p770
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
+/*
 	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PA;	// Select Pin PA7 which uses External interrupt 2
 	EXTI->RTSR1 |= EXTI_RTSR1_TR7;					// Enable rising edge trigger
 	EXTI->IMR1 |= EXTI_IMR1_IM7;					// Activate interrupt using mask register
 
 	NVIC_SetPriority(EXTI9_5_IRQn, 4);				// Lower is higher priority
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
+	*/
 }
 
 void InitDebugTimer()
