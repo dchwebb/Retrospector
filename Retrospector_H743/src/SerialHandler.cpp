@@ -1,4 +1,5 @@
-#include "CDCHandler.h"
+#include "SerialHandler.h"
+
 #include <stdio.h>
 
 extern volatile bool sampleClock;
@@ -6,12 +7,12 @@ extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
 
-CDCHandler::CDCHandler(USB& usbObj)
+SerialHandler::SerialHandler(USB& usbObj)
 {
 	usb = &usbObj;
 
 	// bind the usb's CDC caller to the CDC handler in this class
-	usb->cdcDataHandler = std::bind(&CDCHandler::Handler, this, std::placeholders::_1, std::placeholders::_2);
+	usb->cdcDataHandler = std::bind(&SerialHandler::Handler, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 void suspendI2S()
@@ -37,7 +38,7 @@ void resumeI2S()
 
 
 // Check if a command has been received from USB, parse and action as required
-bool CDCHandler::Command()
+bool SerialHandler::Command()
 {
 	if (!CmdPending) {
 		return false;
@@ -278,7 +279,7 @@ bool CDCHandler::Command()
 }
 
 
-void CDCHandler::Handler(uint8_t* data, uint32_t length)
+void SerialHandler::Handler(uint8_t* data, uint32_t length)
 {
 	static bool newCmd = true;
 	if (newCmd) {

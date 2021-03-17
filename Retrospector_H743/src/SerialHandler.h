@@ -5,13 +5,13 @@
 extern DigitalDelay delay;
 
 
-class CDCHandler {
+class SerialHandler {
 public:
 	bool CmdPending = false;
 	std::string ComCmd;
 	bool dfuConfirm = false;		// Used to allow confirmation before entering USB DFU mode
 	USB* usb;
-	CDCHandler(USB& usb);
+	SerialHandler(USB& usb);
 
 	bool Command();
 	void Handler(uint8_t* data, uint32_t length);

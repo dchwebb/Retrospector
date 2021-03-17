@@ -1,15 +1,16 @@
 #include "initialisation.h"
 #include "USB.h"
-#include "CDCHandler.h"
 #include "DigitalDelay.h"
 #include "Filter.h"
 #include "sdram.h"
 #include "LEDHandler.h"
+#include "SerialHandler.h"
 
 /* TODO
  * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
- *
+ * Store config/calibration values to Flash
+ * Implement RGB LED functionality
  */
 
 volatile uint32_t SysTickVal;
@@ -19,6 +20,7 @@ extern uint32_t SystemCoreClock;
 bool USBDebug;
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
+// STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
 void BootDFU() {
 	SCB_DisableDCache();
 	__disable_irq();
@@ -45,7 +47,7 @@ int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH]
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
 
 USB usb;
-CDCHandler cdc(usb);
+SerialHandler serial(usb);
 DigitalDelay delay;
 Filter filter;
 
@@ -94,7 +96,7 @@ int main(void) {
 
 		filter.Update();			// Check if filter coefficients need to be updated
 
-		cdc.Command();				// Check for incoming CDC commands
+		serial.Command();				// Check for incoming CDC commands
 
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
