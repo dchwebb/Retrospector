@@ -1,4 +1,4 @@
-406867215730409
+403686720311518
 Battery_Holders
 Bulgin_BX0036_1xC
 
@@ -19831,6 +19831,13 @@ connector multicomp MC9A MC9A12
 16
 16
 Custom_Footprints
+FBGA-24
+
+
+0
+24
+24
+Custom_Footprints
 ICE40_QFN-48-1EP_7x7mm_Pitch0.5mm
 UK Package; 48-Lead Plastic QFN (7mm x 7mm); (see Linear Technology QFN_48_05-08-1704.pdf)
 QFN 0.5
@@ -19893,27 +19900,6 @@ resistor 0805
 0
 2
 2
-Custom_Footprints
-Layer_1_4_Marker
-
-
-0
-0
-0
-Custom_Footprints
-Layer_2_Marker
-
-
-0
-0
-0
-Custom_Footprints
-Layer_3_Marker
-
-
-0
-0
-0
 Custom_Footprints
 MIDISocket_Hole_15mm
 Mounting Hole 15mm

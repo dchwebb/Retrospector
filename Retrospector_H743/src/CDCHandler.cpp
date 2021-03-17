@@ -6,7 +6,6 @@ extern bool activateFilter;
 extern uint16_t currentTone;
 extern int32_t dampedTone;
 
-
 CDCHandler::CDCHandler(USB& usbObj)
 {
 	usb = &usbObj;
@@ -44,7 +43,19 @@ bool CDCHandler::Command()
 		return false;
 	}
 
-	if (ComCmd.compare("help\n") == 0) {
+	// Provide option to switch to USB DFU mode - this allows the MCU to be programmed with STM32CubeProgrammer in DFU mode
+	if (dfuConfirm) {
+		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
+			usb->SendString("Switching to DFU Mode ...\r\n");
+			uint32_t old = SysTickVal;
+			while (SysTickVal < old + 100) {};		// Give enough time to send the message
+			void BootDFU();
+			BootDFU();
+		} else {
+			dfuConfirm = false;
+			usb->SendString("Upgrade cancelled\r\n");
+		}
+	} else if (ComCmd.compare("help\n") == 0) {
 
 		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n");
 		usb->SendString("Chorus: " + std::string(delay.chorusMode ? "on" : "off") +
@@ -72,6 +83,7 @@ bool CDCHandler::Command()
 				"c          -  Chorus on/off\r\n"
 				"clk        -  Clock timings\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
+				"dfu        -  USB firmware upgrade\r\n"
 				"\r\nDebug Data Dump:\r\n"
 				"dl         -  Left delay samples\r\n"
 				"dr         -  Right delay samples\r\n"
@@ -84,6 +96,11 @@ bool CDCHandler::Command()
 				"cb         -  Chorus samples\r\n"
 		);
 
+
+
+	} else if (ComCmd.compare("dfu\n") == 0) {		// USB DFU firmware upgrade
+		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
+		dfuConfirm = true;
 
 
 	} else if (ComCmd.compare("clk\n") == 0) {		// Clock timing info

@@ -54,7 +54,7 @@ F 0 "U1" H 10000 5100 50  0000 C CNN
 F 1 "MCP6004" H 10150 5500 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9950 5400 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10050 5500 50  0001 C CNN
-F 4 "C7378" H 10000 5300 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 10000 5300 50  0001 C CNN "Part_Number"
 	3    10000 5300
 	1    0    0    1   
 $EndComp
@@ -92,7 +92,7 @@ F 0 "D4" V 6000 11000 50  0000 L CNN
 F 1 "LM4040DBZ-5" V 6100 10600 50  0000 L CNN
 F 2 "TO_SOT_Packages_SMD:SOT-23" H 6050 11050 50  0001 C CIN
 F 3 "http://www.ti.com/lit/ds/symlink/lm4040-n.pdf" H 6050 11250 50  0001 C CIN
-F 4 "C69316" H 6050 11250 50  0001 C CNN "Part_Number"
+F 4 "C156291" H 6050 11250 50  0001 C CNN "Part_Number"
 F 5 "90" H 6050 11250 50  0001 C CNN "Rotation"
 	1    6050 11250
 	0    1    1    0   
@@ -141,7 +141,7 @@ F 0 "U3" H 12500 3450 50  0000 C CNN
 F 1 "MCP6004" H 12500 3900 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12400 3750 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12500 3850 50  0001 C CNN
-F 4 "C7378" H 12450 3650 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 12450 3650 50  0001 C CNN "Part_Number"
 	4    12450 3650
 	1    0    0    1   
 $EndComp
@@ -217,8 +217,8 @@ F 0 "C61" H 4250 11700 50  0000 C CNN
 F 1 "47uF" H 4250 11600 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_5x5.8" H 4438 11550 50  0001 C CNN
 F 3 "" H 4400 11700 50  0001 C CNN
-F 4 "" H 4400 11700 50  0001 C CNN "Part_Number"
-F 5 "90" H 4400 11700 50  0001 C CNN "Rotation"
+F 4 "C134798" H 4400 11700 50  0001 C CNN "Part_Number"
+F 5 "360" H 4400 11700 50  0001 C CNN "Rotation"
 	1    4400 11700
 	1    0    0    -1  
 $EndComp
@@ -230,7 +230,7 @@ F 0 "U1" H 9950 1750 50  0000 C CNN
 F 1 "MCP6004" H 9950 2200 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9900 2050 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10000 2150 50  0001 C CNN
-F 4 "C7378" H 9950 1950 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 9950 1950 50  0001 C CNN "Part_Number"
 F 5 "" H 9950 1950 50  0001 C CNN "Rotation"
 	2    9950 1950
 	1    0    0    1   
@@ -305,7 +305,7 @@ F 0 "U1" H 10000 3400 50  0000 C CNN
 F 1 "MCP6004" H 10050 3800 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9950 3700 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10050 3800 50  0001 C CNN
-F 4 "C7378" H 10000 3600 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 10000 3600 50  0001 C CNN "Part_Number"
 	1    10000 3600
 	1    0    0    1   
 $EndComp
@@ -395,7 +395,7 @@ F 0 "U1" H 7350 10250 50  0000 C CNN
 F 1 "MCP6004" H 7450 10350 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 7250 10350 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 7350 10450 50  0001 C CNN
-F 4 "C7378" H 7300 10250 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 7300 10250 50  0001 C CNN "Part_Number"
 	5    7300 10250
 	1    0    0    -1  
 $EndComp
@@ -452,7 +452,7 @@ F 0 "C43" V 1695 9900 50  0000 C CNN
 F 1 "47uF" V 1786 9900 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_5x5.8" H 1988 9750 50  0001 C CNN
 F 3 "" H 1950 9900 50  0001 C CNN
-F 4 "" H 1950 9900 50  0001 C CNN "Part_Number"
+F 4 "C134798" H 1950 9900 50  0001 C CNN "Part_Number"
 F 5 "360" H 1950 9900 50  0001 C CNN "Rotation"
 	1    1950 9900
 	0    1    1    0   
@@ -465,8 +465,8 @@ F 0 "C57" V 2205 11200 50  0000 C CNN
 F 1 "22uF" V 2114 11200 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 1988 11050 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 1950 11200 50  0001 C CNN
-F 4 "C178597" H 1950 11200 50  0001 C CNN "Part_Number"
-F 5 "360" H 1950 11200 50  0001 C CNN "Rotation"
+F 4 "C134793" H 1950 11200 50  0001 C CNN "Part_Number"
+F 5 "270" H 1950 11200 50  0001 C CNN "Rotation"
 	1    1950 11200
 	0    -1   -1   0   
 $EndComp
@@ -774,8 +774,8 @@ F 0 "C62" H 4750 11700 50  0000 C CNN
 F 1 "22uF" H 4750 11600 50  0000 C CNN
 F 2 "Capacitors_SMD:CP_Elec_4x5.8" H 4938 11550 50  0001 C CNN
 F 3 "https://datasheet.lcsc.com/szlcsc/1809131544_PANASONIC-EEEFT1V220AR_C178597.pdf" H 4900 11700 50  0001 C CNN
-F 4 "C178597" H 4900 11700 50  0001 C CNN "Part_Number"
-F 5 "90" H 4900 11700 50  0001 C CNN "Rotation"
+F 4 "C134793" H 4900 11700 50  0001 C CNN "Part_Number"
+F 5 "180" H 4900 11700 50  0001 C CNN "Rotation"
 	1    4900 11700
 	1    0    0    -1  
 $EndComp
@@ -872,7 +872,7 @@ F 0 "U4" H 6950 4731 50  0000 C CNN
 F 1 "IS42S16800F-7TLI" H 6950 4640 50  0000 C CNN
 F 2 "Custom_Footprints:TSOP-II-54_22.2x10.16mm_P0.8mm" H 6950 3150 50  0001 C CNN
 F 3 "https://lcsc.com/product-detail/DDR_ISSI-Integrated-Silicon-Solution-IS42S16800F-7TLI_C69411.html" H 6350 4400 50  0001 C CNN
-F 4 "C69411" H 6950 3150 50  0001 C CNN "Part_Number"
+F 4 "C91278" H 6950 3150 50  0001 C CNN "Part_Number"
 	1    6950 3150
 	1    0    0    -1  
 $EndComp
@@ -1775,7 +1775,7 @@ F 0 "U3" H 12500 1700 50  0000 C CNN
 F 1 "MCP6004" H 12550 2100 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12400 1950 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12500 2050 50  0001 C CNN
-F 4 "C7378" H 12450 1850 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 12450 1850 50  0001 C CNN "Part_Number"
 	2    12450 1850
 	1    0    0    1   
 $EndComp
@@ -1787,7 +1787,7 @@ F 0 "U3" H 8250 10250 50  0000 C CNN
 F 1 "MCP6004" H 8350 10350 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 8150 10350 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 8250 10450 50  0001 C CNN
-F 4 "C7378" H 8200 10250 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 8200 10250 50  0001 C CNN "Part_Number"
 	5    8200 10250
 	1    0    0    -1  
 $EndComp
@@ -2314,7 +2314,7 @@ F 0 "U1" H 10000 6750 50  0000 C CNN
 F 1 "MCP6004" H 10100 7150 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 9950 7050 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 10050 7150 50  0001 C CNN
-F 4 "C7378" H 10000 6950 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 10000 6950 50  0001 C CNN "Part_Number"
 	4    10000 6950
 	1    0    0    1   
 $EndComp
@@ -2769,7 +2769,7 @@ F 0 "U3" H 12550 6750 50  0000 C CNN
 F 1 "MCP6004" H 12550 7200 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12450 7050 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12550 7150 50  0001 C CNN
-F 4 "C7378" H 12500 6950 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 12500 6950 50  0001 C CNN "Part_Number"
 	3    12500 6950
 	1    0    0    1   
 $EndComp
@@ -2917,7 +2917,7 @@ F 0 "U3" H 12550 5100 50  0000 C CNN
 F 1 "MCP6004" H 12550 5550 50  0000 C CNN
 F 2 "SMD_Packages:SOIC-14_N" H 12450 5400 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12550 5500 50  0001 C CNN
-F 4 "C7378" H 12500 5300 50  0001 C CNN "Part_Number"
+F 4 "C116668" H 12500 5300 50  0001 C CNN "Part_Number"
 	1    12500 5300
 	1    0    0    -1  
 $EndComp
@@ -3460,7 +3460,7 @@ F 0 "R45" V 10700 10350 35  0000 C CNN
 F 1 "100R" V 10600 10400 50  0000 C CNN
 F 2 "Resistors_SMD:R_0603_HandSoldering" H 10700 10350 50  0001 C CNN
 F 3 "~" H 10700 10350 50  0001 C CNN
-F 4 "" H 10700 10350 50  0001 C CNN "Part_Number"
+F 4 "C22775" H 10700 10350 50  0001 C CNN "Part_Number"
 	1    10700 10350
 	-1   0    0    1   
 $EndComp
@@ -3619,7 +3619,7 @@ Wire Wire Line
 Wire Wire Line
 	5300 10450 5300 10050
 Wire Wire Line
-	5300 10050 4550 10050
+	5300 10050 4950 10050
 Connection ~ 5300 10450
 Wire Wire Line
 	5300 10450 5500 10450
@@ -3661,7 +3661,7 @@ F 0 "L1" V 5285 10450 50  0000 C CNN
 F 1 "68uH" V 5194 10450 50  0000 C CNN
 F 2 "Custom_Footprints:TDK_Inductor_6.9x7.2" H 5100 10450 50  0001 C CNN
 F 3 "https://www.mouser.co.uk/ProductDetail/810-CLF7045T-680M-D/" H 5100 10450 50  0001 C CNN
-F 4 "C326343" V 5100 10450 50  0001 C CNN "Part_Number"
+F 4 "" V 5100 10450 50  0001 C CNN "Part_Number"
 	1    5100 10450
 	0    -1   -1   0   
 $EndComp
@@ -4952,4 +4952,18 @@ F 3 "~" H 16550 10650 50  0001 C CNN
 	1    16550 10650
 	-1   0    0    -1  
 $EndComp
+$Comp
+L Connector:TestPoint TP13
+U 1 1 6062BFFE
+P 4950 10050
+F 0 "TP13" H 4950 10300 50  0000 C CNN
+F 1 "TestPoint" H 4950 10400 50  0000 C CNN
+F 2 "Measurement_Points:Measurement_Point_Square-SMD-Pad_Small" H 5150 10050 50  0001 C CNN
+F 3 "~" H 5150 10050 50  0001 C CNN
+	1    4950 10050
+	1    0    0    -1  
+$EndComp
+Connection ~ 4950 10050
+Wire Wire Line
+	4950 10050 4550 10050
 $EndSCHEMATC

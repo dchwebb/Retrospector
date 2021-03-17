@@ -105,7 +105,8 @@ void DigitalDelay::CalcSample(channel LR)
 	// Check if clock received
 	if ((GPIOA->IDR & GPIO_IDR_ID7) == GPIO_IDR_ID7) {
 		if (!clockHigh) {
-			clockInterval = delayCounter - lastClock - 80;			// FIXME constant 40 found by trial and error - possibly GPIO pin is slightly slow registering on value
+			clockError = delayCounter - (lastClock + clockInterval);
+			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - possibly GPIO pin is slightly slow registering on value
 			lastClock = delayCounter;
 			clockHigh = true;
 		}
@@ -123,7 +124,6 @@ void DigitalDelay::CalcSample(channel LR)
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
 		}
 		calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
-		//calcDelay[LR] = delayMult[LR] * clockInterval * SAMPLE_RATE / 1000;
 
 	} else {
 		if (Mode() != modeShort)

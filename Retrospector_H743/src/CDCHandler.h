@@ -9,6 +9,7 @@ class CDCHandler {
 public:
 	bool CmdPending = false;
 	std::string ComCmd;
+	bool dfuConfirm = false;		// Used to allow confirmation before entering USB DFU mode
 	USB* usb;
 	CDCHandler(USB& usb);
 

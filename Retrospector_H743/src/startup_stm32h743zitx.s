@@ -59,7 +59,7 @@ defined in linker script */
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:
-  ldr r0, =0x2407FFF0
+  ldr r0, =0x20000000
   ldr r1, =0xDEADBEEF
   ldr r2, [r0, #0]
   str r0, [r0, #0]
@@ -73,7 +73,7 @@ Reset_Handler:
   b  LoopCopyDataInit
 
 Reboot_Loader:
-  ldr r0, =0x1FF09800     /* ROM address of boot loader for M4 F7 etc 0x1FF00000 */
+  ldr r0, =0x1FF09800     /* ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
   ldr sp, [r0, #0]
   ldr r0, [r0, #4]
   bx r0

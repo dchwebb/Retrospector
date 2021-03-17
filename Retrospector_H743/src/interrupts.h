@@ -9,8 +9,8 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-//	if (calculatingFilter)
-//		GPIOC->ODR |= GPIO_ODR_OD12;		// Toggle LED for debugging
+	if (calculatingFilter)
+		GPIOC->ODR |= GPIO_ODR_OD12;		// Toggle LED for debugging
 
 	sampleClock = !sampleClock;
 
@@ -23,7 +23,7 @@ void SPI2_IRQHandler() {
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-//	GPIOC->ODR &= ~GPIO_ODR_OD12;
+	GPIOC->ODR &= ~GPIO_ODR_OD12;
 }
 
 
@@ -38,14 +38,14 @@ void SPI2_IRQHandler() {
 
 
 void TIM2_IRQHandler() {
-	TIM2->SR &= ~TIM_SR_UIF;					// clear UIF flag
+	TIM2->SR &= ~TIM_SR_UIF;				// clear UIF flag
 }
 
-void I2C1_EV_IRQHandler() {
-//	I2C1->TXIS
-	volatile int txint = 0;
-	txint++;
-}
+//void I2C1_EV_IRQHandler() {
+////	I2C1->TXIS
+//	volatile int txint = 0;
+//	txint++;
+//}
 
 // System interrupts
 void NMI_Handler(void) {}

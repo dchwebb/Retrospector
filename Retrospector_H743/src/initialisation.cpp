@@ -482,21 +482,6 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 }
 
 
-void InitTempoClock()
-{
-	// Fire interrupt when clock pulse is received on PA7 - See manual p770
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
-	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
-/*
-	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PA;	// Select Pin PA7 which uses External interrupt 2
-	EXTI->RTSR1 |= EXTI_RTSR1_TR7;					// Enable rising edge trigger
-	EXTI->IMR1 |= EXTI_IMR1_IM7;					// Activate interrupt using mask register
-
-	NVIC_SetPriority(EXTI9_5_IRQn, 4);				// Lower is higher priority
-	NVIC_EnableIRQ(EXTI9_5_IRQn);
-	*/
-}
-
 void InitDebugTimer()
 {
 	// Configure timer to use in internal debug timing
@@ -504,25 +489,6 @@ void InitDebugTimer()
 	TIM3->ARR = 65535;
 	TIM3->PSC = 1;
 	TIM3->CR1 |= TIM_CR1_CEN;
-}
-
-
-void InitChorusTimer()
-{
-	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
-	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
-
-	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
-	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
-	TIM2->ARR = 4165;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
-
-
-	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
-	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
-	NVIC_EnableIRQ(TIM2_IRQn);
-
-	TIM2->CR1 |= TIM_CR1_CEN;
-	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
 
 
@@ -540,6 +506,11 @@ void InitIO()
 	GPIOE->MODER &= ~GPIO_MODER_MODE3;				// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD2_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+
+	// Init tempo clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
+
 }
 
 
@@ -585,7 +556,7 @@ void InitLEDSPI()
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 }
 
-
+#ifdef UNUSED
 // Unused
 void Init_WS2812_SPI()
 {
@@ -735,6 +706,43 @@ void InitClockTimer()
 	TIM3->CR1 |= TIM_CR1_CEN;
 
 }
+
+// Unused
+void InitChorusTimer()
+{
+	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
+	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
+
+	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
+	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
+	TIM2->ARR = 4165;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
+
+
+	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
+	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	TIM2->CR1 |= TIM_CR1_CEN;
+	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
+}
+
+
+void InitTempoClock()
+{
+	// Fire interrupt when clock pulse is received on PA7 - See manual p770
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
+/*
+	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PA;	// Select Pin PA7 which uses External interrupt 2
+	EXTI->RTSR1 |= EXTI_RTSR1_TR7;					// Enable rising edge trigger
+	EXTI->IMR1 |= EXTI_IMR1_IM7;					// Activate interrupt using mask register
+
+	NVIC_SetPriority(EXTI9_5_IRQn, 4);				// Lower is higher priority
+	NVIC_EnableIRQ(EXTI9_5_IRQn);
+	*/
+}
+#endif
+
 
 #ifdef ITCMRAM
 void CopyToITCMRAM()

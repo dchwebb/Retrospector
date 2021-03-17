@@ -37,6 +37,7 @@ public:
 	uint32_t delayCounter;					// Counter used to calculate clock times
 	uint32_t lastClock;
 	uint32_t clockInterval;
+	int16_t clockError;						// Debug offset on clock calculations
 	bool clockValid = false;
 	bool clockHigh = false;;
 

@@ -1,27 +1,15 @@
-G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,(5.1.5)-3*
-G04 #@! TF.CreationDate,2020-11-23T20:36:50+00:00*
+G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,(5.1.9)-1*
+G04 #@! TF.CreationDate,2021-03-14T14:56:39+00:00*
 G04 #@! TF.ProjectId,Retrospector_Components,52657472-6f73-4706-9563-746f725f436f,rev?*
 G04 #@! TF.SameCoordinates,Original*
 G04 #@! TF.FileFunction,Paste,Bot*
 G04 #@! TF.FilePolarity,Positive*
 %FSLAX46Y46*%
 G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
-G04 Created by KiCad (PCBNEW (5.1.5)-3) date 2020-11-23 20:36:50*
+G04 Created by KiCad (PCBNEW (5.1.9)-1) date 2021-03-14 14:56:39*
 %MOMM*%
 %LPD*%
+G01*
 G04 APERTURE LIST*
-%ADD10R,2.600000X1.600000*%
-%ADD11R,3.500000X2.000000*%
-%ADD12R,7.000000X7.000000*%
 G04 APERTURE END LIST*
-D10*
-X145200000Y-61200000D03*
-X141600000Y-61200000D03*
-X145200000Y-55700000D03*
-X141600000Y-55700000D03*
-D11*
-X139075000Y-65400000D03*
-X139075000Y-69980000D03*
-D12*
-X131675000Y-67700000D03*
 M02*
