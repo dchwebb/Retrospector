@@ -203,48 +203,6 @@ iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 }
 
 
-/*
-//	Take a new sample and return filtered value
-iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
-{
-	const uint16_t crossfadeLength = 400;
-	static uint16_t crossfade = 0;
-	static PassType pt = LowPass;
-	static iirdouble_t prevSample[2] = {0.0, 0.0};
-
-	iirdouble_t hpSample = iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
-	iirdouble_t lpSample = iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
-
-	if (pt != passType) {
-		GPIOC->ODR |= GPIO_ODR_OD12;
-		crossfade = crossfadeLength;
-		pt = passType;
-	}
-
-	// Crossfade from last stored sample to current output when changing between highpass and lowpass
-	if (crossfade > 0) {
-		--crossfade;
-
-		if (crossfade == 0)
-			GPIOC->ODR &= ~GPIO_ODR_OD12;
-
-		volatile iirdouble_t cf = (iirdouble_t)crossfade / (iirdouble_t)crossfadeLength;
-		if (passType == HighPass) {
-			return prevSample[c] * cf + hpSample * ((iirdouble_t)1.0 - cf);
-		} else {
-			return prevSample[c] * cf + lpSample * ((iirdouble_t)1.0 - cf);
-		}
-	} else {
-		if (passType == HighPass) {
-			prevSample[c] = hpSample;
-		} else {
-			prevSample[c] = lpSample;
-		}
-		return prevSample[c];
-	}
-}
- */
-
 //	Take a new sample and return filtered value
 iirdouble_t IIRFilter::FilterSample(iirdouble_t sample, IIRRegisters& registers)
 {

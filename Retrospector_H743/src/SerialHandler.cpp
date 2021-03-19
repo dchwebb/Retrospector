@@ -105,7 +105,7 @@ bool SerialHandler::Command()
 
 
 	} else if (ComCmd.compare("clk\n") == 0) {		// Clock timing info
-		usb->SendString("Delay interval: " + std::to_string(delay.clockInterval) + " Mult L: " + std::to_string(delay.delayMult[left]) + "\r\n");
+		usb->SendString("Delay interval: " + std::to_string(delay.clockInterval / 96) + " ms, " + std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();

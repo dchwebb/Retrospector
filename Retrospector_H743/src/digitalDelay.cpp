@@ -106,7 +106,7 @@ void DigitalDelay::CalcSample(channel LR)
 	if ((GPIOA->IDR & GPIO_IDR_ID7) == GPIO_IDR_ID7) {
 		if (!clockHigh) {
 			clockError = delayCounter - (lastClock + clockInterval);
-			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - possibly GPIO pin is slightly slow registering on value
+			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
 			lastClock = delayCounter;
 			clockHigh = true;
 		}

@@ -29,9 +29,9 @@ public:
 	uint16_t delayCrossfade[2];
 	int32_t oldReadPos[2];
 	int32_t currentDelay[2];
-	volatile int32_t calcDelay[2];			// volatile required to prevent optimiser using incorrect ADC channel
-	volatile int16_t delayPotVal[2];
-	volatile float delayMult[2];
+	int32_t calcDelay[2];
+	int16_t delayPotVal[2];
+	float delayMult[2];
 	delay_mode delayMode;
 
 	uint32_t delayCounter;					// Counter used to calculate clock times
