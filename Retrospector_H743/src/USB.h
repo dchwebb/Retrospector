@@ -80,20 +80,18 @@
 #define USBD_IDX_MFC_STR				0x01U
 #define USBD_IDX_PRODUCT_STR			0x02U
 #define USBD_IDX_SERIAL_STR				0x03U
-#define USBD_IDX_MIDI_STR				0x04U
-#define USBD_IDX_CDC_STR				0x05U
+#define USBD_IDX_CDC_STR				0x04U
 
 #define USBD_VID						1155
 #define USBD_LANGID_STRING				1033
 #define USBD_MANUFACTURER_STRING		"Mountjoy Modular"
 #define USBD_PID_FS						22352
-#define USBD_PRODUCT_STRING				"Mountjoy MIDI"
-#define USBD_MIDI_STRING				"Mountjoy MIDI"
-#define USBD_CDC_STRING					"Mountjoy CDC Interface"
+#define USBD_PRODUCT_STRING				"Mountjoy Retrospector"
+#define USBD_CDC_STRING					"Mountjoy Retrospector CDC"
 
 #define CLASS_SPECIFIC_DESC_SIZE		50
-#define CDC_MIDI_CONFIG_DESC_SIZE		152
 #define USB_LEN_LANGID_STR_DESC			4
+#define USB_CDC_CONFIG_DESC_SIZE		75
 
 #define LOBYTE(x)  ((uint8_t)(x & 0x00FFU))
 #define HIBYTE(x)  ((uint8_t)((x & 0xFF00U) >> 8U))
@@ -107,9 +105,8 @@ public:
 	void SendString(std::string s);
 
 	std::function<void(uint8_t*,uint32_t)> cdcDataHandler;			// Declare data handler to store incoming CDC data
-	std::function<void(uint8_t*,uint32_t)> midiDataHandler;			// Declare data handler to store incoming midi data
 
-	enum EndPoint {MIDI_In = 0x81, MIDI_Out = 0x1, CDC_In = 0x82, CDC_Out = 0x2, CDC_Cmd = 0x83, };
+	enum EndPoint {CDC_In = 0x81, CDC_Out = 0x1, CDC_Cmd = 0x82, };
 	enum EndPointType { Control = 0, Isochronous = 1, Bulk = 2, Interrupt = 3 };
 	enum class Direction {in, out};
 private:
@@ -182,120 +179,23 @@ private:
 			0x01					// bNumConfigurations
 	};
 
-	const uint8_t CDC_MIDI_CfgFSDesc[CDC_MIDI_CONFIG_DESC_SIZE] = {
+	const uint8_t USBD_CDC_CfgFSDesc[USB_CDC_CONFIG_DESC_SIZE] = {
 			// Configuration Descriptor
 			0x09,								// bLength: Configuration Descriptor size
 			USB_DESC_TYPE_CONFIGURATION,		// bDescriptorType: Configuration
-			LOBYTE(CDC_MIDI_CONFIG_DESC_SIZE),	// wTotalLength
-			HIBYTE(CDC_MIDI_CONFIG_DESC_SIZE),
-			0x04,								// bNumInterfaces: 4 interfaces
+			LOBYTE(USB_CDC_CONFIG_DESC_SIZE),	// wTotalLength
+			HIBYTE(USB_CDC_CONFIG_DESC_SIZE),
+			0x02,								// bNumInterfaces: 2 interfaces
 			0x01,								// bConfigurationValue: Configuration value
 			0x00,								// iConfiguration: Index of string descriptor describing the configuration
 			0xC0,								// bmAttributes: self powered
 			0x32,								// MaxPower 0 mA
 
 			//---------------------------------------------------------------------------
-
-			// MIDI Descriptors
-
-			// B.3.1 Standard Audio Control standard Interface Descriptor
-			0x09,								// sizeof(usbDescrInterface): length of descriptor in bytes
-			USB_DESC_TYPE_INTERFACE,			// interface descriptor type
-			0x00,								// index of this interface
-			0x00,								// alternate setting for this interface
-			0x00,								// endpoints excl 0: number of endpoint descriptors to follow
-			0x01,								// AUDIO
-			0x01,								// AUDIO_Control
-			0x00,								// bInterfaceProtocol
-			USBD_IDX_MIDI_STR,					// string index for interface
-
-			// B.3.2 Class-specific AC Interface Descriptor
-			0x09,								// sizeof(usbDescrCDC_HeaderFn): length of descriptor in bytes
-			0x24,								// descriptor type
-			0x01,								// header functional descriptor
-			0x00, 0x01,							// bcdADC
-			0x09, 0x00,							// wTotalLength
-			0x01,								// bInCollection
-			0x01,								// baInterfaceNr[1]
-
-			// B.4 MIDIStreaming Interface Descriptors
-
-			// B.4.1 Standard MS Interface Descriptor
-			0x09,								// bLength
-			USB_DESC_TYPE_INTERFACE,			// bDescriptorType: interface descriptor
-			0x01,								// bInterfaceNumber
-			0x00,								// bAlternateSetting
-			0x02,								// bNumEndpoints
-			0x01,								// bInterfaceClass: Audio
-			0x03,								// bInterfaceSubClass: MIDIStreaming
-			0x00,								// InterfaceProtocol
-			USBD_IDX_MIDI_STR,					// iInterface: No String Descriptor
-
-			// B.4.2 Class-specific MS Interface Descriptor
-			0x07,								// length of descriptor in bytes
-			0x24,								// bDescriptorType: Class Specific Interface Descriptor
-			0x01,								// header functional descriptor
-			0x0, 0x01,							// bcdADC
-			CLASS_SPECIFIC_DESC_SIZE, 0,		// wTotalLength
-
-			// B.4.3 MIDI IN Jack Descriptor (Embedded)
-			0x06,								// bLength
-			0x24,								// descriptor type
-			0x02,								// bDescriptorSubtype: MIDI_IN_JACK
-			0x01,								// bJackType: Embedded
-			0x01,								// bJackID
-			0x00,								// iJack: No String Descriptor
-
-			// Table B4.4 Midi Out Jack Descriptor (Embedded)
-			0x09,								// length of descriptor in bytes
-			0x24,								// descriptor type
-			0x03,								// MIDI_OUT_JACK descriptor
-			0x01,								// bJackType: Embedded
-			0x02,								// bJackID
-			0x01,								// No of input pins
-			0x01,								// ID of the Entity to which this Pin is connected.
-			0x01,								// Output Pin number of the Entity to which this Input Pin is connected.
-			0X00,								// iJack
-
-			//B.5.1 Standard Bulk OUT Endpoint Descriptor
-			0x09,								// bLength
-			USB_DESC_TYPE_ENDPOINT,				// bDescriptorType = endpoint
-			MIDI_Out,							// bEndpointAddress
-			Bulk,								// bmAttributes: 2:Bulk
-			0x40, 0X00,							// wMaxPacketSize 64 bytes per packet.
-			0x00,								// bInterval in ms : ignored for bulk
-			0x00,								// bRefresh Unused
-			0x00,								// bSyncAddress Unused
-
-			// B.5.2 Class-specific MS Bulk OUT Endpoint Descriptor
-			0x05,								// bLength of descriptor in bytes
-			0x25,								// bDescriptorType (Audio Endpoint Descriptor)
-			0x01,								// bDescriptorSubtype: MS General
-			0x01,								// bNumEmbMIDIJack
-			0x01,								// baAssocJackID (0) ID of the Embedded MIDI IN Jack.
-
-			//B.6.1 Standard Bulk IN Endpoint Descriptor
-			0x09,								// bLength
-			USB_DESC_TYPE_ENDPOINT,				// bDescriptorType = endpoint
-			MIDI_In,							// bEndpointAddress IN endpoint number 3
-			Bulk,								// bmAttributes: 2: Bulk, 3: Interrupt endpoint
-			0x40, 0X00,							// wMaxPacketSize
-			0X00,								// bInterval in ms
-			0X00,								// bRefresh
-			0X00,								// bSyncAddress
-
-			// B.6.2 Class-specific MS Bulk IN Endpoint Descriptor
-			0X05,								// bLength of descriptor in bytes
-			0X25,								// bDescriptorType
-			0x01,								// bDescriptorSubtype
-			0X01,								// bNumEmbMIDIJack (0)
-			0X02,								// baAssocJackID (0) ID of the Embedded MIDI OUT Jack
-
-			//---------------------------------------------------------------------------
 	        // IAD Descriptor - Interface association descriptor for CDC class
 			0x08,								// bLength (8 bytes)
 			USB_DESC_TYPE_IAD,					// bDescriptorType
-			0x02,								// bFirstInterface
+			0x00,								// bFirstInterface
 			0x02,								// bInterfaceCount
 			0x02,								// bFunctionClass (Communications and CDC Control)
 			0x02,								// bFunctionSubClass
@@ -305,7 +205,7 @@ private:
 			// Interface Descriptor
 			0x09,								// bLength: Interface Descriptor size
 			USB_DESC_TYPE_INTERFACE,			// bDescriptorType: Interface
-			0x02,								// bInterfaceNumber: Number of Interface
+			0x00,								// bInterfaceNumber: Number of Interface
 			0x00,								// bAlternateSetting: Alternate setting
 			0x01,								// bNumEndpoints: One endpoints used
 			0x02,								// bInterfaceClass: Communication Interface Class
@@ -354,7 +254,7 @@ private:
 			// Data class interface descriptor
 			0x09,								// bLength: Endpoint Descriptor size
 			USB_DESC_TYPE_INTERFACE,			// bDescriptorType:
-			0x03,								// bInterfaceNumber: Number of Interface
+			0x01,								// bInterfaceNumber: Number of Interface
 			0x00,								// bAlternateSetting: Alternate setting
 			0x02,								// bNumEndpoints: Two endpoints used
 			0x0A,								// bInterfaceClass: CDC
@@ -380,6 +280,8 @@ private:
 			HIBYTE(ep_maxPacket),
 			0x00								// bInterval: ignore for Bulk transfer
 	};
+
+
 
 	// Binary Object Store (BOS) Descriptor
 	const uint8_t USBD_FS_BOSDesc[12] = {

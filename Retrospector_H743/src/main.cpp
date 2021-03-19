@@ -11,7 +11,6 @@
  * USB hangs when sending over CDC and client disconnects
  * Store config/calibration values to Flash
  * Implement RGB LED functionality
- * Remove MIDI from USB descriptors
  */
 
 volatile uint32_t SysTickVal;

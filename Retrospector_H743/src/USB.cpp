@@ -79,11 +79,7 @@ void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f
 					} else {
 						// Call appropriate data handler depending on endpoint of data
 						USB_EPStartXfer(Direction::out, epnum, xfer_count);
-						if (epnum == MIDI_Out) {
-							midiDataHandler((uint8_t*)xfer_buff, xfer_count);
-						} else {
-							cdcDataHandler((uint8_t*)xfer_buff, xfer_count);
-						}
+						cdcDataHandler((uint8_t*)xfer_buff, xfer_count);
 					}
 				}
 
@@ -515,8 +511,8 @@ void USB::USBD_GetDescriptor() {
 		break;
 
 	case USB_DESC_TYPE_CONFIGURATION:
-		outBuff = CDC_MIDI_CfgFSDesc;
-		outBuffSize = sizeof(CDC_MIDI_CfgFSDesc);
+		outBuff = USBD_CDC_CfgFSDesc;
+		outBuffSize = sizeof(USBD_CDC_CfgFSDesc);
 		break;
 
 	case USB_DESC_TYPE_BOS:
@@ -555,11 +551,12 @@ void USB::USBD_GetDescriptor() {
 				outBuffSize = sizeof(USBD_StringSerial);
 			}
 			break;
-	    case USBD_IDX_MIDI_STR:				// 304
+/*
+		case USBD_IDX_MIDI_STR:				// 304
 			outBuffSize = USBD_GetString((uint8_t*)USBD_MIDI_STRING, USBD_StrDesc);
 			outBuff = USBD_StrDesc;
 	      break;
-
+*/
 	    case USBD_IDX_CDC_STR:				// 305
 			outBuffSize = USBD_GetString((uint8_t*)USBD_CDC_STRING, USBD_StrDesc);
 			outBuff = USBD_StrDesc;
@@ -656,8 +653,8 @@ void USB::USBD_StdDevReq()
 				USB_ActivateEndpoint(CDC_In,   Direction::in,  Bulk);			// Activate CDC in endpoint
 				USB_ActivateEndpoint(CDC_Out,  Direction::out, Bulk);			// Activate CDC out endpoint
 				USB_ActivateEndpoint(CDC_Cmd,  Direction::in,  Interrupt);		// Activate Command IN EP
-				USB_ActivateEndpoint(MIDI_In,  Direction::in,  Bulk);			// Activate MIDI in endpoint
-				USB_ActivateEndpoint(MIDI_Out, Direction::out, Bulk);			// Activate MIDI out endpoint
+				//USB_ActivateEndpoint(MIDI_In,  Direction::in,  Bulk);			// Activate MIDI in endpoint
+				//USB_ActivateEndpoint(MIDI_Out, Direction::out, Bulk);			// Activate MIDI out endpoint
 
 				//USB_EPStartXfer(Direction::out, req.Value, 0x40);		// FIXME maxpacket is 2 for EP 1: CUSTOM_HID_EPIN_SIZE, 0x40 = CDC_DATA_FS_OUT_PACKET_SIZE
 				ep0_state = USBD_EP0_STATUS_IN;

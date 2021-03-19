@@ -56,10 +56,11 @@ bool SerialHandler::Command()
 			dfuConfirm = false;
 			usb->SendString("Upgrade cancelled\r\n");
 		}
-	} else if (ComCmd.compare("help\n") == 0) {
 
-		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n");
-		usb->SendString("Chorus: " + std::string(delay.chorusMode ? "on" : "off") +
+	} else if (ComCmd.compare("info\n") == 0) {		// Print diagnostic information
+
+		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n"
+				"Chorus: " + std::string(delay.chorusMode ? "on" : "off") +
 				"  PingPong: " + std::string(delay.pingPong ? "on\r\n" : "off\r\n"));
 
 		char buf[50];
@@ -71,18 +72,24 @@ bool SerialHandler::Command()
 		}
 
 		extern uint16_t adcZeroOffset[2];
-		usb->SendString("Zero offset L:" + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n");
+		usb->SendString("Delay Times L: " + std::to_string(delay.calcDelay[left] / 48) + " ms, R: " + std::to_string(delay.calcDelay[right] / 48) + " ms\r\n" +
+				std::string((delay.clockValid ? "Clock On": "Clock Off")) + ": interval: " + std::to_string(delay.clockInterval / 96) + " ms, " +
+				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
+				"ADC Zero offset L: " + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n" +
+				"\r\n");
 
+	} else if (ComCmd.compare("help\n") == 0) {
 
-		usb->SendString("\r\nSupported commands:\r\n"
+		usb->SendString("Mountjoy Retrospector\r\n"
+				"\r\nSupported commands:\r\n"
 				"help       -  Shows this information\r\n"
+				"info       -  Show diagnostic information\r\n"
 				"f          -  Filter on/off\r\n"
-				"lp         -  Filter is low pass\r\n"
-				"hp         -  Filter is high pass\r\n"
-				"both       -  Filter sweeps from low pass to high pass\r\n"
+				"lp         -  Low pass IIR filter mode\r\n"
+				"hp         -  High pass IIR filter mode\r\n"
+				"both       -  Low pass to high pass FIR filter mode\r\n"
 				"pp         -  Turn ping pong mode on/off\r\n"
 				"c          -  Chorus on/off\r\n"
-				"clk        -  Clock timings\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"\r\nDebug Data Dump:\r\n"
@@ -93,8 +100,8 @@ bool SerialHandler::Command()
 				"fdl        -  Left filter buffer\r\n"
 				"wd         -  FIR window coefficients\r\n"
 				"imp        -  IIR impulse response\r\n"
-				"iirs       -  IIR square wave test\r\n"
 				"cb         -  Chorus samples\r\n"
+				"\r\n"
 		);
 
 
@@ -103,9 +110,6 @@ bool SerialHandler::Command()
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
 		dfuConfirm = true;
 
-
-	} else if (ComCmd.compare("clk\n") == 0) {		// Clock timing info
-		usb->SendString("Delay interval: " + std::to_string(delay.clockInterval / 96) + " ms, " + std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n");
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();
@@ -124,7 +128,6 @@ bool SerialHandler::Command()
 		filter.filterType = IIR;
 		filter.filterControl = LP;
 		filter.Update(true);
-		//currentTone = filter.dampedADC + 1000;			// to force update
 		usb->SendString(std::string("Low Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("hp\n") == 0) {		// High Pass (IIR)
@@ -132,7 +135,6 @@ bool SerialHandler::Command()
 		filter.filterType = IIR;
 		filter.filterControl = HP;
 		filter.Update(true);
-		//currentTone = dampedTone + 1000;			// to force update
 		usb->SendString(std::string("High Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("both\n") == 0) {		// Low to High Pass sweep (FIR)
@@ -140,7 +142,6 @@ bool SerialHandler::Command()
 		filter.filterType = FIR;
 		filter.filterControl = Both;
 		filter.Update(true);
-		//currentTone = dampedTone + 1000;			// to force update
 		usb->SendString(std::string("Low Pass to High Pass\r\n").c_str());
 
 	} else if (ComCmd.compare("c\n") == 0) {		// Activate chorus mode
@@ -179,34 +180,6 @@ bool SerialHandler::Command()
 
 		resumeI2S();
 
-	} else if (ComCmd.compare("iirs\n") == 0) {		// IIR Filter test on square wave
-		suspendI2S();
-
-//		float out;
-
-//		for (int i = 1; i < 1000; ++i) {
-//			if (i < 50) {
-//				out = Filter.IIRFilter(0, left);
-//			} else if (i < 100) {
-//				out = Filter.IIRFilter(-30000, left);
-//			} else if (i < 150) {
-//				out = Filter.IIRFilter(30000, left);
-//			} else if (i < 200) {
-//				out = Filter.IIRFilter(-30000, left);
-//			} else if (i < 250) {
-//				out = Filter.IIRFilter(30000, left);
-//			} else if (i < 300) {
-//				out = Filter.IIRFilter(-30000, left);
-//			} else if (i < 350) {
-//				out = Filter.IIRFilter(30000, left);
-//			} else {
-//				out = Filter.IIRFilter(0, left);
-//			}
-//
-//			usb->SendString(std::to_string(out).append("\r\n").c_str());
-//		}
-
-		resumeI2S();
 
 	} else if (ComCmd.compare("cb\n") == 0) {		// Dump chorus buffer for L or R output
 		suspendI2S();
