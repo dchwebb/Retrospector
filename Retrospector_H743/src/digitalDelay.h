@@ -1,7 +1,7 @@
 #pragma once
 
 #include "initialisation.h"
-//#include <map>
+#include "SerialHandler.h"
 #include "Filter.h"
 
 extern uint16_t adcZeroOffset[2];
@@ -23,20 +23,23 @@ union StereoSample {
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
 struct DigitalDelay {
-public:
+	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+private:
+	delay_mode delayMode;
+	channel LR = right;						// Alternates between left and right channel each time sample is calculated
+
+	int32_t writePos[2] = {1, 1};			// Write position in sample buffer
 	int32_t readPos[2];
-	int32_t writePos[2] = {1, 1};
 	uint16_t delayCrossfade[2];
 	int32_t oldReadPos[2];
-	int32_t currentDelay[2];
-	int32_t calcDelay[2];
-	int16_t delayPotVal[2];
-	float delayMult[2];
-	delay_mode delayMode;
+	int32_t currentDelay[2];				// Used to trigger crossfade from old to new read position
+	int32_t calcDelay[2];					// Delay time according to whether clocked and with multipliers applied
+	int16_t delayPotVal[2];					// For hysteresis checking
+	float delayMult[2];						// Multipliers for delay in clocked mode
 
-	uint32_t delayCounter;					// Counter used to calculate clock times
-	uint32_t lastClock;
-	uint32_t clockInterval;
+	uint32_t delayCounter;					// Counter used to calculate clock times in sample time
+	uint32_t lastClock;						// Time last clock signal received in sample time
+	uint32_t clockInterval;					// Clock interval in sample time
 	int16_t clockError;						// Debug offset on clock calculations
 	bool clockValid = false;
 	bool clockHigh = false;;
@@ -44,6 +47,10 @@ public:
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
+
+public:
+
+
 
 	bool pingPong = false;
 	bool chorusMode = false;
@@ -60,7 +67,7 @@ public:
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
 
-	void CalcSample(channel LOrR);
+	void CalcSample();
 	void Init();
 	void UpdateLED(channel c);
 	void ReverseLED(channel c, int32_t remainingDelay);

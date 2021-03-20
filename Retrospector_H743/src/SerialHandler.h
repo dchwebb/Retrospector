@@ -1,8 +1,10 @@
+#pragma once
+
 #include "DigitalDelay.h"
 #include "initialisation.h"
 #include "USB.h"
 
-extern DigitalDelay delay;
+
 
 
 class SerialHandler {
@@ -15,5 +17,7 @@ public:
 
 	bool Command();
 	void Handler(uint8_t* data, uint32_t length);
+	void suspendI2S();
+	void resumeI2S();
 };
 

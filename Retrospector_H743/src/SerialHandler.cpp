@@ -2,10 +2,9 @@
 
 #include <stdio.h>
 
-extern volatile bool sampleClock;
 extern bool activateFilter;
-extern uint16_t currentTone;
-extern int32_t dampedTone;
+extern DigitalDelay delay;
+
 
 SerialHandler::SerialHandler(USB& usbObj)
 {
@@ -15,15 +14,15 @@ SerialHandler::SerialHandler(USB& usbObj)
 	usb->cdcDataHandler = std::bind(&SerialHandler::Handler, this, std::placeholders::_1, std::placeholders::_2);
 }
 
-void suspendI2S()
+void SerialHandler::suspendI2S()
 {
 	SPI2->CR1 |= SPI_CR1_CSUSP;
 	while ((SPI2->SR & SPI_SR_SUSP) == 0);
 }
 
-void resumeI2S()
+void SerialHandler::resumeI2S()
 {
-	sampleClock = true;
+	delay.LR = left;
 
 	// to allow resume from debugging ensure suspended then clear buffer underrun flag
 	SPI2->CR1 |= SPI_CR1_CSUSP;

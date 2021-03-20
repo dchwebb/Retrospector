@@ -5,11 +5,13 @@ extern float DACLevel;
 uint32_t debugDuration = 0;
 
 
-void DigitalDelay::CalcSample(channel LR)
+void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	float nextSample, pingSample;									// nextSample is the delayed sample to be played (pingSample form the opposite side)
 	bool reverse = (Mode() == modeReverse);
+
+	LR = (channel)!(bool)LR;
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in ping-pong calculations
@@ -88,12 +90,13 @@ void DigitalDelay::CalcSample(channel LR)
 		writeSample.sample[left] = leftWriteSample;
 		writeSample.sample[right] = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
 		samples[writePos[LR]] = writeSample.bothSamples;
+
 	}
+	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;
 
 
 
 	// Move write and read heads one sample forwards
-	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;
 	if (reverse) {
 		if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 		if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
@@ -220,8 +223,8 @@ void DigitalDelay::Init()
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
 	calcDelay[right] = ADC_array[ADC_Delay_Pot_R];
-	CalcSample(left);
-	CalcSample(right);
+	CalcSample();
+	CalcSample();
 	delayCrossfade[left] = 0;
 	delayCrossfade[right] = 0;
 }

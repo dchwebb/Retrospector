@@ -12,13 +12,7 @@ void SPI2_IRQHandler() {
 	if (calculatingFilter)
 		GPIOC->ODR |= GPIO_ODR_OD12;		// Toggle LED for debugging
 
-	sampleClock = !sampleClock;
-
-	if (sampleClock) {
-		delay.CalcSample(left);				// Left Channel
-	} else {
-		delay.CalcSample(right);			// Right Channel
-	}
+	delay.CalcSample();
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();

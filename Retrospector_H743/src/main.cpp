@@ -34,8 +34,6 @@ uint32_t newOffset[2] = {33800, 33800};
 uint32_t offsetCounter[2];
 
 
-volatile bool sampleClock = false;		// Records whether outputting left or right channel on I2S
-
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
