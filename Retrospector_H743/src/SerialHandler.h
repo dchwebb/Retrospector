@@ -6,7 +6,6 @@
 
 
 
-
 class SerialHandler {
 public:
 	bool CmdPending = false;

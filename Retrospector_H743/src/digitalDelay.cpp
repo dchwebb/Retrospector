@@ -89,10 +89,11 @@ void DigitalDelay::CalcSample()
 		StereoSample writeSample;
 		writeSample.sample[left] = leftWriteSample;
 		writeSample.sample[right] = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
-		samples[writePos[LR]] = writeSample.bothSamples;
+		samples[writePos] = writeSample.bothSamples;
+
+		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
 
 	}
-	if (++writePos[LR] == SAMPLE_BUFFER_LENGTH) 		writePos[LR] = 0;
 
 
 
@@ -137,8 +138,8 @@ void DigitalDelay::CalcSample()
 
 	// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
 	if (reverse) {
-		// Adjust read and write positions to handle circular buffer complications
-		int32_t wp = writePos[LR];
+		// Create temporary read and write positions that handle circular buffer complications
+		int32_t wp = writePos;
 		int32_t rp = readPos[LR];
 		if (rp > wp) {
 			if (wp - (calcDelay[LR] * 2) < 0)
@@ -155,7 +156,7 @@ void DigitalDelay::CalcSample()
 		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
 			ledOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos[LR] - 1;
+			readPos[LR] = writePos - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 			delayCrossfade[LR] = crossfade;
 		}
@@ -164,7 +165,7 @@ void DigitalDelay::CalcSample()
 		// If delay time has changed trigger crossfade from old to new read position
 		if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) > delayHysteresis) {
 			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos[LR] - calcDelay[LR] - 1;
+			readPos[LR] = writePos - calcDelay[LR] - 1;
 			while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
 			delayCrossfade[LR] = crossfade;
 			currentDelay[LR] = calcDelay[LR];

@@ -197,7 +197,7 @@ bool SerialHandler::Command()
 		suspendI2S();
 
 		channel LR = ComCmd.compare("dl\n") == 0 ? left : right;
-		usb->SendString("Read Pos: " + std::to_string(delay.readPos[LR]) + "; Write Pos: " + std::to_string(delay.writePos[LR]) + "\r\n");
+		usb->SendString("Read Pos: " + std::to_string(delay.readPos[LR]) + "; Write Pos: " + std::to_string(delay.writePos) + "\r\n");
 		for (int s = 0; s < 1000; ++s) {
 			StereoSample samp = {samples[s]};
 			usb->SendString(std::to_string(samp.sample[LR]).append("\r\n").c_str());
