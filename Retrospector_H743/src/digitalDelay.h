@@ -23,6 +23,9 @@ enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
 struct DigitalDelay {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+public:
+	void CalcSample();						// Called by interrupt handler to generate next sample
+	void Init();							// Initialise caches, buffers etc
 private:
 	delay_mode delayMode;					// Long/short/reverse
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
@@ -41,7 +44,7 @@ private:
 	uint32_t clockInterval;					// Clock interval in sample time
 	int16_t clockError;						// Debug offset on clock calculations
 	bool clockValid = false;
-	bool clockHigh = false;;
+	bool clockHigh = false;
 
 	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
@@ -52,7 +55,7 @@ private:
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
-	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};
+	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};		// Need 2 filters as uses IIR filter with feedback
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;
@@ -70,7 +73,4 @@ private:
 	void ChorusMode(bool on);
 	int32_t OutputMix(float drySample, float wetSample);
 
-public:
-	void CalcSample();						// Called by interrupt handler to generate next sample
-	void Init();							// Initialise caches, buffers etc
 };

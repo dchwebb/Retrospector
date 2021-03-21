@@ -57,16 +57,8 @@ void DigitalDelay::CalcSample()
 		nextSample = 0.75f * nextSample + 0.4f * pingSample;
 	}
 
-
 	// Filter output
-	if (activateFilter) {			// For debug
-		if (filter.filterType == IIR) {
-			nextSample = filter.CalcIIRFilter(nextSample, LR);
-		} else {
-			nextSample = filter.CalcFIRFilter(nextSample, LR);
-		}
-	}
-
+	nextSample = filter.CalcFilter(nextSample, LR);
 
 	// Compression
 	if (nextSample > threshold || nextSample < -threshold) {

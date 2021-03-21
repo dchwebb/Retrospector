@@ -54,15 +54,18 @@ struct IIRRegisters {
 
 class IIRPrototype {
 public:
-	uint8_t numPoles;
-	uint8_t numSections;
-	SPlaneCoeff Coeff;
-
 	IIRPrototype(uint8_t poles) {
 		numPoles = poles;
 		CalcLowPassProtoCoeff();
 	}
 	IIRPrototype() {};
+
+	SPlaneCoeff Coeff;
+
+private:
+	uint8_t numPoles;
+	uint8_t numSections;
+
 	void CalcLowPassProtoCoeff();
 	void ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots);
 	void GetFilterCoeff(std::array<std::complex<double>, MAX_POLES> &Roots);
@@ -70,7 +73,15 @@ public:
 
 
 class IIRFilter {
+	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
+	// constructors
+	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto{IIRPrototype(poles)} {}
+	IIRFilter() {};
+
+	void CalcCoeff(iirdouble_t omega);
+	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
+private:
 	uint8_t numPoles = 1;
 	uint8_t numSections;
 	PassType passType;
@@ -78,49 +89,34 @@ public:
 	IIRPrototype iirProto;
 	IIRCoeff iirCoeff;
 
-	// constructors
-	IIRFilter(uint8_t poles, PassType pass) {
-		iirProto = IIRPrototype(poles);
-		numPoles = poles;
-		passType = pass;
-	}
-	IIRFilter() {};
-
-	void CalcCoeff(iirdouble_t omega);
-	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
-
-private:
 	iirdouble_t CalcSection(int k, iirdouble_t x, IIRRegisters& registers);
 };
 
 
-// Filter with fixed cut off
+// Filter with fixed cut off (eg chorus filter, control smoothing)
 class FixedFilter {
-public:
+private:
 	IIRFilter filter;
 	IIRRegisters iirReg;
-
-	FixedFilter(uint8_t poles, PassType pass, iirdouble_t frequency) {
-		// FIXME should probably be an init method in the IIRFilter class
-		filter.numPoles = poles;
-		filter.passType = pass;
-		filter.iirProto = IIRPrototype(poles);
+public:
+	FixedFilter(uint8_t poles, PassType pass, iirdouble_t frequency) : filter{poles, pass} {
 		filter.CalcCoeff(frequency);
 	}
-
 	iirdouble_t FilterSample(iirdouble_t sample);
 };
 
 
-struct Filter {
+class Filter {
+	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
+	void Init();
+	void Update(bool reset = false);
+	float CalcFilter(float sample, channel c);
+
+private:
 	static constexpr uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
 
-	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
-	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
-	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
-	static constexpr uint16_t hysteresis = 30;
-
+	bool activateFilter = true;				// For debug
 	FilterType filterType = FIR;
 	PassType passType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
@@ -141,12 +137,16 @@ public:
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
 	IIRRegisters iirHPReg[2];				// STore separate shift registers for high and low pass to allow smooth transition
 
-	void Init();
-	void Update(bool reset = false);
-	void InitFIRFilter(uint16_t tone);
-	void InitIIRFilter(uint16_t tone);
+	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
+	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
+	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
+	static constexpr uint16_t hysteresis = 30;
+
+
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
 	float CalcFIRFilter(float sample, channel c);
+	void InitFIRFilter(uint16_t tone);
+	void InitIIRFilter(uint16_t tone);
 	float Sinc(float x);
 	void FIRFilterWindow();
 	float Bessel(float x);

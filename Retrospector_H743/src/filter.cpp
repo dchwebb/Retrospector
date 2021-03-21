@@ -2,7 +2,6 @@
 
 // Debug
 bool calculatingFilter = false;
-bool activateFilter = true;
 
 void Filter::Init()
 {
@@ -59,6 +58,18 @@ void Filter::Update(bool reset)
 	}
 }
 
+float Filter::CalcFilter(float sample, channel c)
+{
+	if (activateFilter) {
+		if (filterType == IIR) {
+			return static_cast<float>(filter.CalcIIRFilter(sample, c));
+		} else {
+			return filter.CalcFIRFilter(sample, c);
+		}
+	} else {
+		return sample;
+	}
+}
 
 // Rectangular FIR
 void Filter::InitFIRFilter(uint16_t tone)
@@ -113,7 +124,7 @@ float Filter::CalcFIRFilter(float sample, channel c)
 		uint8_t pos, revpos;
 
 		pos = filterBuffPos[c] - firTaps + 1;		// position of sample 1, 2, 3 etc
-		revpos = filterBuffPos[c];					// posiiton of sample N, N-1, N-2 etc
+		revpos = filterBuffPos[c];					// position of sample N, N-1, N-2 etc
 
 		for (uint8_t i = 0; i < firTaps / 2; ++i) {
 			// Folded FIR structure - as coefficients are symmetrical we can multiple the sample 1 + sample N by the 1st coefficient, sample 2 + sample N - 1 by 2nd coefficient etc

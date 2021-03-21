@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 
-extern bool activateFilter;
 extern DigitalDelay delay;
 
 
@@ -64,8 +63,8 @@ bool SerialHandler::Command()
 
 		char buf[50];
 
-		usb->SendString(!activateFilter ? "Filter: Off\r\n" : (filter.filterType == IIR) ? "Filter: IIR" : "Filter: FIR");
-		if (activateFilter) {
+		usb->SendString(!filter.activateFilter ? "Filter: Off\r\n" : (filter.filterType == IIR) ? "Filter: IIR" : "Filter: FIR");
+		if (filter.activateFilter) {
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
 			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + ";  Cutoff: " + std::string(buf).append("\r\n"));
 		}
@@ -115,8 +114,8 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 
-		activateFilter = !activateFilter;
-		if (activateFilter) {
+		filter.activateFilter = !filter.activateFilter;
+		if (filter.activateFilter) {
 			usb->SendString(std::string("Filter on\r\n").c_str());
 		} else {
 			usb->SendString(std::string("Filter off\r\n").c_str());
