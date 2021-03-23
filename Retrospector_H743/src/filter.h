@@ -1,12 +1,14 @@
+#pragma once
+
 /*
  * Much of the filter code gratefully taken from Iowa Hills Software
  * http://www.iowahills.com/
  */
-#pragma once
 
 #include "initialisation.h"
 #include <cmath>
 #include <complex>
+#include <array>
 
 
 #define MAX_POLES 8		// For declaring IIR arrays
@@ -63,8 +65,8 @@ public:
 	SPlaneCoeff Coeff;
 
 private:
-	uint8_t numPoles;
-	uint8_t numSections;
+	uint8_t numPoles = 0;
+	uint8_t numSections = 0;
 
 	void CalcLowPassProtoCoeff();
 	void ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots);
@@ -74,22 +76,23 @@ private:
 
 class IIRFilter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
-public:
-	// constructors
-	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto{IIRPrototype(poles)} {}
-	IIRFilter() {};
-
-	void CalcCoeff(iirdouble_t omega);
-	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
 private:
 	uint8_t numPoles = 1;
-	uint8_t numSections;
-	PassType passType;
-	iirdouble_t cutoffFreq;
+	uint8_t numSections = 0;
+	PassType passType = LowPass;
+	iirdouble_t cutoffFreq = 0.0f;
 	IIRPrototype iirProto;
 	IIRCoeff iirCoeff;
 
 	iirdouble_t CalcSection(int k, iirdouble_t x, IIRRegisters& registers);
+
+public:
+	// constructors
+	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto(IIRPrototype(poles)) {}
+	IIRFilter() {};
+
+	void CalcCoeff(iirdouble_t omega);
+	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
 };
 
 
@@ -109,6 +112,8 @@ public:
 class Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
+	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
+
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
@@ -137,7 +142,6 @@ private:
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
 	IIRRegisters iirHPReg[2];				// STore separate shift registers for high and low pass to allow smooth transition
 
-	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
 	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
 	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
 	static constexpr uint16_t hysteresis = 30;

@@ -5,6 +5,7 @@
 #include "sdram.h"
 #include "LEDHandler.h"
 #include "SerialHandler.h"
+#include "config.h"
 
 /* TODO
  * Increase tempo Multiplier times for Long Delay
@@ -48,6 +49,7 @@ USB usb;
 SerialHandler serial(usb);
 DigitalDelay delay;
 Filter filter;
+Config config;
 
 extern "C" {
 #include "interrupts.h"
