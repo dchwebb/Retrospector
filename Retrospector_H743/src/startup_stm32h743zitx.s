@@ -62,10 +62,18 @@ Reset_Handler:
   ldr r0, =0x20000000
   ldr r1, =0xDEADBEEF
   ldr r2, [r0, #0]
-  str r0, [r0, #0]
+  ldr r3, =0x1FF09800		// ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
+  str r3, [r0, #0]			// Store the r3 jump address to 0x20000000
   cmp r2, r1
   beq Reboot_Loader
 
+  ldr r1, =0xABBACAFE
+  ldr r3, =0x08100000		// Blinky test is at 0x08100000
+  str r3, [r0, #0]			// Store the r3 jump address to 0x20000000
+  cmp r2, r1
+  beq Blinky_Loader
+
+// End of bootloader checking
   ldr   sp, =_estack      /* set stack pointer */
 
 /* Copy the data segment initializers from flash to SRAM */  
@@ -73,9 +81,17 @@ Reset_Handler:
   b  LoopCopyDataInit
 
 Reboot_Loader:
-  ldr r0, =0x1FF09800     /* ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
+//  ldr r0, =0x1FF09800     /* ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
+//  str r0, [r0, #0]		// copy the jump address to the jump location
+  ldr r0, [r0, #0]
   ldr sp, [r0, #0]
   ldr r0, [r0, #4]
+  bx r0
+
+Blinky_Loader:
+  ldr r0, =0x08100000		// Blinky test is at 0x08100000
+  ldr sp, [r0, #0]			// Store the value at 0x08100000 to the stack pointer (0x20020000)
+  ldr r0, [r0, #4]			// Load the value at 0x08100004 to register r0
   bx r0
 
 CopyDataInit:

@@ -90,7 +90,8 @@ bool SerialHandler::Command()
 				"c          -  Chorus on/off\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
-				"save        -  Save calibration\r\n"
+				"boot       -  Bootloader test\r\n"
+				"save       -  Save calibration\r\n"
 				"\r\nDebug Data Dump:\r\n"
 				"dl         -  Left delay samples\r\n"
 				"dr         -  Right delay samples\r\n"
@@ -108,6 +109,10 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("dfu\n") == 0) {		// USB DFU firmware upgrade
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
 		dfuConfirm = true;
+
+	} else if (ComCmd.compare("boot\n") == 0) {		// Test bootloader code
+		void Bootloader();
+		Bootloader();
 
 	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
 		suspendI2S();
