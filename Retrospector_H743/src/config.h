@@ -15,6 +15,14 @@ struct configValues {
 
 	// Settings
 	int16_t filter_pot_center = 0;
+	uint32_t test_value1 = 0xABBACAFE;
+	uint32_t test_value2 = 0xDEADBABE;
+	uint32_t test_value3 = 0xCEDECAFE;
+	uint32_t test_value4 = 0xACEDABBA;
+	uint32_t test_value5 = 0xABBACAFE;
+	uint32_t test_value6 = 0xDEADBABE;
+	uint32_t test_value7 = 0xCEDECAFE;
+	uint32_t test_value8 = 0xACEDABBA;
 
 	char EndMarker[4] = "END";			// End Marker
 };
@@ -27,7 +35,7 @@ public:
 	uint32_t saveBooked;
 
 	void ScheduleSave();				// called whenever a config setting is changed to schedule a save after waiting to see if any more changes are being made
-	void SaveConfig();
+	bool SaveConfig();
 	void SetConfig(configValues &cv);	// sets properties of class to match current values
 	void RestoreConfig();				// gets config from Flash, checks and updates settings accordingly
 
