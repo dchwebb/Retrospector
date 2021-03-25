@@ -46,6 +46,7 @@
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:
+  // Check for instruction to jump to STM bootloader
   ldr r0, =0x20000000
   ldr r1, =0xDEADBEEF
   ldr r2, [r0, #0]			// load the value stored at 0x20000000 into register r2
@@ -54,6 +55,7 @@ Reset_Handler:
   cmp r2, r1				// Check if the magic word is found
   beq Reboot_Loader			// Jump to STM bootloader if magic word found
 
+  // Check for instruction to jump to custom bootloader
   ldr r1, =0xABBACAFE
   ldr r3, =0x08100000		// Blinky test is at 0x08100000
   cmp r2, r1
@@ -68,14 +70,6 @@ Reboot_Loader:
   ldr sp, [r3, #0]			// Store the bootloader start address (eg 0x08100000) to the stack pointer (0x20020000)
   ldr r0, [r3, #4]			// Store the bootloader jump address (eg 0x08100004) to the stack pointer (0x20020000)
   bx r0						// Branch to bootloader jump address (0x08100004)
-
-/*
-Blinky_Loader:
-  ldr r0, =0x08100000		// Blinky test is at 0x08100000
-  ldr sp, [r0, #0]			// Store the value at 0x08100000 to the stack pointer (0x20020000)
-  ldr r0, [r0, #4]			// Load the value at 0x08100004 to register r0 (0x810049d)
-  bx r0						// Branch to 0x08100004
-*/
 
 CopyDataInit:
   ldr  r3, =_sidata

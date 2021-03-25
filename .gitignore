@@ -25,3 +25,5 @@ bu/*
 *.list
 *.map
 *.launch
+bin_to_wav/demofile2.txt
+bin_to_wav/encoded.wav
