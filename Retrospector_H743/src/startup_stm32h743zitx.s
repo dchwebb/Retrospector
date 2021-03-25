@@ -33,66 +33,49 @@
 .global  g_pfnVectors
 .global  Default_Handler
 
-/* start address for the initialization values of the .data section. 
-defined in linker script */
-.word  _sidata
-/* start address for the .data section. defined in linker script */  
-.word  _sdata
-/* end address for the .data section. defined in linker script */
-.word  _edata
-/* start address for the .bss section. defined in linker script */
-.word  _sbss
-/* end address for the .bss section. defined in linker script */
-.word  _ebss
-/* stack used for SystemInit_ExtMemCtl; always internal RAM used */
+// start address for the initialization values of the .data section defined in linker script
+.word  _sidata	// start address for the .data section
+.word  _sdata	// end address for the .data section
+.word  _edata	// start address for the .bss section
+.word  _sbss	// end address for the .bss section
+.word  _ebss	// stack used for SystemInit_ExtMemCtl; always internal RAM used
 
-/**
- * @brief  This is the code that gets called when the processor first
- *          starts execution following a reset event. Only the absolutely
- *          necessary set is performed, after which the application
- *          supplied main() routine is called. 
- * @param  None
- * @retval : None
-*/
 
-    .section  .text.Reset_Handler
+
+  .section  .text.Reset_Handler
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:
   ldr r0, =0x20000000
   ldr r1, =0xDEADBEEF
-  ldr r2, [r0, #0]
+  ldr r2, [r0, #0]			// load the value stored at 0x20000000 into register r2
   ldr r3, =0x1FF09800		// ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
-  str r3, [r0, #0]			// Store the r3 jump address to 0x20000000
-  cmp r2, r1
-  beq Reboot_Loader
+  str r3, [r0, #0]			// Store the r3 jump address to 0x20000000 (ie blank the magic word)
+  cmp r2, r1				// Check if the magic word is found
+  beq Reboot_Loader			// Jump to STM bootloader if magic word found
 
   ldr r1, =0xABBACAFE
   ldr r3, =0x08100000		// Blinky test is at 0x08100000
-  str r3, [r0, #0]			// Store the r3 jump address to 0x20000000
   cmp r2, r1
-  beq Blinky_Loader
+  beq Reboot_Loader			// Jump to Blinky test bootloader if magic word found
 
-// End of bootloader checking
-  ldr   sp, =_estack      /* set stack pointer */
-
-/* Copy the data segment initializers from flash to SRAM */  
-  movs  r1, #0
+  // End of bootloader checking - Copy the data segment initializers from flash to SRAM
+  ldr   sp, =_estack		// set stack pointer
+  movs  r1, #0				// Blank r1 (used as counter)
   b  LoopCopyDataInit
 
 Reboot_Loader:
-//  ldr r0, =0x1FF09800     /* ROM address of boot loader for H7: 0x1FF09800 (M4 F7 etc 0x1FF00000) */
-//  str r0, [r0, #0]		// copy the jump address to the jump location
-  ldr r0, [r0, #0]
-  ldr sp, [r0, #0]
-  ldr r0, [r0, #4]
-  bx r0
+  ldr sp, [r3, #0]			// Store the bootloader start address (eg 0x08100000) to the stack pointer (0x20020000)
+  ldr r0, [r3, #4]			// Store the bootloader jump address (eg 0x08100004) to the stack pointer (0x20020000)
+  bx r0						// Branch to bootloader jump address (0x08100004)
 
+/*
 Blinky_Loader:
   ldr r0, =0x08100000		// Blinky test is at 0x08100000
   ldr sp, [r0, #0]			// Store the value at 0x08100000 to the stack pointer (0x20020000)
-  ldr r0, [r0, #4]			// Load the value at 0x08100004 to register r0
-  bx r0
+  ldr r0, [r0, #4]			// Load the value at 0x08100004 to register r0 (0x810049d)
+  bx r0						// Branch to 0x08100004
+*/
 
 CopyDataInit:
   ldr  r3, =_sidata
