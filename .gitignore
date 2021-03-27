@@ -27,3 +27,5 @@ bu/*
 *.launch
 bin_to_wav/demofile2.txt
 bin_to_wav/encoded.wav
+bin_to_wav/.vscode/.ropeproject/config.py
+bin_to_wav/.vscode/.ropeproject/objectdb
