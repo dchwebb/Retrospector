@@ -203,13 +203,13 @@ SECTIONS
   } >MEMORY_B2
 
   /* DW RAM Area for non-cached DMA buffers (ADC) */
-  .dma_buffer :
+  .dma_buffer (NOLOAD) :
   {
     *(.dma_buffer)
   } >RAM_D2
   
   /* DW RAM Area for SPI6 BDMA buffers (LED Controller) */
-  .led_buffer :
+  .led_buffer (NOLOAD) :
   {
     *(.led_buffer)
   } >RAM_D3

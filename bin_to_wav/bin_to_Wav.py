@@ -6,59 +6,47 @@ dataLength = dataSize * 8 * samplesPerBit      # number of bytes, * 8 bits * 4 s
 samplerate = 48000
 shiftReg = 0
 padding = False
+byte_arr = []
 
+# Encodes byte into sequence of four samples, creating smoothing transitions as required
+# pass -1 to output 8 bits at the mid-value for padding
 def EncodeByte(b):
-    result = bytearray()
+    global byte_arr
+    
     for x in range(8):
+        lastByte = len(byte_arr) - 1
         if b == -1:
-            result += EncodeBit(-1)
+            byte_arr += bytearray((0x80808080).to_bytes(4, "little"))
+            # Create transitions if necessary
+            if lastByte > 44:
+                if byte_arr[lastByte] == 0x00:
+                    byte_arr[lastByte] = 0x55
+                if byte_arr[lastByte] == 0xFF:
+                    byte_arr[lastByte] = 0xAA
         else:
-            if b & 1:
-                result += EncodeBit(1)
+            if b & 0x80:
+                byte_arr += bytearray((0xFFFFFFFF).to_bytes(4, "little"))
+                if byte_arr[lastByte] == 0x00:            # transitioning to 1 from 0
+                    byte_arr[lastByte] = 0x55
+                if byte_arr[lastByte] < 0xFF:             # transitioning to 1 from mid point or 0
+                    byte_arr[lastByte + 1] = 0xAA
             else:
-                result += EncodeBit(0)
-            b = b >> 1
+                byte_arr += bytearray((0x00000000).to_bytes(4, "little"))
+                if byte_arr[lastByte] == 0xFF:            # transitioning to 0 from 1
+                    byte_arr[lastByte] = 0xAA
+                if byte_arr[lastByte] > 0x00:             # transitioning to 0 from mid point or 1
+                    byte_arr[lastByte + 1] = 0x55
 
-    return result
+            b = b << 1
 
-def EncodeBit(bitVal):
-    global shiftReg, padding
-
-    if bitVal < 0:
-        padding = True
-        return bytearray((0x80808080).to_bytes(4, "little"))
-
-    # If previously padding create transition to bit value
-    if padding:
-        padding = False
-        if bitVal:
-            shiftReg = 0b001
-        else:
-            shiftReg = 0b010
-        return bytearray()
-
-    # shift in bit values and write middle bit as pseudo sine when we know the transitions from bit to bit
-    shiftReg = ((shiftReg << 1) | bitVal) & 7
-
-    encodedBit = {
-        0: 0x00000000,            # 000       
-        1: 0x00000055,            # 001
-        2: 0xAAFFFFAA,            # 010
-        3: 0xAAFFFFFF,            # 011
-        4: 0x55000000,            # 100
-        5: 0x55000055,            # 101
-        6: 0xFFFFFFAA,            # 110
-        7: 0xFFFFFFFF             # 111
-        }
-
-    return bytearray((encodedBit.get(shiftReg)).to_bytes(4, "big"))
+    return
 
 
 
 f = open("encoded.wav", "wb")
 
 # 'RIFF'
-byte_arr = [0x52, 0x49, 0x46, 0x46]
+byte_arr += [0x52, 0x49, 0x46, 0x46]
 
 # ChunkSize: 36 + SubChunk2Size, or more precisely  4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) This is the size of the entire file in bytes minus 8 bytes
 byte_arr += (36 + dataLength).to_bytes(4, "little")
@@ -74,15 +62,14 @@ byte_arr += [0x04, 0x00]                            # Block align = 4
 byte_arr += [0x08, 0x00]                            # Bits per sample = 8
 byte_arr += [0x64, 0x61, 0x74, 0x61]                # 'data'
 byte_arr += (dataLength).to_bytes(4, "little")      # subchunk 2 = number of bytes in the data. NumSamples * NumChannels * BitsPerSample/8
-byte_arr += EncodeByte(-1)                          # Add padding to start
 
+EncodeByte(-1)                                      # Add padding to start
 for x in range(int(dataSize / 4)):
-    byte_arr += EncodeByte(0x55)
-    byte_arr += EncodeByte(0xAA)
-    byte_arr += EncodeByte(0x00)
-    byte_arr += EncodeByte(0xFF)
-
-byte_arr += EncodeByte(-1)                          # Add padding to end
+    EncodeByte(0x55)
+    EncodeByte(0xAA)
+    EncodeByte(0x00)
+    EncodeByte(0xFF)
+EncodeByte(-1)                                       # Add padding to end
 
 
 binary_format = bytearray(byte_arr)
