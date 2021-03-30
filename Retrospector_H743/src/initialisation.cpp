@@ -556,6 +556,25 @@ void InitLEDSPI()
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 }
 
+// Unused
+void InitBootloaderTimer()
+{
+	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
+	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
+
+	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
+	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
+	TIM2->ARR = 2083;								// Set auto reload register 200MHz / 2083 = 96kHz
+
+
+	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
+	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	TIM2->CR1 |= TIM_CR1_CEN;
+	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
+}
+
 #ifdef UNUSED
 // Unused
 void Init_WS2812_SPI()
@@ -705,25 +724,6 @@ void InitClockTimer()
 
 	TIM3->CR1 |= TIM_CR1_CEN;
 
-}
-
-// Unused
-void InitChorusTimer()
-{
-	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
-	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
-
-	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
-	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
-	TIM2->ARR = 4165;								// Set auto reload register 200MHz / 1200 = 166kHz, 5000 = 40kHz
-
-
-	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
-	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
-	NVIC_EnableIRQ(TIM2_IRQn);
-
-	TIM2->CR1 |= TIM_CR1_CEN;
-	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
 
 

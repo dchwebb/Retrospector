@@ -4,6 +4,7 @@
 
 extern DigitalDelay delay;
 extern Config config;
+extern Bootloader bootloader;
 
 SerialHandler::SerialHandler(USB& usbObj)
 {
@@ -111,8 +112,9 @@ bool SerialHandler::Command()
 		dfuConfirm = true;
 
 	} else if (ComCmd.compare("boot\n") == 0) {		// Test bootloader code
-		void Bootloader();
-		Bootloader();
+		bootloader.Receive();
+		//void Bootloader();
+		//Bootloader();
 
 	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
 		suspendI2S();

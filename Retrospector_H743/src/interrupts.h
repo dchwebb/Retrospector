@@ -30,9 +30,12 @@ void SPI2_IRQHandler() {
 //	}
 //}
 
-
+// Bootloader timer
 void TIM2_IRQHandler() {
-	TIM2->SR &= ~TIM_SR_UIF;				// clear UIF flag
+	TIM2->SR &= ~TIM_SR_UIF;				// clear Update Interrupt Flag
+
+	bootloader.GetSample();
+
 }
 
 //void I2C1_EV_IRQHandler() {

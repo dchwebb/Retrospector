@@ -40,7 +40,7 @@ void InitADCControls();
 void InitDAC();
 void InitI2S();
 void InitTempoClock();
-void InitChorusTimer();
+void InitBootloaderTimer();
 void InitIO();
 //void LED(channel c, bool on);
 void InitDebugTimer();

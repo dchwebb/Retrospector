@@ -6,6 +6,7 @@
 #include "LEDHandler.h"
 #include "SerialHandler.h"
 #include "config.h"
+#include "Bootloader.h"
 
 /* TODO
  * Increase tempo Multiplier times for Long Delay
@@ -30,13 +31,7 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-void Bootloader() {
-	SCB_DisableDCache();
-	__disable_irq();
-	*((unsigned long *)0x20000000) = 0xABBACAFE; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
-	__DSB();
-	NVIC_SystemReset();
-}
+
 
 uint16_t adcZeroOffset[2] = {33800, 33800};			// 0V ADC reading
 uint32_t newOffset[2] = {33800, 33800};
@@ -58,6 +53,7 @@ SerialHandler serial(usb);
 DigitalDelay delay;
 Filter filter;
 Config config;
+Bootloader bootloader;
 
 extern "C" {
 #include "interrupts.h"

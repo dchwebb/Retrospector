@@ -7,6 +7,7 @@ samplerate = 48000
 shiftReg = 0
 padding = False
 byte_arr = []
+binFilePath = "D:\CubeIDE\Boottest_H743\Debug\Boottest_H743.bin"
 
 # Encodes byte into sequence of four samples, creating smoothing transitions as required
 # pass -1 to output 8 bits at the mid-value for padding
@@ -42,9 +43,15 @@ def EncodeByte(b):
     return
 
 
+wavFile = open("encoded.wav", "wb")
+binFile = open(binFilePath, "rb")
+binFile.seek(0, 2)                                  # move the cursor to the end of the file
+rawDataSize = binFile.tell()
+paddingBytes = 4
+dataLength = (rawDataSize + paddingBytes) * 8 * 4              # file size plus padding
 
-f = open("encoded.wav", "wb")
 
+# Generate wav header
 # 'RIFF'
 byte_arr += [0x52, 0x49, 0x46, 0x46]
 
@@ -64,15 +71,17 @@ byte_arr += [0x64, 0x61, 0x74, 0x61]                # 'data'
 byte_arr += (dataLength).to_bytes(4, "little")      # subchunk 2 = number of bytes in the data. NumSamples * NumChannels * BitsPerSample/8
 
 EncodeByte(-1)                                      # Add padding to start
-for x in range(int(dataSize / 4)):
-    EncodeByte(0x55)
-    EncodeByte(0xAA)
-    EncodeByte(0x00)
-    EncodeByte(0xFF)
+EncodeByte(0xAA)                                    # Add 10 timing pattern to start
+EncodeByte(0xAA)
+binFile.seek(0, 0)                                  # Go to beginning of binary file
+
+for x in range(rawDataSize):
+    EncodeByte(int.from_bytes(binFile.read(1), "little"))
+
 EncodeByte(-1)                                       # Add padding to end
 
 
 binary_format = bytearray(byte_arr)
-f.write(binary_format)
-f.close()
-
+wavFile.write(binary_format)
+wavFile.close()
+binFile.close()
