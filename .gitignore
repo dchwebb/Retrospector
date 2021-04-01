@@ -1,5 +1,6 @@
 Alligator_H743/Debug/*
 Retrospector_H743/Debug/*
+Retrospector_H743_v2/Debug/*
 Retrospector_F429/Debug/*
 Hardware_v1/*
 bu/*
@@ -30,3 +31,6 @@ bin_to_wav/encoded.wav
 bin_to_wav/.vscode/.ropeproject/config.py
 bin_to_wav/.vscode/.ropeproject/objectdb
 bin_to_wav/encoded - Copy.wav
+Hardware/_autosave-Retrospector_Components.kicad_pcb
+Hardware/_autosave-Retrospector_Components.sch
+jlc_bom_v2.xls
