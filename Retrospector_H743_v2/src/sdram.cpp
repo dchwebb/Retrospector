@@ -248,14 +248,14 @@ void InitSDRAM_16800(void) {
 }
 #endif
 
-#define MEMTEST
+#define MEMTESTx
 #ifdef MEMTEST
 // SDRAM testing variables
 using memSize = uint32_t;
 uint32_t testAddr;
 memSize* tempAddr;
 //constexpr uint32_t maxAddr = 0x2000000 / sizeof(memSize);
-constexpr uint32_t maxAddr = 0x1000000 / sizeof(memSize);
+constexpr uint32_t maxAddr = 0x0800000 / sizeof(memSize);
 uint32_t MemTestDuration;
 uint32_t MemTestCount = 0;
 uint32_t MemTestErrors = 0;

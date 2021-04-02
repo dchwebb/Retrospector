@@ -45,8 +45,8 @@ volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_
 __attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 
 // Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
-//int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
-int32_t  samples[SAMPLE_BUFFER_LENGTH];
+int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
+//int32_t  samples[SAMPLE_BUFFER_LENGTH];
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
 
 USB usb;
@@ -68,22 +68,22 @@ int main(void) {
 	InitSysTick();
 
 	InitADCAudio();					// Initialise ADC to capture audio samples
-//	InitADCControls();				// Initialise ADC to capture knob and CV data
-//	InitDAC();						// DAC used to output Wet/Dry mix levels
+	InitADCControls();				// Initialise ADC to capture knob and CV data
+	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();
-//	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
+	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
 //	InitIO();						// Initialise switches and LEDs
 //	InitDebugTimer();
-//	filter.Init();					// Initialise filter coefficients, windows etc
-//	usb.InitUSB();
-//	delay.Init();					// clear sample buffers and preset delay timings
+	filter.Init();					// Initialise filter coefficients, windows etc
+	usb.InitUSB();
+	delay.Init();					// clear sample buffers and preset delay timings
 //	InitLEDSPI();					// Initialise SPI/DAM for LED controller
 //	led.Init();
-//	InitI2S();						// Initialise I2S which will start main sample interrupts
+	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-		MemoryTest();
-/*
+		//MemoryTest();
+
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
  			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
@@ -102,7 +102,7 @@ int main(void) {
 		filter.Update();			// Check if filter coefficients need to be updated
 
 		serial.Command();				// Check for incoming CDC commands
-*/
+
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
 			USBDebug = true;

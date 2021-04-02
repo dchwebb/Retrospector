@@ -3,6 +3,7 @@
 extern float DACLevel;
 
 uint32_t debugDuration = 0;
+int16_t debugOutput = 0;
 
 
 void DigitalDelay::CalcSample()
@@ -69,7 +70,11 @@ void DigitalDelay::CalcSample()
 
 
 	// Put next output sample in I2S buffer (OutputMix will set VCA mix levels in normal mode or apply a software mix for chorus mode)
-	SPI2->TXDR = OutputMix(recordSample, nextSample);
+	// debug:
+	debugOutput += 10;
+	SPI2->TXDR = debugOutput;
+
+	//SPI2->TXDR = OutputMix(recordSample, nextSample);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);

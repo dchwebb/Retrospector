@@ -40,7 +40,7 @@ void Filter::Update(bool reset)
 	TIM3->CNT = 0;		// Debug
 
 	//dampedADC = std::max((127L * dampedADC + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 7, 0L);		// FIXME - don't yet have CV input for Filter
-	dampedADC = filterADC.FilterSample(std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535));
+	dampedADC = filterADC.FilterSample(std::min((int)ADC_array[ADC_Filter_Pot] + (65535 - ADC_array[ADC_Filter_CV]), 65535));
 	//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
 
 	extern uint32_t debugDuration;

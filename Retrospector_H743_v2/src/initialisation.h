@@ -7,8 +7,8 @@
 
 extern volatile uint32_t SysTickVal;
 
-#define ADC_BUFFER_LENGTH 8
-#define SAMPLE_BUFFER_LENGTH 100 // 1048576		// Currently 2^20 (4MB of 16MB)
+#define ADC_BUFFER_LENGTH 9
+#define SAMPLE_BUFFER_LENGTH 1048576		// Currently 2^20 (4MB of 16MB)
 #define SAMPLE_RATE 48000
 #define SYSTICK 1000						// Set in uS so 1000uS = 1ms
 
@@ -19,7 +19,7 @@ extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
 
 // Define ADC array positions of various controls
 enum ADC_Controls { ADC_Mix = 0, ADC_Delay_Pot_L = 1, ADC_Delay_Pot_R = 2, ADC_Delay_CV_L = 3, ADC_Delay_CV_R = 4,
-	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Tone = 7};
+	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Filter_CV = 7, ADC_Filter_Pot = 8};
 enum channel {left = 0, right = 1};
 
 // Available in C++ 17
