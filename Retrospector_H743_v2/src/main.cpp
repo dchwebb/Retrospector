@@ -72,7 +72,7 @@ int main(void) {
 	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();
 	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
-//	InitIO();						// Initialise switches and LEDs
+	InitIO();						// Initialise switches and LEDs
 //	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();

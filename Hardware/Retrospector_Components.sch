@@ -4,9 +4,9 @@ EELAYER END
 $Descr User 18000 13000
 encoding utf-8
 Sheet 1 1
-Title "Retrospector"
+Title "Retrospector v3"
 Date ""
-Rev "2"
+Rev "3"
 Comp "Mountjoy Modular"
 Comment1 ""
 Comment2 ""
@@ -2832,7 +2832,7 @@ Connection ~ 10350 3600
 Wire Wire Line
 	14900 1750 14950 1750
 Text Label 7400 7100 0    50   ~ 0
-CHORUS
+STEREO_WIDE
 $Comp
 L Connector:Conn_01x08_Male J1
 U 1 1 608307FF
@@ -2919,7 +2919,7 @@ F 2 "SMD_Packages:SOIC-14_N" H 12450 5400 50  0001 C CNN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21733j.pdf" H 12550 5500 50  0001 C CNN
 F 4 "C116668" H 12500 5300 50  0001 C CNN "Part_Number"
 	1    12500 5300
-	1    0    0    -1  
+	1    0    0    1   
 $EndComp
 Connection ~ 1200 1000
 Connection ~ 1500 1000
@@ -3217,7 +3217,7 @@ CLOCK_SCALED
 Wire Wire Line
 	4350 2150 4250 2150
 Text Label 4350 6550 0    50   ~ 0
-CHORUS
+STEREO_WIDE
 Wire Wire Line
 	4250 6550 4350 6550
 NoConn ~ 4250 6050
@@ -4163,7 +4163,7 @@ $EndComp
 Text Notes 13600 10900 0    50   ~ 0
 FLT: connect to earth for \nhigher latency but less ringing
 Text Label 7400 7000 0    50   ~ 0
-PINGPONG
+CHORUS
 Text Label 7400 7300 0    50   ~ 0
 LP_MODE
 Text Label 7400 7200 0    50   ~ 0
@@ -4390,7 +4390,7 @@ Connection ~ 12800 6950
 Text Label 4350 5750 0    50   ~ 0
 FILTER_CV_SCALED
 Text Label 1600 4650 2    50   ~ 0
-PINGPONG
+CHORUS
 $Comp
 L power:GND #PWR050
 U 1 1 610D4F76

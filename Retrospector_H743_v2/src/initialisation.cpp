@@ -495,23 +495,34 @@ void InitDebugTimer()
 
 void InitIO()
 {
-	// Initialise timing LEDs on PC10 and PC11
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
-	GPIOC->MODER &= ~GPIO_MODER_MODE10_1;			// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
-	GPIOC->MODER &= ~GPIO_MODER_MODE11_1;			// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
-	GPIOC->MODER &= ~GPIO_MODER_MODE12_1;			// Debug - will be input switch later
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port B clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port C clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// GPIO port E clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;			// GPIO port G clock
 
-	// Init mode switches on PE2 and PE3
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// GPIO port clock
-	GPIOE->MODER &= ~GPIO_MODER_MODE2;				// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
-	GPIOE->MODER &= ~GPIO_MODER_MODE3;				// 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
-	GPIOE->PUPDR |= GPIO_PUPDR_PUPD2_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
-	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;				// 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+	// MODER: 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	// PUPDR: 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+	GPIOB->MODER &= ~GPIO_MODER_MODE2;				// PB2: tempo clock
+	GPIOB->MODER &= ~GPIO_MODER_MODE4;				// PB4: lock button
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD4_0;
 
-	// Init tempo clock
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
-	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;			// 00: Input mode
+	GPIOC->MODER &= ~GPIO_MODER_MODE10;				// PC10: LP switch, low when in LP mode
+	GPIOC->PUPDR |= GPIO_PUPDR_PUPD10_0;
+	GPIOC->MODER &= ~GPIO_MODER_MODE11;				// PC11: HP switch
+	GPIOC->PUPDR |= GPIO_PUPDR_PUPD11_0;
 
+	GPIOC->MODER &= ~GPIO_MODER_MODE12;				// PC12: Stereo Wide
+	GPIOC->PUPDR |= GPIO_PUPDR_PUPD12_0;
+	GPIOG->MODER &= ~GPIO_MODER_MODE10;				// PG10: Chorus
+	GPIOG->PUPDR |= GPIO_PUPDR_PUPD10_0;
+
+	GPIOE->MODER &= ~GPIO_MODER_MODE2;				// PE2: Mode 1, low in reverse mode
+	GPIOE->PUPDR |= GPIO_PUPDR_PUPD2_0;
+	GPIOE->MODER &= ~GPIO_MODER_MODE3;				// PE3: Mode 2, low in short mode
+	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;
+
+
+	// PB7, PB8 - I2C/debug
 }
 
 

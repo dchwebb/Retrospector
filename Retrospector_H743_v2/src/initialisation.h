@@ -22,12 +22,6 @@ enum ADC_Controls { ADC_Mix = 0, ADC_Delay_Pot_L = 1, ADC_Delay_Pot_R = 2, ADC_D
 	ADC_Feedback_Pot = 5, ADC_Feedback_CV = 6, ADC_Filter_CV = 7, ADC_Filter_Pot = 8};
 enum channel {left = 0, right = 1};
 
-// Available in C++ 17
-//template<class T>
-//constexpr const T& clamp( const T& v, const T& lo, const T& hi )
-//{
-//	return (v < lo) ? lo : (hi < v) ? hi : v;
-//}
 
 void SystemClock_Config();
 void InitCache();
