@@ -13,6 +13,7 @@
  * USB hangs when sending over CDC and client disconnects
  * Store config/calibration values to Flash
  * Implement RGB LED functionality
+ * Implement Link button
  */
 
 volatile uint32_t SysTickVal;
@@ -77,12 +78,13 @@ int main(void) {
 	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();
 	delay.Init();					// clear sample buffers and preset delay timings
-//	InitLEDSPI();					// Initialise SPI/DAM for LED controller
-//	led.Init();
+	InitLEDSPI();					// Initialise SPI/DAM for LED controller
+	led.Init();
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
 		//MemoryTest();
+		led.TestPattern();
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
@@ -97,6 +99,14 @@ int main(void) {
 			} else {
 				offsetCounter[lr] = 0;
 			}
+		}
+
+		// Implement chorus (PG10)/stereo wide (PC12) switch
+		if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != delay.chorusMode) {
+			delay.ChorusMode(!delay.chorusMode);
+		}
+		if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != delay.stereoWide) {
+			delay.stereoWide = !delay.stereoWide;
 		}
 
 		filter.Update();			// Check if filter coefficients need to be updated

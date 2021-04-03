@@ -26,6 +26,10 @@ struct DigitalDelay {
 public:
 	void CalcSample();						// Called by interrupt handler to generate next sample
 	void Init();							// Initialise caches, buffers etc
+	void ChorusMode(bool on);
+
+	bool stereoWide = false;					// Feedback from one side of the stereo spectrum to the other
+	bool chorusMode = false;
 private:
 	delay_mode delayMode;					// Long/short/reverse
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
@@ -50,8 +54,6 @@ private:
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 
-	bool pingPong = false;					// Feedback from one side of the stereo spectrum to the other
-	bool chorusMode = false;
 	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
@@ -70,7 +72,6 @@ private:
 	void LedOn(channel c);
 	void LedOff(channel c);
 	delay_mode Mode();
-	void ChorusMode(bool on);
 	int32_t OutputMix(float drySample, float wetSample);
 
 };

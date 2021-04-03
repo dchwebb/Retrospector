@@ -9,13 +9,13 @@ int16_t debugOutput = 0;
 void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
-	float nextSample, pingSample;									// nextSample is the delayed sample to be played (pingSample form the opposite side)
+	float nextSample, oppositeSample;								// nextSample is the delayed sample to be played (oppositeSample form the opposite side)
 	bool reverse = (Mode() == modeReverse);
 
 	LR = (channel)!(bool)LR;
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
-	channel RL = (LR == left) ? right : left;						// Get other channel for use in ping-pong calculations
+	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 
 	// If chorussing, 'dry' sample is current sample + LFO delayed chorus sample
 	if (chorusMode) {
@@ -45,17 +45,17 @@ void DigitalDelay::CalcSample()
 		StereoSample oldreadSamples = {samples[oldReadPos[LR]]};
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
 		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[LR]) * (scale);
-		pingSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
+		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
 		--delayCrossfade[LR];
 	} else {
 		nextSample = static_cast<float>(readSamples.sample[LR]);
-		pingSample = static_cast<float>(readSamples.sample[RL]);
+		oppositeSample = static_cast<float>(readSamples.sample[RL]);
 	}
 
 	// Add in a scaled amount of the sample from the opposite stereo channel
-	if (pingPong) {
+	if (stereoWide) {
 		// FIXME levels are somewhat arbitrary
-		nextSample = 0.75f * nextSample + 0.4f * pingSample;
+		nextSample = 0.75f * nextSample + 0.4f * oppositeSample;
 	}
 
 	// Filter output

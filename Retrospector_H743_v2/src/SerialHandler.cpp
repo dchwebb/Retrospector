@@ -60,7 +60,7 @@ bool SerialHandler::Command()
 
 		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n"
 				"Chorus: " + std::string(delay.chorusMode ? "on" : "off") +
-				"  PingPong: " + std::string(delay.pingPong ? "on\r\n" : "off\r\n"));
+				"  Stereo wide: " + std::string(delay.stereoWide ? "on\r\n" : "off\r\n"));
 
 		char buf[50];
 
@@ -84,11 +84,6 @@ bool SerialHandler::Command()
 				"help       -  Shows this information\r\n"
 				"info       -  Show diagnostic information\r\n"
 				"f          -  Filter on/off\r\n"
-				"lp         -  Low pass IIR filter mode\r\n"
-				"hp         -  High pass IIR filter mode\r\n"
-				"both       -  Low pass to high pass FIR filter mode\r\n"
-				"pp         -  Turn ping pong mode on/off\r\n"
-				"c          -  Chorus on/off\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
@@ -132,35 +127,6 @@ bool SerialHandler::Command()
 		} else {
 			usb->SendString(std::string("Filter off\r\n").c_str());
 		}
-
-	} else if (ComCmd.compare("lp\n") == 0) {		// Low Pass (IIR)
-
-		filter.filterType = IIR;
-		filter.filterControl = LP;
-		filter.Update(true);
-		usb->SendString(std::string("Low Pass\r\n").c_str());
-
-	} else if (ComCmd.compare("hp\n") == 0) {		// High Pass (IIR)
-
-		filter.filterType = IIR;
-		filter.filterControl = HP;
-		filter.Update(true);
-		usb->SendString(std::string("High Pass\r\n").c_str());
-
-	} else if (ComCmd.compare("both\n") == 0) {		// Low to High Pass sweep (FIR)
-
-		filter.filterType = FIR;
-		filter.filterControl = Both;
-		filter.Update(true);
-		usb->SendString(std::string("Low Pass to High Pass\r\n").c_str());
-
-	} else if (ComCmd.compare("c\n") == 0) {		// Activate chorus mode
-		delay.ChorusMode(!delay.chorusMode);
-		usb->SendString(delay.chorusMode ? "Chorus on\r\n" : "Chorus off\r\n");
-
-	} else if (ComCmd.compare("pp\n") == 0) {		// Activate ping pong mode
-		delay.pingPong = !delay.pingPong;
-		usb->SendString(delay.pingPong ? "PingPong on\r\n" : "PingPong off\r\n");
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Show IIR Coefficients
 

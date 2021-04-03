@@ -54,8 +54,6 @@ void LEDHandler::Init()
 
 void LEDHandler::TestPattern()
 {
-
-
 	static uint32_t lastLED = 0;
 	static uint16_t ledCounter[3];
 	static uint32_t ledTarg[3] = {0xFF0000, 0x00FF00, 0x0000FF};

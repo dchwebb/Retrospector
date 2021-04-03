@@ -548,7 +548,7 @@ void InitLEDSPI()
 
 	// Configure SPI
 	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI6->CFG1 |= SPI_CFG1_MBR_2;	// Master Baud rate p2238:  100: SPI master clock/32; 101: SPI master clock/64
+	SPI6->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32; 101: SPI master clock/64
 	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
@@ -563,7 +563,7 @@ void InitLEDSPI()
 	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;			// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
 	BDMA_Channel5->CCR |= BDMA_CCR_MINC;			// Memory in increment mode
 
-	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));	// Configure the peripheral data register address
+	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));// Configure the peripheral data register address
 
 	DMAMUX2_Channel5->CCR |= 12; 					// DMA request MUX input 86 = spi6_tx_dma (See p.697)
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
