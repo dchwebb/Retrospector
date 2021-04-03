@@ -87,7 +87,7 @@ MODE1
 Text Label 8050 1200 2    50   ~ 0
 MODE2
 Text Label 2300 5550 0    50   ~ 0
-CHORUS
+STEREO_WIDE
 Text Label 2300 4200 0    50   ~ 0
 MODE1
 Text Label 2300 4300 0    50   ~ 0
@@ -161,7 +161,7 @@ $EndComp
 Text Notes 1400 6450 0    100  ~ 20
 Headers
 Text Label 2300 5450 0    50   ~ 0
-PINGPONG
+CHORUS
 Text Label 2300 5350 0    50   ~ 0
 LINK_BTN
 $Comp
@@ -1099,9 +1099,9 @@ F 3 "" H 8700 2100 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Text Label 8050 1900 2    50   ~ 0
-CHORUS
+STEREO_WIDE
 Text Label 8050 2100 2    50   ~ 0
-PINGPONG
+CHORUS
 $Comp
 L power:PWR_FLAG #FLG0103
 U 1 1 603D657A

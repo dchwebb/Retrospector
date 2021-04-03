@@ -55,7 +55,7 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 				// FIXME timing correction mechanism not yet implemented for early sampling
 				// Confirm a potential late sample (transitioned from 1 to 0 and previous capture was a sample late)
 				if (recordSample < 0 && potentiallyLate) {
-					//GPIOC->ODR |= GPIO_ODR_OD12;			// Debug
+					GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
 					sampleCounter = 6;			// We could try altering the sampling speed but currently just reducing the interval of the next capture
 				} else {
 					sampleCounter = 7;
@@ -74,7 +74,7 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 
 			} else {
 				lastSample = recordSample;
-				//GPIOC->ODR &= ~GPIO_ODR_OD12;
+				GPIOB->ODR &= ~GPIO_ODR_OD7;
 				sampleCounter--;
 			}
 		} else {

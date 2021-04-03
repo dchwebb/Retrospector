@@ -71,10 +71,10 @@ void DigitalDelay::CalcSample()
 
 	// Put next output sample in I2S buffer (OutputMix will set VCA mix levels in normal mode or apply a software mix for chorus mode)
 	// debug:
-	debugOutput += 10;
-	SPI2->TXDR = debugOutput;
+	//debugOutput += 10;
+	//SPI2->TXDR = debugOutput;
 
-	//SPI2->TXDR = OutputMix(recordSample, nextSample);
+	SPI2->TXDR = OutputMix(recordSample, nextSample);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
@@ -104,7 +104,7 @@ void DigitalDelay::CalcSample()
 	}
 
 	// Check if clock received
-	if ((GPIOA->IDR & GPIO_IDR_ID7) == GPIO_IDR_ID7) {
+	if ((GPIOB->IDR & GPIO_IDR_ID2) == GPIO_IDR_ID2) {
 		if (!clockHigh) {
 			clockError = delayCounter - (lastClock + clockInterval);
 			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
@@ -272,12 +272,14 @@ void DigitalDelay::ReverseLED(channel c, int32_t remainingDelay)
 // Switch LED on and set off time
 void DigitalDelay::LedOn(channel c)
 {
+	/*
 	if (c == left) {
 		GPIOC->ODR |= GPIO_ODR_OD10;
 	}
 	if (c == right) {
 		GPIOC->ODR |= GPIO_ODR_OD11;
 	}
+	*/
 	ledCounter[c] = 0;
 	ledOffTime[c] = SysTickVal + 50;		// In ms
 }
@@ -286,12 +288,14 @@ void DigitalDelay::LedOn(channel c)
 // Directly switch LED on or off
 void DigitalDelay::LedOff(channel c)
 {
+	/*
 	if (c == left) {
 		GPIOC->ODR &= ~GPIO_ODR_OD10;
 	}
 	if (c == right) {
 		GPIOC->ODR &= ~GPIO_ODR_OD11;
 	}
+	*/
 	ledOffTime[c] = 0;
 }
 

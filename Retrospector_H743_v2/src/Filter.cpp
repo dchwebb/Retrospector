@@ -12,6 +12,25 @@ void Filter::Init()
 
 void Filter::Update(bool reset)
 {
+	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
+	if ((GPIOC->IDR & GPIO_IDR_ID10) == 0) {
+		if (filterControl != LP) {
+			filterType = IIR;
+			filterControl = LP;
+			reset = true;
+		}
+	} else if ((GPIOC->IDR & GPIO_IDR_ID11) == 0) {
+		if (filterControl != HP) {
+			filterType = IIR;
+			filterControl = HP;
+			reset = true;
+		}
+	} else if (filterControl != Both) {
+		filterType = FIR;
+		filterControl = Both;
+		reset = true;
+	}
+
 
 	// Debug: create tests of variation in damping techniques
 	static uint16_t testCounter;

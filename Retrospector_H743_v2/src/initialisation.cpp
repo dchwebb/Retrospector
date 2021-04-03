@@ -522,7 +522,8 @@ void InitIO()
 	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;
 
 
-	// PB7, PB8 - I2C/debug
+	// PB7 (D), PB8 (C) - I2C/debug
+	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
 }
 
 

@@ -101,7 +101,7 @@ int main(void) {
 
 		filter.Update();			// Check if filter coefficients need to be updated
 
-		serial.Command();				// Check for incoming CDC commands
+		serial.Command();			// Check for incoming CDC commands
 
 #if (USB_DEBUG)
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
