@@ -27,7 +27,7 @@ public:
 	ledSelection led = ledSeq;
 	uint8_t brightness[9];
 	uint8_t stop = 0x81;
-	uint8_t stopSpacer = 0xFF;
+	uint8_t stopSpacer = 0x00;
 
 	void Init();
 	void LEDSet(ledSelection l, uint8_t b);

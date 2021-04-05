@@ -14,6 +14,7 @@
  * Store config/calibration values to Flash
  * Implement RGB LED functionality
  * Implement Link button
+ * Investigate R channel zero offset
  */
 
 volatile uint32_t SysTickVal;
@@ -32,10 +33,8 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-
-
-uint16_t adcZeroOffset[2] = {33800, 33800};			// 0V ADC reading
-uint32_t newOffset[2] = {33800, 33800};
+int32_t adcZeroOffset[2] = {33870, 34000};			// 0V ADC reading
+uint32_t newOffset[2] = {33870, 34000};
 uint32_t offsetCounter[2];
 
 
@@ -83,14 +82,13 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-		//MemoryTest();
 		led.TestPattern();
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
- 			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
+			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
 				newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
-				if (offsetCounter[lr] == 3000000) {
+				if (offsetCounter[lr] == 1000000) {
 					adcZeroOffset[lr] = newOffset[lr];
 					offsetCounter[lr] = 0;
 				}

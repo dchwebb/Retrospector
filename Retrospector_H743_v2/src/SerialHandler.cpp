@@ -70,7 +70,7 @@ bool SerialHandler::Command()
 			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + ";  Cutoff: " + std::string(buf).append("\r\n"));
 		}
 
-		extern uint16_t adcZeroOffset[2];
+		//extern uint16_t adcZeroOffset[2];
 		usb->SendString("Delay Times L: " + std::to_string(delay.calcDelay[left] / 48) + " ms, R: " + std::to_string(delay.calcDelay[right] / 48) + " ms\r\n" +
 				std::string((delay.clockValid ? "Clock On": "Clock Off")) + ": interval: " + std::to_string(delay.clockInterval / 96) + " ms, " +
 				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
@@ -84,6 +84,7 @@ bool SerialHandler::Command()
 				"help       -  Shows this information\r\n"
 				"info       -  Show diagnostic information\r\n"
 				"f          -  Filter on/off\r\n"
+				"mem        -  Start Memory Test\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
@@ -118,6 +119,20 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();
+
+	} else if (ComCmd.compare("mem\n") == 0) {		// Memory test
+		extern bool runMemTest;
+		if (!runMemTest) {
+			suspendI2S();
+			usb->SendString("Entering memory test mode - clears, writes and reads external RAM. Type 'mem' again to stop\r\n");
+			CmdPending = false;
+			MemoryTest();
+		} else {
+			usb->SendString("Memory test complete\r\n");
+			delay.Init();
+			resumeI2S();
+			runMemTest = false;
+		}
 
 	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
 

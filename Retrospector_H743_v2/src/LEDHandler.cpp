@@ -27,7 +27,7 @@ void LEDHandler::LEDSend()
 
 	SPI6->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
 	BDMA_Channel5->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
-	BDMA_Channel5->CNDTR = 15;						// Number of data items to transfer (ie size of LED sequence control)
+	BDMA_Channel5->CNDTR = sizeof(*this);			// Number of data items to transfer (ie size of LED sequence control)
 	BDMA_Channel5->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI6->CR1 |= SPI_CR1_CSTART;					// Start SPI
@@ -45,7 +45,17 @@ void LEDHandler::Init()
 	stop = 0x81;
 	stopSpacer = 0x0;
 
-	SPI6->CR2 |= 15;								// Set the number of items to transfer
+	brightness[0] = 0x0;
+	brightness[1] = 0x0;
+	brightness[2] = 0x0;
+	brightness[3] = 0x0;
+	brightness[4] = 0x0;
+	brightness[5] = 0x0;
+	brightness[6] = 0x0;
+	brightness[7] = 0x0;
+	brightness[8] = 0x0;
+
+	SPI6->CR2 |= sizeof(*this);								// Set the number of items to transfer
 	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	BDMA_Channel5->CM0AR = (uint32_t)(this);		// Configure the memory data register address
@@ -72,7 +82,18 @@ void LEDHandler::TestPattern()
 			0x555555 };
 
 	if (SysTickVal > lastLED + 3) {
-		for (uint8_t i = 0; i < 3; ++i) {
+		/*brightness[0] = 0x11;
+		brightness[1] = 0x22;
+		brightness[2] = 0x30;
+		brightness[3] = 0x44;
+		brightness[4] = 0x55;
+		brightness[5] = 0x66;
+		brightness[6] = 0x77;
+		brightness[7] = 0x88;
+		brightness[8] = 0x90;*/
+
+
+		/*for (uint8_t i = 0; i < 3; ++i) {
 
 			++ledCounter[i];
 
@@ -104,7 +125,7 @@ void LEDHandler::TestPattern()
 				}
 				ledCounter[i] = 0;
 			}
-		}
+		}*/
 		lastLED = SysTickVal;
 		LEDSend();
 	}

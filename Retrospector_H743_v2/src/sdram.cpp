@@ -10,12 +10,12 @@
  +-------------------+--------------------+--------------------+--------------------+
  | PD0  <-> FMC_D2   | PE0  <-> FMC_NBL0  | PF0  <-> FMC_A0    | PG0  <-> FMC_A10   |
  | PD1  <-> FMC_D3   | PE1  <-> FMC_NBL1  | PF1  <-> FMC_A1    | PG1  <-> FMC_A11   |
- | PD8  <-> FMC_D13  | PE7  <-> FMC_D4    | PF2  <-> FMC_A2    | PG4  <-> FMC_BA0   |
- | PD9  <-> FMC_D14  | PE8  <-> FMC_D5    | PF3  <-> FMC_A3    | PG5  <-> FMC_BA1   |
- | PD10 <-> FMC_D15  | PE9  <-> FMC_D6    | PF4  <-> FMC_A4    | PG8  <-> FMC_SDCLK |
- | PD14 <-> FMC_D0   | PE10 <-> FMC_D7    | PF5  <-> FMC_A5    | PG15 <-> FMC_NCAS  |
- | PD15 <-> FMC_D1   | PE11 <-> FMC_D8    | PF11 <-> FMC_NRAS  |--------------------+
- +-------------------| PE12 <-> FMC_D9    | PF12 <-> FMC_A6    |
+ | PD8  <-> FMC_D13  | PE7  <-> FMC_D4    | PF2  <-> FMC_A2    | PG2  <-> FMC_A12   |
+ | PD9  <-> FMC_D14  | PE8  <-> FMC_D5    | PF3  <-> FMC_A3    | PG4  <-> FMC_BA0   |
+ | PD10 <-> FMC_D15  | PE9  <-> FMC_D6    | PF4  <-> FMC_A4    | PG5  <-> FMC_BA1   |
+ | PD14 <-> FMC_D0   | PE10 <-> FMC_D7    | PF5  <-> FMC_A5    | PG8  <-> FMC_SDCLK |
+ | PD15 <-> FMC_D1   | PE11 <-> FMC_D8    | PF11 <-> FMC_NRAS  | PG15 <-> FMC_NCAS  |
+ +-------------------| PE12 <-> FMC_D9    | PF12 <-> FMC_A6    |--------------------+
                      | PE13 <-> FMC_D10   | PF13 <-> FMC_A7    |
                      | PE14 <-> FMC_D11   | PF14 <-> FMC_A8    |
                      | PE15 <-> FMC_D12   | PF15 <-> FMC_A9    |
@@ -59,7 +59,7 @@ void InitSDRAM_16160(void) {
 	InitRamPin(GPIOD, {0, 1, 8, 9, 10, 14, 15});
 	InitRamPin(GPIOE, {0, 1, 7, 8, 9, 10, 11, 12, 13, 14, 15});
 	InitRamPin(GPIOF, {0, 1, 2, 3, 4, 5, 11, 12, 13, 14, 15});
-	InitRamPin(GPIOG, {0, 1, 4, 5, 8, 15});
+	InitRamPin(GPIOG, {0, 1, 2, 4, 5, 8, 15});
 
 	// Enable the SDRAM Controller
 	RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
@@ -76,7 +76,7 @@ void InitSDRAM_16160(void) {
 	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
 	                       FMC_SDCRx_NB |					// Number of internal banks: 1: Four internal Banks (4M x16 x4 Banks)
 	                       FMC_SDCRx_MWID_0 |				// Memory data bus width.	00: 8 bits	01: 16 bits	10: 32 bits (8,192 rows by 512 columns by 16 bits)
-	                       FMC_SDCRx_NR_0 |					// Number of row address bits 00: 11 bit, 01: 12 bits (4096), 10: 13 bits (8192) - See RAM datasheet p2 Device Overview
+	                       FMC_SDCRx_NR_1 |					// Number of row address bits 00: 11 bit, 01: 12 bits (4096), 10: 13 bits (8192) - See RAM datasheet p2 Device Overview
 						   FMC_SDCRx_NC_0;					// Number of column address bits 00: 8 bits, 01: 9 bits (512), 10: 10 bits (1024), 11: 11 bits
 
 	// SDRAM Timings on p18 of datasheet. All settings below in 10ns cycles minus one
@@ -248,65 +248,59 @@ void InitSDRAM_16800(void) {
 }
 #endif
 
-#define MEMTESTx
-#ifdef MEMTEST
+
 // SDRAM testing variables
 using memSize = uint32_t;
-uint32_t testAddr;
-memSize* tempAddr;
-//constexpr uint32_t maxAddr = 0x2000000 / sizeof(memSize);
-constexpr uint32_t maxAddr = 0x0800000 / sizeof(memSize);
-uint32_t MemTestDuration;
-uint32_t MemTestCount = 0;
-uint32_t MemTestErrors = 0;
+constexpr uint32_t startAddr = 0xD0000000;
+constexpr uint32_t maxAddr = 0x2000000 / sizeof(memSize);		// 0x1000000 = 16MB
+bool runMemTest = false;
 
-uint32_t startAddr = 0xD0000000;
+uint32_t* SDRAMBuffer = (memSize *)(startAddr);
 
-// Tell linker script to store buffer in SDRAM
-uint32_t __attribute__((section (".sdramSection"))) SDRAMBuffer[maxAddr];
+extern USB usb;
+extern SerialHandler serial;
 
 // Test SDRAM
 void MemoryTest() {
-	static uint32_t memErrs = 0;
-	uint32_t testStart = SysTickVal;
+	uint32_t memTestDuration, memTestCount, memErrs, memAllErrors, testStart, testAddr;
+	memSize* tempAddr;
+	runMemTest = true;
+	memTestCount = 0;
+	memAllErrors = 0;
 
-	// Blank Memory
-	//GPIOC->ODR |= GPIO_ODR_OD11;			// Toggle LED for testing
-	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-		tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
-		*tempAddr = 0;
-	}
-	//GPIOC->ODR &= ~GPIO_ODR_OD11;
+	while (runMemTest) {
+		testStart = SysTickVal;
+		memErrs = 0;
 
-	// Write
-	for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-		tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
-		*tempAddr = static_cast<memSize>(testAddr);
-		//if (*((uint32_t *)(0xD0000004)) != 0) {
-			//++memErrs;
-		//}
-
-
-	}
-
-	uint32_t time = SysTickVal;
-	while (time == SysTickVal) {};
-	time = SysTickVal;
-	while (time == SysTickVal) {};
-
-	// Read
-	for (uint32_t testAddr1 = 0; testAddr1 < maxAddr; ++testAddr1) {
-		memSize val = SDRAMBuffer[testAddr1];
-		if (val != static_cast<memSize>(testAddr1)) {
-			++memErrs;
+		// Blank Memory
+		for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+			tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
+			*tempAddr = 0;
 		}
+
+		// Write
+		for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+			tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
+			*tempAddr = static_cast<memSize>(testAddr);
+		}
+
+		// Read
+		for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
+			memSize val = SDRAMBuffer[testAddr];
+			if (val != static_cast<memSize>(testAddr)) {
+				++memErrs;
+			}
+		}
+
+		memTestDuration = SysTickVal - testStart;
+		memAllErrors += memErrs;
+
+		if (memErrs > 0 || (memTestCount % 5) == 0) {
+			usb.SendString("Memory Test: Errors: " + std::to_string(memErrs) + "; Duration: " + std::to_string(memTestDuration) +
+					"ms; All Errors: " + std::to_string(memAllErrors) + "; Tests run: " + std::to_string(memTestCount) + "\r\n");
+		}
+
+		++memTestCount;
+		serial.Command();			// Check for incoming CDC commands
 	}
-
-	// H743: 32 bit words @ 100MHz (with DCache and ICache): 2017-2027
-	// F429: 32 bit words @ 180MHz / 2 = 90MHz: 2975
-
-	MemTestDuration = SysTickVal - testStart;
-	++MemTestCount;
-	MemTestErrors = memErrs;
 }
-#endif

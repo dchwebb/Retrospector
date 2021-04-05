@@ -865,7 +865,7 @@ Wire Wire Line
 Connection ~ 1700 10500
 Connection ~ 1700 10700
 $Comp
-L Memory_RAM:IS42S16400J-xC U4
+L SDRAM:IS42S16160 U4
 U 1 1 5F0FFF4D
 P 6950 3150
 F 0 "U4" H 6950 4731 50  0000 C CNN
@@ -1648,7 +1648,6 @@ Wire Wire Line
 	4350 3650 4250 3650
 Wire Wire Line
 	4350 3750 4250 3750
-NoConn ~ 1750 3850
 NoConn ~ 1750 3950
 NoConn ~ 1750 4250
 NoConn ~ 1750 4350
@@ -4161,7 +4160,7 @@ F 3 "~" H 16950 9850 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 Text Notes 13600 10900 0    50   ~ 0
-FLT: connect to earth for \nhigher latency but less ringing
+FLT: connect to ground for \nhigher latency but less ringing
 Text Label 7400 7000 0    50   ~ 0
 CHORUS
 Text Label 7400 7300 0    50   ~ 0
@@ -4966,4 +4965,12 @@ $EndComp
 Connection ~ 4950 10050
 Wire Wire Line
 	4950 10050 4550 10050
+Text Label 5800 3450 0    50   ~ 0
+FMC_A12
+Wire Wire Line
+	6150 3450 5800 3450
+Text Label 1600 3850 2    50   ~ 0
+FMC_A12
+Wire Wire Line
+	1750 3850 1600 3850
 $EndSCHEMATC

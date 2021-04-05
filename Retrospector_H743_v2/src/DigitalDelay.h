@@ -4,7 +4,7 @@
 #include "SerialHandler.h"
 #include "Filter.h"
 
-extern uint16_t adcZeroOffset[2];
+extern int32_t adcZeroOffset[2];
 extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 extern uint16_t chorusSamples[2][65536];
 

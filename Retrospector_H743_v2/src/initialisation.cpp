@@ -143,12 +143,26 @@ void InitCache()
 	MPU->RBAR = reinterpret_cast<uint32_t>(&ADC_audio);	// Store the address of the ADC_array into the region base address register
 
 	MPU->RASR = (0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
-				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of CortexM7 programming manual
+				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of Cortex M7 programming manual
 				(1     << MPU_RASR_S_Pos)    |		// Shareable: provides data synchronization between bus masters. Eg a processor with a DMA controller
 				(0     << MPU_RASR_C_Pos)    |		// Cacheable
 				(0     << MPU_RASR_B_Pos)    |		// Bufferable (ignored for non-cacheable configuration)
-				(17    << MPU_RASR_SIZE_Pos) |		// 256KB - D3 is actually 288K (size is log 2(mem size) - 1 ie 2^18 = 256k)
+				(17    << MPU_RASR_SIZE_Pos) |		// 256KB - D2 is actually 288K (size is log 2(mem size) - 1 ie 2^18 = 256k)
 				(1     << MPU_RASR_ENABLE_Pos);		// Enable MPU region
+
+	MPU->RNR = 1;									// Memory region number
+	MPU->RBAR = 0x3800000;							// Store the address of the led DAM buffer into the region base address register
+
+	MPU->RASR = (0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
+				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of Cortex M7 programming manual
+				(1     << MPU_RASR_S_Pos)    |		// Shareable: provides data synchronization between bus masters. Eg a processor with a DMA controller
+				(0     << MPU_RASR_C_Pos)    |		// Cacheable
+				(0     << MPU_RASR_B_Pos)    |		// Bufferable (ignored for non-cacheable configuration)
+				(15    << MPU_RASR_SIZE_Pos) |		// 64KB - D3 (size is log 2(mem size) - 1 ie 2^16 = 64k)
+				(1     << MPU_RASR_ENABLE_Pos);		// Enable MPU region
+
+
+
 	MPU->CTRL |= (1 << MPU_CTRL_PRIVDEFENA_Pos) |	// Enable PRIVDEFENA - this allows use of default memory map for memory areas other than those specific regions defined above
 				 (1 << MPU_CTRL_ENABLE_Pos);		// Enable the MPU
 
@@ -553,6 +567,7 @@ void InitLEDSPI()
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI6->CFG2 |= SPI_CFG2_MASTER;					// Master mode
+//	SPI6->CFG2 |= SPI_CFG2_CPHA;					// Clock phase - this setting potentially reduces risk of MOSI line idling high (See p9 of dm00725181)
 
 	// Configure DMA
 	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
@@ -569,16 +584,12 @@ void InitLEDSPI()
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
 }
 
-// Unused
 void InitBootloaderTimer()
 {
-	// Timer used to capture chorus samples on variable sampling rate; Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
-	// First guess is we want to oscillate between ARR = 110 (180kHz) and 500 (40kHz) in 2 seconds
-
+	// Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
 	RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;
 	TIM2->PSC = 0;									// [prescaler is PSC + 1] 200MHz / 1 = 200MHz
 	TIM2->ARR = 2083;								// Set auto reload register 200MHz / 2083 = 96kHz
-
 
 	TIM2->DIER |= TIM_DIER_UIE;						// DMA/interrupt enable register
 	NVIC_SetPriority(TIM2_IRQn, 1);					// Lower is higher priority
