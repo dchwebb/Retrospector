@@ -150,8 +150,9 @@ void InitCache()
 				(17    << MPU_RASR_SIZE_Pos) |		// 256KB - D2 is actually 288K (size is log 2(mem size) - 1 ie 2^18 = 256k)
 				(1     << MPU_RASR_ENABLE_Pos);		// Enable MPU region
 
+
 	MPU->RNR = 1;									// Memory region number
-	MPU->RBAR = 0x3800000;							// Store the address of the led DAM buffer into the region base address register
+	MPU->RBAR = 0x38000000;							// Store the address of the led DMA buffer into the region base address register
 
 	MPU->RASR = (0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
 				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of Cortex M7 programming manual
@@ -170,6 +171,7 @@ void InitCache()
 	SCB_EnableDCache();
 
 	SCB_EnableICache();
+
 }
 
 
@@ -572,16 +574,16 @@ void InitLEDSPI()
 	// Configure DMA
 	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
 
-	BDMA_Channel5->CCR &= ~BDMA_CCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	BDMA_Channel5->CCR &= ~BDMA_CCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
-	BDMA_Channel5->CCR |= BDMA_CCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
-	BDMA_Channel5->CCR |= BDMA_CCR_PL_0;			// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
-	BDMA_Channel5->CCR |= BDMA_CCR_MINC;			// Memory in increment mode
+	BDMA_Channel0->CCR &= ~BDMA_CCR_MSIZE;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	BDMA_Channel0->CCR &= ~BDMA_CCR_PSIZE;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	BDMA_Channel0->CCR |= BDMA_CCR_DIR;				// data transfer direction: 00: peripheral-to-memory; 01: memory-to-peripheral; 10: memory-to-memory
+	BDMA_Channel0->CCR |= BDMA_CCR_PL_0;			// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+	BDMA_Channel0->CCR |= BDMA_CCR_MINC;			// Memory in increment mode
 
-	BDMA_Channel5->CPAR = (uint32_t)(&(SPI6->TXDR));// Configure the peripheral data register address
+	BDMA_Channel0->CPAR = (uint32_t)(&(SPI6->TXDR));// Configure the peripheral data register address
 
-	DMAMUX2_Channel5->CCR |= 12; 					// DMA request MUX input 86 = spi6_tx_dma (See p.697)
-	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF5; // Channel 5 Clear synchronization overrun event flag
+	DMAMUX2_Channel0->CCR |= 12; 					// DMA request MUX input 86 = spi6_tx_dma (See p.697)
+	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 5 Clear synchronization overrun event flag
 }
 
 void InitBootloaderTimer()

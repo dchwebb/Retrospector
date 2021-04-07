@@ -17,6 +17,7 @@ void LEDHandler::LEDColour(uint8_t g, uint32_t rgb)
 	brightness[g * 3 + 2] = rgb & 0xFF;
 }
 
+
 void LEDHandler::LEDSend()
 {
 	// Clear DMA errors and transfer complete status flags
@@ -26,9 +27,10 @@ void LEDHandler::LEDSend()
 	while ((SPI6->SR & SPI_SR_TXP) == 0 && (SPI6->SR & SPI_SR_TXC) == 0) {};
 
 	SPI6->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
-	BDMA_Channel5->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
-	BDMA_Channel5->CNDTR = sizeof(*this);			// Number of data items to transfer (ie size of LED sequence control)
-	BDMA_Channel5->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
+	BDMA_Channel0->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
+	BDMA_Channel0->CNDTR = sizeof(*this);			// Number of data items to transfer (ie size of LED sequence control)
+	//BDMA_Channel0->CM0AR = (uint32_t)(this);		// Configure the memory data register address
+	BDMA_Channel0->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI6->CR1 |= SPI_CR1_CSTART;					// Start SPI
 }
@@ -45,20 +47,10 @@ void LEDHandler::Init()
 	stop = 0x81;
 	stopSpacer = 0x0;
 
-	brightness[0] = 0x0;
-	brightness[1] = 0x0;
-	brightness[2] = 0x0;
-	brightness[3] = 0x0;
-	brightness[4] = 0x0;
-	brightness[5] = 0x0;
-	brightness[6] = 0x0;
-	brightness[7] = 0x0;
-	brightness[8] = 0x0;
-
-	SPI6->CR2 |= sizeof(*this);								// Set the number of items to transfer
+	SPI6->CR2 |= sizeof(*this);						// Set the number of items to transfer
 	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
-	BDMA_Channel5->CM0AR = (uint32_t)(this);		// Configure the memory data register address
+	BDMA_Channel0->CM0AR = (uint32_t)(this);		// Configure the memory data register address
 }
 
 
@@ -72,7 +64,7 @@ void LEDHandler::TestPattern()
 
 
 	static bool ledCycle = true;
-	static const uint16_t transition = 1000;
+	static const uint16_t transition = 500;
 	static const uint32_t colourCycle[] = {
 			0xFF0000,
 			0x00FF00,
@@ -82,19 +74,8 @@ void LEDHandler::TestPattern()
 			0x555555 };
 
 	if (SysTickVal > lastLED + 3) {
-		/*brightness[0] = 0x11;
-		brightness[1] = 0x22;
-		brightness[2] = 0x30;
-		brightness[3] = 0x44;
-		brightness[4] = 0x55;
-		brightness[5] = 0x66;
-		brightness[6] = 0x77;
-		brightness[7] = 0x88;
-		brightness[8] = 0x90;*/
 
-
-		/*for (uint8_t i = 0; i < 3; ++i) {
-
+		for (uint8_t i = 0; i < 3; ++i) {
 			++ledCounter[i];
 
 			float mult = (float)ledCounter[i] / transition;
@@ -125,7 +106,7 @@ void LEDHandler::TestPattern()
 				}
 				ledCounter[i] = 0;
 			}
-		}*/
+		}
 		lastLED = SysTickVal;
 		LEDSend();
 	}
