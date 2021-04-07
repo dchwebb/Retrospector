@@ -31,39 +31,7 @@ void Filter::Update(bool reset)
 		reset = true;
 	}
 
-
-	// Debug: create tests of variation in damping techniques
-	static uint16_t testCounter;
-	static uint16_t dampMin[2], dampMax[2];
-	if (testCounter == 0) {
-		dampDiff[0] = dampMax[0] - dampMin[0];
-		dampMin[0] = dampedADC;
-		dampMax[0] = dampedADC;
-		dampDiff[1] = dampMax[1] - dampMin[1];
-		dampMin[1] = dampedADC2;
-		dampMax[1] = dampedADC2;
-	} else {
-		if (dampedADC > dampMax[0]) {
-			dampMax[0] = dampedADC;
-		} else if (dampedADC < dampMin[0]) {
-			dampMin[0] = dampedADC;
-		}
-		if (dampedADC2 > dampMax[1]) {
-			dampMax[1] = dampedADC2;
-		} else if (dampedADC2 < dampMin[1]) {
-			dampMin[1] = dampedADC2;
-		}
-	}
-	++testCounter;
-
-	TIM3->CNT = 0;		// Debug
-
-	//dampedADC = std::max((127L * dampedADC + std::min((int)ADC_array[ADC_Tone] + (65535 - ADC_array[ADC_Delay_CV_L]), 65535)) >> 7, 0L);		// FIXME - don't yet have CV input for Filter
 	dampedADC = filterADC.FilterSample(std::min((int)ADC_array[ADC_Filter_Pot] + (65535 - ADC_array[ADC_Filter_CV]), 65535));
-	//dampedTone = std::max((31L * dampedTone + ADC_array[ADC_Tone]) >> 5, 0L);		// FIXME - don't yet have CV input for Filter
-
-	extern uint32_t debugDuration;
-	debugDuration = TIM3->CNT;
 
 	if (reset || std::abs(dampedADC - previousADC) > hysteresis) {
 		calculatingFilter = true;
@@ -74,6 +42,11 @@ void Filter::Update(bool reset)
 			InitFIRFilter(dampedADC);
 		}
 		calculatingFilter = false;
+
+		// Update filter LED
+		float ColourMult = (float)dampedADC / 65535;
+		led.LEDColour(ledFilter, ColourMult * 0xFF, 0, (1 - ColourMult) * 0xFF);
+		led.LEDSend();
 	}
 }
 

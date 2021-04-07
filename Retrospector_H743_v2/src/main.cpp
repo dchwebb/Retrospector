@@ -72,17 +72,17 @@ int main(void) {
 	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();
 	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
+	InitLEDSPI();					// Initialise SPI/DAM for LED controller
+	led.Init();
 	InitIO();						// Initialise switches and LEDs
 //	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();
 	delay.Init();					// clear sample buffers and preset delay timings
-	InitLEDSPI();					// Initialise SPI/DAM for LED controller
-	led.Init();
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-		led.TestPattern();
+		//led.TestPattern();
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {

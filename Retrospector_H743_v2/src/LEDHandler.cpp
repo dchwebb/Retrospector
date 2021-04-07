@@ -17,6 +17,11 @@ void LEDHandler::LEDColour(uint8_t g, uint32_t rgb)
 	brightness[g * 3 + 2] = rgb & 0xFF;
 }
 
+void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
+	brightness[l * 3] = r & 0xFE;
+	brightness[l * 3 + 1] = g & 0xFE;
+	brightness[l * 3 + 2] = b & 0xFE;
+}
 
 void LEDHandler::LEDSend()
 {
@@ -29,7 +34,6 @@ void LEDHandler::LEDSend()
 	SPI6->CR1 &= ~SPI_CR1_SPE;						// Disable SPI
 	BDMA_Channel0->CCR &= ~BDMA_CCR_EN;				// Disable BDMA
 	BDMA_Channel0->CNDTR = sizeof(*this);			// Number of data items to transfer (ie size of LED sequence control)
-	//BDMA_Channel0->CM0AR = (uint32_t)(this);		// Configure the memory data register address
 	BDMA_Channel0->CCR |= BDMA_CCR_EN;				// Enable DMA and wait
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
 	SPI6->CR1 |= SPI_CR1_CSTART;					// Start SPI
@@ -42,7 +46,7 @@ void LEDHandler::Init()
 	spacer = 0x0;			// See Errata in data sheet - does not work correctly without spacer
 	start = 0xFF;
 	slaveAddress = 3;
-	led = ledSeq;
+	ledSel = ledSeq;
 	std::fill(std::begin(brightness), std::begin(brightness) + 9, 0);
 	stop = 0x81;
 	stopSpacer = 0x0;

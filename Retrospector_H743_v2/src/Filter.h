@@ -9,7 +9,7 @@
 #include <cmath>
 #include <complex>
 #include <array>
-
+#include "LEDHandler.h"
 
 #define MAX_POLES 8		// For declaring IIR arrays
 #define MAX_SECTIONS (MAX_POLES + 1) / 2
@@ -18,6 +18,7 @@
 // For debugging
 extern bool activateFilter;
 extern bool calculatingFilter;
+extern LEDHandler led;
 
 enum FilterControl {LP, HP, Both};
 enum PassType {FilterOff, LowPass, HighPass, BandPass};
