@@ -50,7 +50,6 @@ private:
 	bool clockValid = false;
 	bool clockHigh = false;
 
-	uint32_t ledOffTime[2];
 	int32_t ledCounter[2];					// Counter to control timing of LED delay rate indicators
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 
@@ -69,8 +68,6 @@ private:
 	// Private class functions
 	void UpdateLED(channel c);
 	void ReverseLED(channel c, int32_t remainingDelay);
-	void LedOn(channel c);
-	void LedOff(channel c);
 	delay_mode Mode();
 	int32_t OutputMix(float drySample, float wetSample);
 

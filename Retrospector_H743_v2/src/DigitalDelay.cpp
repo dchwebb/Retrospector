@@ -145,7 +145,7 @@ void DigitalDelay::CalcSample()
 
 		// check if read position is less than write position less delay then reset read position to write position
 		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
-			ledOffTime[LR] = SysTickVal + 50;
+			//ledOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
@@ -229,25 +229,30 @@ void DigitalDelay::UpdateLED(channel c)
 	if (clockValid) {
 		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
 		if (delayMult[c] < 1.0f) {
-			if (delayCounter - lastClock < 1000 && ledOffTime[c] < SysTickVal) {		// Always trigger on the clock, unless LED already on
+			if (delayCounter - lastClock < 500) {				// Always trigger on the clock, unless LED already on
 				ledFraction[c] = 1;
 				ledCounter[c] = 0;
-				//LedOn(c);
 			} else if (delayMult[c] * ledFraction[c] < 1.0f && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
 				ledFraction[c]++;
 				ledCounter[c] = 0;
-				//LedOn(c);
 			}
-		} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 		// 1000 ~= 20.8ms: handle tempos slower than 1
+		} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 	// handle tempos slower than 1 (1000 ~= 20.8ms)
 			ledCounter[c] = 0;
-			//LedOn(c);
 		}
 	} else if (ledCounter[c] > calcDelay[c]) {
-		LedOn(c);
+		ledCounter[c] = 0;
 	}
 
-	// fade out
+	// Debug
+	if (c == left) {
+		if (ledCounter[c] < 50) {
+			GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+		} else if (ledCounter[c] > 200) {
+			GPIOB->ODR &= ~GPIO_ODR_OD8;		// Toggle LED for debugging
+		}
+	}
 
+	// exponential fade out
 	float fract = 1.0f - std::pow(2.0f * (float)ledCounter[c] / calcDelay[c], 0.1f);
 	if (c == left) {
 		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
@@ -255,53 +260,18 @@ void DigitalDelay::UpdateLED(channel c)
 		led.LEDColour(ledDelR, fract * 0x05, fract * 0xFF, fract * 0x10);
 	}
 
-	/*// Turn off delay LED after duration expired
-	if (SysTickVal > ledOffTime[c]) {
-		LedOff(c);
-	}*/
 }
 
 
 // Scale the LED so it fades in with the timing of the reverse delay
 void DigitalDelay::ReverseLED(channel c, int32_t remainingDelay)
 {
-	float rc = (float)remainingDelay / (calcDelay[c] * 2);
-	ledCounter[c]++;
-	if (ledCounter[c] >= pow(rc, 2.0f) * 120) {
-		LedOn(c);
+	float fract = std::pow(1.0f - (float)remainingDelay / (calcDelay[c] * 2), 4.0f);
+	if (c == left) {
+		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
 	} else {
-		LedOff(c);
+		led.LEDColour(ledDelR, fract * 0x05, fract * 0xFF, fract * 0x10);
 	}
-}
-
-
-// Switch LED on and set off time
-void DigitalDelay::LedOn(channel c)
-{
-	/*
-	if (c == left) {
-		led.LEDColour(ledDelL, 0xFF, 0xFF, 0xFF);
-	}
-	if (c == right) {
-		led.LEDColour(ledDelR, 0, 0xFF, 0);
-	}
-	*/
-	ledCounter[c] = 0;
-	ledOffTime[c] = SysTickVal + 50;		// In ms
-}
-
-
-// Directly switch LED on or off
-void DigitalDelay::LedOff(channel c)
-{
-
-	if (c == left) {
-		//led.LEDColour(ledDelL, 0, 0, 0);
-	}
-	if (c == right) {
-		led.LEDColour(ledDelR, 0, 0, 0);
-	}
-	ledOffTime[c] = 0;
 }
 
 

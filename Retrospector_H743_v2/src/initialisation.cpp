@@ -540,6 +540,8 @@ void InitIO()
 
 	// PB7 (D), PB8 (C) - I2C/debug
 	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB7: debug pin
+
 }
 
 
