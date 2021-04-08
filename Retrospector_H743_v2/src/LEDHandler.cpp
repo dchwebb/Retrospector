@@ -60,7 +60,7 @@ void LEDHandler::Init()
 void LEDHandler::TimedSend()
 {
 	static uint32_t lastSend = 0;
-	if (SysTickVal > lastSend + 3) {
+	if (SysTickVal > lastSend + 1) {
 		lastSend = SysTickVal;
 		LEDSend();
 	}

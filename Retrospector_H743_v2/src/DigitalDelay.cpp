@@ -231,22 +231,34 @@ void DigitalDelay::UpdateLED(channel c)
 		if (delayMult[c] < 1.0f) {
 			if (delayCounter - lastClock < 1000 && ledOffTime[c] < SysTickVal) {		// Always trigger on the clock, unless LED already on
 				ledFraction[c] = 1;
-				LedOn(c);
+				ledCounter[c] = 0;
+				//LedOn(c);
 			} else if (delayMult[c] * ledFraction[c] < 1.0f && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
 				ledFraction[c]++;
-				LedOn(c);
+				ledCounter[c] = 0;
+				//LedOn(c);
 			}
 		} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 		// 1000 ~= 20.8ms: handle tempos slower than 1
-			LedOn(c);
+			ledCounter[c] = 0;
+			//LedOn(c);
 		}
 	} else if (ledCounter[c] > calcDelay[c]) {
 		LedOn(c);
 	}
 
-	// Turn off delay LED after duration expired
+	// fade out
+
+	float fract = 1.0f - std::pow(2.0f * (float)ledCounter[c] / calcDelay[c], 0.1f);
+	if (c == left) {
+		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
+	} else {
+		led.LEDColour(ledDelR, fract * 0x05, fract * 0xFF, fract * 0x10);
+	}
+
+	/*// Turn off delay LED after duration expired
 	if (SysTickVal > ledOffTime[c]) {
 		LedOff(c);
-	}
+	}*/
 }
 
 
@@ -266,12 +278,14 @@ void DigitalDelay::ReverseLED(channel c, int32_t remainingDelay)
 // Switch LED on and set off time
 void DigitalDelay::LedOn(channel c)
 {
+	/*
 	if (c == left) {
-		led.LEDColour(ledDelL, 0xFF, 0, 0);
+		led.LEDColour(ledDelL, 0xFF, 0xFF, 0xFF);
 	}
 	if (c == right) {
 		led.LEDColour(ledDelR, 0, 0xFF, 0);
 	}
+	*/
 	ledCounter[c] = 0;
 	ledOffTime[c] = SysTickVal + 50;		// In ms
 }
@@ -282,7 +296,7 @@ void DigitalDelay::LedOff(channel c)
 {
 
 	if (c == left) {
-		led.LEDColour(ledDelL, 0, 0, 0);
+		//led.LEDColour(ledDelL, 0, 0, 0);
 	}
 	if (c == right) {
 		led.LEDColour(ledDelR, 0, 0, 0);
