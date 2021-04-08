@@ -82,7 +82,7 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-		//led.TestPattern();
+		led.TimedSend();
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {

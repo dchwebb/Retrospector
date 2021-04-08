@@ -57,6 +57,15 @@ void LEDHandler::Init()
 	BDMA_Channel0->CM0AR = (uint32_t)(this);		// Configure the memory data register address
 }
 
+void LEDHandler::TimedSend()
+{
+	static uint32_t lastSend = 0;
+	if (SysTickVal > lastSend + 3) {
+		lastSend = SysTickVal;
+		LEDSend();
+	}
+}
+
 
 void LEDHandler::TestPattern()
 {

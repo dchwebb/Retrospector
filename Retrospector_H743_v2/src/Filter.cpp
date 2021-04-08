@@ -45,8 +45,11 @@ void Filter::Update(bool reset)
 
 		// Update filter LED
 		float ColourMult = (float)dampedADC / 65535;
-		led.LEDColour(ledFilter, ColourMult * 0xFF, 0, (1 - ColourMult) * 0xFF);
-		led.LEDSend();
+		if (passType == FilterOff) {
+			led.LEDColour(ledFilter, 0x80, 0x80, 0x80);
+		} else {
+			led.LEDColour(ledFilter, ColourMult * 0xFF, 0, (1 - ColourMult) * 0xFF);
+		}
 	}
 }
 

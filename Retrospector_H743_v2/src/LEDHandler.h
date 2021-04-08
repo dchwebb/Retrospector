@@ -18,8 +18,8 @@ enum ledSelection {
 };
 
 enum ledType {
-	ledDelL = 0,
-	ledDelR = 1,
+	ledDelR = 0,
+	ledDelL = 1,
 	ledFilter = 2
 };
 
@@ -38,9 +38,7 @@ public:
 	void LEDColour(uint8_t g, uint32_t b);
 	void LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b);
 	void LEDSend();
+	void TimedSend();
 	void TestPattern();
 
 };
-
-
-

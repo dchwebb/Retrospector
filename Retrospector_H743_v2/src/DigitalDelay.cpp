@@ -68,12 +68,6 @@ void DigitalDelay::CalcSample()
 		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;
 	}
 
-
-	// Put next output sample in I2S buffer (OutputMix will set VCA mix levels in normal mode or apply a software mix for chorus mode)
-	// debug:
-	//debugOutput += 10;
-	//SPI2->TXDR = debugOutput;
-
 	SPI2->TXDR = OutputMix(recordSample, nextSample);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
@@ -272,14 +266,12 @@ void DigitalDelay::ReverseLED(channel c, int32_t remainingDelay)
 // Switch LED on and set off time
 void DigitalDelay::LedOn(channel c)
 {
-	/*
 	if (c == left) {
-		GPIOC->ODR |= GPIO_ODR_OD10;
+		led.LEDColour(ledDelL, 0xFF, 0, 0);
 	}
 	if (c == right) {
-		GPIOC->ODR |= GPIO_ODR_OD11;
+		led.LEDColour(ledDelR, 0, 0xFF, 0);
 	}
-	*/
 	ledCounter[c] = 0;
 	ledOffTime[c] = SysTickVal + 50;		// In ms
 }
@@ -288,14 +280,13 @@ void DigitalDelay::LedOn(channel c)
 // Directly switch LED on or off
 void DigitalDelay::LedOff(channel c)
 {
-	/*
+
 	if (c == left) {
-		GPIOC->ODR &= ~GPIO_ODR_OD10;
+		led.LEDColour(ledDelL, 0, 0, 0);
 	}
 	if (c == right) {
-		GPIOC->ODR &= ~GPIO_ODR_OD11;
+		led.LEDColour(ledDelR, 0, 0, 0);
 	}
-	*/
 	ledOffTime[c] = 0;
 }
 
