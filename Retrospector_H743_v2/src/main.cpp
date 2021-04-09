@@ -36,7 +36,8 @@ void BootDFU() {
 int32_t adcZeroOffset[2] = {33870, 34000};			// 0V ADC reading
 uint32_t newOffset[2] = {33870, 34000};
 uint32_t offsetCounter[2];
-
+bool lockButton;
+uint32_t lockBtnTest;
 
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
@@ -82,7 +83,7 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-		led.TimedSend();
+
 
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
@@ -99,12 +100,23 @@ int main(void) {
 			}
 		}
 
-		// Implement chorus (PG10)/stereo wide (PC12) switch
+		// Implement chorus (PG10)/stereo wide (PC12) switch, and lock button (PB4) for delay LR timing
 		if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != delay.chorusMode) {
 			delay.ChorusMode(!delay.chorusMode);
 		}
 		if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != delay.stereoWide) {
 			delay.stereoWide = !delay.stereoWide;
+		}
+		if (SysTickVal > lockBtnDown + 1) {			// Test if lock button pressed with some debouncing
+			if ((GPIOB->IDR & GPIO_IDR_ID4) == 0) {
+				if (!lockButton) {
+					delay.lockLR = !delay.lockLR;
+					lockButton = true;
+				}
+			} else {
+				lockButton = false;
+			}
+			lockBtnDown = SysTickVal;
 		}
 
 		filter.Update();			// Check if filter coefficients need to be updated

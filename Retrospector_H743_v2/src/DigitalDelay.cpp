@@ -141,11 +141,11 @@ void DigitalDelay::CalcSample()
 		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
 
 		// Scale the LED so it fades in with the timing of the reverse delay
-		ReverseLED(LR, remainingDelay);
+		//ReverseLED(LR, remainingDelay);
+		UpdateLED(LR, true, remainingDelay);
 
 		// check if read position is less than write position less delay then reset read position to write position
 		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
-			//ledOffTime[LR] = SysTickVal + 50;
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos - 1;
 			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
@@ -161,7 +161,7 @@ void DigitalDelay::CalcSample()
 			delayCrossfade[LR] = crossfade;
 			currentDelay[LR] = calcDelay[LR];
 		}
-		UpdateLED(LR);
+		UpdateLED(LR, false);
 	}
 
 
@@ -222,43 +222,60 @@ void DigitalDelay::Init()
 }
 
 
-void DigitalDelay::UpdateLED(channel c)
+void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 {
-	// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
-	++ledCounter[c];
-	if (clockValid) {
-		// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
-		if (delayMult[c] < 1.0f) {
-			if (delayCounter - lastClock < 500) {				// Always trigger on the clock, unless LED already on
-				ledFraction[c] = 1;
-				ledCounter[c] = 0;
-			} else if (delayMult[c] * ledFraction[c] < 1.0f && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
-				ledFraction[c]++;
+	float fract;
+	ledOnTimer++;
+
+	if (reverse) {
+		fract = std::pow(1.0f - (float)remainingDelay / (calcDelay[c] * 2), 4.0f);
+	} else {
+		// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
+		++ledCounter[c];
+		if (clockValid) {
+			// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
+			if (delayMult[c] < 1.0f) {
+				if (delayCounter - lastClock < 500) {				// Always trigger on the clock, unless LED already on
+					ledFraction[c] = 1;
+					ledCounter[c] = 0;
+				} else if (delayMult[c] * ledFraction[c] < 1.0f && ledCounter[c] > calcDelay[c]) {	// Handle fractional times
+					ledFraction[c]++;
+					ledCounter[c] = 0;
+				}
+			} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 	// handle tempos slower than 1 (1000 ~= 20.8ms)
 				ledCounter[c] = 0;
 			}
-		} else if (delayCounter - lastClock < 5000 && ledCounter[c] > calcDelay[c] - 1000) { 	// handle tempos slower than 1 (1000 ~= 20.8ms)
+		} else if (ledCounter[c] > calcDelay[c]) {
 			ledCounter[c] = 0;
 		}
-	} else if (ledCounter[c] > calcDelay[c]) {
-		ledCounter[c] = 0;
-	}
 
-	// Debug
-	if (c == left) {
-		if (ledCounter[c] < 50) {
-			GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
-		} else if (ledCounter[c] > 200) {
-			GPIOB->ODR &= ~GPIO_ODR_OD8;		// Toggle LED for debugging
+		// Debug
+		if (c == left) {
+			if (ledCounter[c] < 50) {
+				GPIOB->ODR |= GPIO_ODR_OD8;			// Toggle LED for debugging
+			} else if (ledCounter[c] > 200) {
+				GPIOB->ODR &= ~GPIO_ODR_OD8;		// Toggle LED for debugging
+			}
 		}
+
+		// Exponential fade out
+		fract = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
 	}
 
-	// exponential fade out
-	float fract = 1.0f - std::pow(2.0f * (float)ledCounter[c] / calcDelay[c], 0.1f);
 	if (c == left) {
 		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
 	} else {
-		led.LEDColour(ledDelR, fract * 0x05, fract * 0xFF, fract * 0x10);
+		if (lockLR)
+			led.LEDColour(ledDelR, fract * 0xFF, fract * 0x12, fract * 0x06);
+		else
+			led.LEDColour(ledDelR, fract * 0x05, fract * 0xBB, fract * 0x12);
 	}
+
+	if (ledOnTimer > 4) {
+		led.LEDSend();
+		ledOnTimer = 0;
+	}
+
 
 }
 
