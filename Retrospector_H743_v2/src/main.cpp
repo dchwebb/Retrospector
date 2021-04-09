@@ -107,7 +107,7 @@ int main(void) {
 		if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != delay.stereoWide) {
 			delay.stereoWide = !delay.stereoWide;
 		}
-		if (SysTickVal > lockBtnDown + 1) {			// Test if lock button pressed with some debouncing
+		if (SysTickVal > lockBtnTest + 1) {			// Test if lock button pressed with some debouncing
 			if ((GPIOB->IDR & GPIO_IDR_ID4) == 0) {
 				if (!lockButton) {
 					delay.lockLR = !delay.lockLR;
@@ -116,7 +116,7 @@ int main(void) {
 			} else {
 				lockButton = false;
 			}
-			lockBtnDown = SysTickVal;
+			lockBtnTest = SysTickVal;
 		}
 
 		filter.Update();			// Check if filter coefficients need to be updated

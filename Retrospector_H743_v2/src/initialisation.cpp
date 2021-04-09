@@ -283,8 +283,8 @@ void InitADCAudio()
 	ADC2->CR |= ADC_CR_ADCAL;
 	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
-	// Configure ADC Channels to be converted: PA2 ADC12_INP14 (AUDIO_IN_L), PA3 ADC12_INP15 (AUDIO_IN_R)
-	InitAdcPins(ADC2, {14, 15});
+	// Configure ADC Channels to be converted: PA3 ADC12_INP15 (AUDIO_IN_L), PA2 ADC12_INP14 (AUDIO_IN_R)
+	InitAdcPins(ADC2, {15, 14});
 
 	// Enable ADC
 	ADC2->CR |= ADC_CR_ADEN;

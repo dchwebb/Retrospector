@@ -5,7 +5,6 @@ extern float DACLevel;
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 
-
 void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
@@ -87,7 +86,6 @@ void DigitalDelay::CalcSample()
 	}
 
 
-
 	// Move write and read heads one sample forwards
 	if (reverse) {
 		if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
@@ -108,7 +106,7 @@ void DigitalDelay::CalcSample()
 	} else {
 		clockHigh = false;
 	}
-	clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));			// Valid clock interval is within a second
+	clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));					// Valid clock interval is within a second
 	++delayCounter;
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
@@ -121,9 +119,19 @@ void DigitalDelay::CalcSample()
 		calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
 
 	} else {
-		if (Mode() != modeShort)
+		if (Mode() != modeShort) {
 			delayClkCV *= SAMPLE_BUFFER_LENGTH / 65356;
-		calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		}
+		// If lock tempo button active right delay is multiple of left delay
+		if (lockLR && LR == right) {
+			int32_t leftDelay = calcDelay[left];
+			delayMult[left] = tempoMult[tempoMult.size() * leftDelay / 65536];		// Get the equivalent multiplier for Left delay
+			int32_t leftDelScaled = leftDelay / delayMult[left];						// Normalise the left delay
+			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
+			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
+		} else {
+			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		}
 	}
 
 
@@ -141,7 +149,6 @@ void DigitalDelay::CalcSample()
 		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
 
 		// Scale the LED so it fades in with the timing of the reverse delay
-		//ReverseLED(LR, remainingDelay);
 		UpdateLED(LR, true, remainingDelay);
 
 		// check if read position is less than write position less delay then reset read position to write position
@@ -163,12 +170,6 @@ void DigitalDelay::CalcSample()
 		}
 		UpdateLED(LR, false);
 	}
-
-
-//	time = TIM3->CNT;
-//	if (time > debugDuration)
-//		debugDuration = time;		// Debug
-
 }
 
 
@@ -227,6 +228,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 	float fract;
 	ledOnTimer++;
 
+	// FIXME - only carry out calculations when needed before send
 	if (reverse) {
 		fract = std::pow(1.0f - (float)remainingDelay / (calcDelay[c] * 2), 4.0f);
 	} else {
@@ -249,14 +251,14 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 			ledCounter[c] = 0;
 		}
 
-		// Debug
+		/* Debug - outputs pulse for checking synch to external clock input
 		if (c == left) {
 			if (ledCounter[c] < 50) {
 				GPIOB->ODR |= GPIO_ODR_OD8;			// Toggle LED for debugging
 			} else if (ledCounter[c] > 200) {
 				GPIOB->ODR &= ~GPIO_ODR_OD8;		// Toggle LED for debugging
 			}
-		}
+		}*/
 
 		// Exponential fade out
 		fract = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
@@ -266,7 +268,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
 	} else {
 		if (lockLR)
-			led.LEDColour(ledDelR, fract * 0xFF, fract * 0x12, fract * 0x06);
+			led.LEDColour(ledDelR, fract * 0xF4, fract * 0x1A, fract * 0x04);
 		else
 			led.LEDColour(ledDelR, fract * 0x05, fract * 0xBB, fract * 0x12);
 	}
@@ -280,16 +282,6 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 }
 
 
-// Scale the LED so it fades in with the timing of the reverse delay
-void DigitalDelay::ReverseLED(channel c, int32_t remainingDelay)
-{
-	float fract = std::pow(1.0f - (float)remainingDelay / (calcDelay[c] * 2), 4.0f);
-	if (c == left) {
-		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
-	} else {
-		led.LEDColour(ledDelR, fract * 0x05, fract * 0xFF, fract * 0x10);
-	}
-}
 
 
 delay_mode DigitalDelay::Mode()

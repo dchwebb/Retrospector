@@ -9,15 +9,16 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	//if (calculatingFilter)
-		//GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+	if (calculatingFilter) {
+		GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+	}
 
 	delay.CalcSample();
 
 	// FIXME - it appears we need something here to add a slight delay or the interrupt sometimes fires twice
 	TinyDelay();
 
-	//GPIOB->ODR &= ~GPIO_ODR_OD8;
+	GPIOB->ODR &= ~GPIO_ODR_OD8;
 }
 
 
