@@ -37,6 +37,7 @@ public:
 	void LEDSet(ledSelection l, uint8_t b);
 	void LEDColour(uint8_t g, uint32_t b);
 	void LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b);
+	void LEDColour(uint8_t g, uint32_t rgb, float fract);
 	void LEDSend();
 	void TimedSend();
 	void TestPattern();

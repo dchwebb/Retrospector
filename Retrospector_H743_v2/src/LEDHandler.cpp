@@ -17,6 +17,16 @@ void LEDHandler::LEDColour(uint8_t g, uint32_t rgb)
 	brightness[g * 3 + 2] = rgb & 0xFF;
 }
 
+// Set colour of RGB led group, applying a fractional reduction to each colour separately
+void LEDHandler::LEDColour(uint8_t g, uint32_t rgb, float fract)
+{
+	// Brightness is from 0 to 255, with lowest bit cleared
+	rgb &= ~0x010101;				// Clear lowest bit
+	brightness[g * 3] = static_cast<uint8_t>(fract * (rgb >> 16));
+	brightness[g * 3 + 1] = static_cast<uint8_t>(fract * ((rgb >> 8) & 0xFF));
+	brightness[g * 3 + 2] = static_cast<uint8_t>(fract * (rgb & 0xFF));
+}
+
 void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
 	brightness[l * 3] = r & 0xFE;
 	brightness[l * 3 + 1] = g & 0xFE;

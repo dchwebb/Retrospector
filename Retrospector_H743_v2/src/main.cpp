@@ -36,8 +36,8 @@ void BootDFU() {
 int32_t adcZeroOffset[2] = {33870, 34000};			// 0V ADC reading
 uint32_t newOffset[2] = {33870, 34000};
 uint32_t offsetCounter[2];
-bool lockButton;
-uint32_t lockBtnTest;
+bool linkButton;
+uint32_t linkBtnTest;
 
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
@@ -100,23 +100,23 @@ int main(void) {
 			}
 		}
 
-		// Implement chorus (PG10)/stereo wide (PC12) switch, and lock button (PB4) for delay LR timing
+		// Implement chorus (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
 		if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != delay.chorusMode) {
 			delay.ChorusMode(!delay.chorusMode);
 		}
 		if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != delay.stereoWide) {
 			delay.stereoWide = !delay.stereoWide;
 		}
-		if (SysTickVal > lockBtnTest + 1) {			// Test if lock button pressed with some debouncing
+		if (SysTickVal > linkBtnTest + 1) {			// Test if link button pressed with some debouncing
 			if ((GPIOB->IDR & GPIO_IDR_ID4) == 0) {
-				if (!lockButton) {
-					delay.lockLR = !delay.lockLR;
-					lockButton = true;
+				if (!linkButton) {
+					delay.linkLR = !delay.linkLR;
+					linkButton = true;
 				}
 			} else {
-				lockButton = false;
+				linkButton = false;
 			}
-			lockBtnTest = SysTickVal;
+			linkBtnTest = SysTickVal;
 		}
 
 		filter.Update();			// Check if filter coefficients need to be updated

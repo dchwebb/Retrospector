@@ -30,7 +30,7 @@ public:
 
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool chorusMode = false;
-	bool lockLR = false;					// Makes tempo of right delay a multiple of left delay
+	bool linkLR = false;					// Makes tempo of right delay a multiple of left delay
 
 private:
 	delay_mode delayMode;					// Long/short/reverse

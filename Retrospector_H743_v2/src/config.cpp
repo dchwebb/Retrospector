@@ -69,8 +69,8 @@ bool FLASH_WaitForLastOperation(uint32_t Timeout, uint32_t bank)
 
 bool FLASH_Program(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 {
-	uint8_t row_index = FLASH_NB_32BITWORD_IN_FLASHWORD;
-	uint8_t bank = ((uintptr_t )dest_addr < FLASH_BANK2_BASE) ? 1 : 2;
+	//uint8_t row_index = FLASH_NB_32BITWORD_IN_FLASHWORD;
+	uint8_t bank = ((uintptr_t)dest_addr < FLASH_BANK2_BASE) ? 1 : 2;
 
 	volatile uint32_t* bankCR  = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
 
@@ -139,7 +139,7 @@ void Config::RestoreConfig()
 {
 	// create temporary copy of settings from memory to check if they are valid
 	configValues cv;
-	memcpy(&cv, (uint32_t*)ADDR_FLASH_SECTOR_7, sizeof(cv));
+	memcpy((uint32_t*)&cv, (uint32_t*)ADDR_FLASH_SECTOR_7, sizeof(cv));
 
 	if (strcmp(cv.StartMarker, "CFG") == 0 && strcmp(cv.EndMarker, "END") == 0 && cv.Version == 2) {
 		filter.filterPotCentre = cv.filter_pot_center;

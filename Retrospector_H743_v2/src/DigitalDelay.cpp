@@ -122,11 +122,12 @@ void DigitalDelay::CalcSample()
 		if (Mode() != modeShort) {
 			delayClkCV *= SAMPLE_BUFFER_LENGTH / 65356;
 		}
-		// If lock tempo button active right delay is multiple of left delay
-		if (lockLR && LR == right) {
+
+		// If link tempo button active, right delay is multiple of left delay
+		if (linkLR && LR == right) {
 			int32_t leftDelay = calcDelay[left];
 			delayMult[left] = tempoMult[tempoMult.size() * leftDelay / 65536];		// Get the equivalent multiplier for Left delay
-			int32_t leftDelScaled = leftDelay / delayMult[left];						// Normalise the left delay
+			int32_t leftDelScaled = leftDelay / delayMult[left];					// Normalise the left delay
 			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
 			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
 		} else {
@@ -264,15 +265,31 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		fract = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
 	}
 
-	if (c == left) {
-		led.LEDColour(ledDelL, fract * 0xFF, fract * 0x12, fract * 0x06);
-	} else {
-		if (lockLR)
-			led.LEDColour(ledDelR, fract * 0xF4, fract * 0x1A, fract * 0x04);
-		else
-			led.LEDColour(ledDelR, fract * 0x05, fract * 0xBB, fract * 0x12);
-	}
+	enum ledColours {
+		ledColourLeft = 0xFF1206,
+		ledColourRight = 0x05BB12,
+		ledColourRightLinked = 0xF41A04,
+		ledColourLeftClock = 0x22CC99,
+		ledColourRightClock = 0x11FFAA};
 
+	if (clockValid) {
+		if (c == left) {
+			led.LEDColour(ledDelL, ledColourLeftClock, fract);
+		} else {
+			led.LEDColour(ledDelR, ledColourRightClock, fract);
+		}
+
+	} else {
+		if (c == left) {
+			led.LEDColour(ledDelL, ledColourLeft, fract);
+		} else {
+			if (linkLR) {
+				led.LEDColour(ledDelR, ledColourRightLinked, fract);
+			} else {
+				led.LEDColour(ledDelR, ledColourRight, fract);
+			}
+		}
+	}
 	if (ledOnTimer > 4) {
 		led.LEDSend();
 		ledOnTimer = 0;
