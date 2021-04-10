@@ -266,28 +266,22 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 	}
 
 	enum ledColours {
-		ledColourLeft = 0xFF1206,
-		ledColourRight = 0x05BB12,
-		ledColourRightLinked = 0xF41A04,
-		ledColourLeftClock = 0x22CC99,
-		ledColourRightClock = 0x11FFAA};
+		ledColourLeft1 = 0xFF1206,
+		ledColourLeft2 = 0xF42204,
+		ledColourRight1 = 0x44FF12,
+		ledColourRight2 = 0x05BB22,
+		ledColourClock1 = 0x00FF22,
+		ledColourClock2 = 0x0022FF,
+	};
 
+	float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
 	if (clockValid) {
-		if (c == left) {
-			led.LEDColour(ledDelL, ledColourLeftClock, fract);
-		} else {
-			led.LEDColour(ledDelR, ledColourRightClock, fract);
-		}
-
+		led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, fract);
 	} else {
-		if (c == left) {
-			led.LEDColour(ledDelL, ledColourLeft, fract);
+		if (c == right && !linkLR) {
+			led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, fract);
 		} else {
-			if (linkLR) {
-				led.LEDColour(ledDelR, ledColourRightLinked, fract);
-			} else {
-				led.LEDColour(ledDelR, ledColourRight, fract);
-			}
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, fract);
 		}
 	}
 	if (ledOnTimer > 4) {

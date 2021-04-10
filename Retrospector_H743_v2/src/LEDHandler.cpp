@@ -4,7 +4,7 @@
 void LEDHandler::LEDSet(ledSelection l, uint8_t b)
 {
 	// Brightness is from 0 to 127, left shifted one
-	brightness[(l >> 1) - 1] = b << 1;
+	colour[(l >> 1) - 1] = b << 1;
 }
 
 // Set colour of RGB led group
@@ -12,9 +12,9 @@ void LEDHandler::LEDColour(uint8_t g, uint32_t rgb)
 {
 	// Brightness is from 0 to 255, with lowest bit cleared
 	rgb &= ~0x010101;				// Clear lowest bit
-	brightness[g * 3] = rgb >> 16;
-	brightness[g * 3 + 1] = (rgb >> 8) & 0xFF;
-	brightness[g * 3 + 2] = rgb & 0xFF;
+	colour[g * 3] = rgb >> 16;
+	colour[g * 3 + 1] = (rgb >> 8) & 0xFF;
+	colour[g * 3 + 2] = rgb & 0xFF;
 }
 
 // Set colour of RGB led group, applying a fractional reduction to each colour separately
@@ -22,15 +22,29 @@ void LEDHandler::LEDColour(uint8_t g, uint32_t rgb, float fract)
 {
 	// Brightness is from 0 to 255, with lowest bit cleared
 	rgb &= ~0x010101;				// Clear lowest bit
-	brightness[g * 3] = static_cast<uint8_t>(fract * (rgb >> 16));
-	brightness[g * 3 + 1] = static_cast<uint8_t>(fract * ((rgb >> 8) & 0xFF));
-	brightness[g * 3 + 2] = static_cast<uint8_t>(fract * (rgb & 0xFF));
+	colour[g * 3] = static_cast<uint8_t>(fract * (rgb >> 16));
+	colour[g * 3 + 1] = static_cast<uint8_t>(fract * ((rgb >> 8) & 0xFF));
+	colour[g * 3 + 2] = static_cast<uint8_t>(fract * (rgb & 0xFF));
+}
+
+// Set colour of RGB led group, blending from/to colour and darkening by applying a fractional reduction to each colour separately
+void LEDHandler::LEDColour(uint8_t grp, uint32_t rgbFrom, uint32_t rgbTo, float blend, float brightness)
+{
+	// Interpolate from to colours
+	float r = brightness * ((blend * (rgbFrom >> 16)) + ((1.0f - blend) * (rgbTo >> 16)));
+	float g = brightness * ((blend * ((rgbFrom >> 8) & 0xFF)) + ((1.0f - blend) * ((rgbTo >> 8) & 0xFF)));
+	float b = brightness * ((blend * (rgbFrom & 0xFF)) + ((1.0f - blend) * (rgbTo & 0xFF)));
+
+	// Brightness is from 0 to 255, with lowest bit cleared
+	colour[grp * 3] = static_cast<uint8_t>(r) & 0xFE;
+	colour[grp * 3 + 1] = static_cast<uint8_t>(g) & 0xFE;
+	colour[grp * 3 + 2] = static_cast<uint8_t>(b) & 0xFE;
 }
 
 void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
-	brightness[l * 3] = r & 0xFE;
-	brightness[l * 3 + 1] = g & 0xFE;
-	brightness[l * 3 + 2] = b & 0xFE;
+	colour[l * 3] = r & 0xFE;
+	colour[l * 3 + 1] = g & 0xFE;
+	colour[l * 3 + 2] = b & 0xFE;
 }
 
 void LEDHandler::LEDSend()
@@ -57,7 +71,7 @@ void LEDHandler::Init()
 	start = 0xFF;
 	slaveAddress = 3;
 	ledSel = ledSeq;
-	std::fill(std::begin(brightness), std::begin(brightness) + 9, 0);
+	std::fill(std::begin(colour), std::begin(colour) + 9, 0);
 	stop = 0x81;
 	stopSpacer = 0x0;
 

@@ -75,7 +75,7 @@ bool SerialHandler::Command()
 				std::string((delay.clockValid ? "Clock On": "Clock Off")) + ": interval: " + std::to_string(delay.clockInterval / 96) + " ms, " +
 				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
 				"ADC Zero offset L: " + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n" +
-				"LEDs Filter R:" + std::to_string(led.brightness[6]) + " G: " + std::to_string(led.brightness[7]) + " B: " + std::to_string(led.brightness[8]) + "\r\n" +
+				"LEDs Filter R:" + std::to_string(led.colour[6]) + " G: " + std::to_string(led.colour[7]) + " B: " + std::to_string(led.colour[8]) + "\r\n" +
 				"\r\n");
 
 	} else if (ComCmd.compare("help\n") == 0) {

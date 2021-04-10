@@ -29,7 +29,7 @@ public:
 	uint8_t start = 0xFF;
 	uint8_t slaveAddress = 3;
 	ledSelection ledSel = ledSeq;
-	uint8_t brightness[9];
+	uint8_t colour[9];
 	uint8_t stop = 0x81;
 	uint8_t stopSpacer = 0x00;
 
@@ -38,6 +38,7 @@ public:
 	void LEDColour(uint8_t g, uint32_t b);
 	void LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b);
 	void LEDColour(uint8_t g, uint32_t rgb, float fract);
+	void LEDColour(uint8_t g, uint32_t rgbFrom, uint32_t rgbTo, float blend, float brightness);
 	void LEDSend();
 	void TimedSend();
 	void TestPattern();
