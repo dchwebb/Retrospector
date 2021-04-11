@@ -44,7 +44,6 @@ void Filter::Update(bool reset)
 		calculatingFilter = false;
 
 		// Update filter LED
-
 		if (filterControl == Both) {
 			float colourMult = dampedADC / 65535.0f;
 			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
@@ -55,8 +54,6 @@ void Filter::Update(bool reset)
 			float colourMult = std::pow(1.0f - (dampedADC / 65535.0f), 4.0f);
 			led.LEDColour(ledFilter, 0xFFBBFF, 0x1100FF, colourMult, 1.0f);
 		}
-
-		//led.LEDColour(ledFilter, colourMult * 0xFF, 0, (1 - colourMult) * 0xFF);
 	}
 }
 

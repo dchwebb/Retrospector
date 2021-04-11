@@ -17,4 +17,6 @@ public:
 	void Receive();
 	void GetSample();
 	void CopyToFlash();
+	void BootDFU();
+
 };

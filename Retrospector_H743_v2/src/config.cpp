@@ -81,7 +81,7 @@ bool FLASH_Program(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 		__DSB();
 
 		// Each write block is 32 bytes
-		for (uint8_t b = 0; b < std::ceil((float)size / 32); ++b) {
+		for (uint8_t b = 0; b < std::ceil(static_cast<float>(size) / 32); ++b) {
 
 			// Program the flash word (8 * 32 bits)
 			for (uint8_t i = 0; i < FLASH_NB_32BITWORD_IN_FLASHWORD; ++i) {

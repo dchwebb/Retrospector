@@ -13,6 +13,7 @@
  * Store config/calibration values to Flash (colours, filter slope)
  * Investigate R channel zero offset
  * Investigate background noise and interference every 20ms
+ * Link button to unlink right delay in clocked mode
  */
 
 volatile uint32_t SysTickVal;
@@ -21,15 +22,7 @@ extern uint32_t SystemCoreClock;
 
 bool USBDebug;
 
-// Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
-// STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
-void BootDFU() {
-	SCB_DisableDCache();
-	__disable_irq();
-	*((unsigned long *)0x20000000) = 0xDEADBEEF; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
-	__DSB();
-	NVIC_SystemReset();
-}
+
 
 int32_t adcZeroOffset[2] = {33791, 33791};			// 0V ADC reading
 int32_t newOffset[2] = {33870, 34000};
