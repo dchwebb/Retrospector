@@ -144,9 +144,9 @@ private:
 		void loadData(const uint8_t* data) {
 			mRequest = data[0];
 			Request = data[1];
-			Value = (uint16_t)(data[2]) + (data[3] << 8);
-			Index = (uint16_t)(data[4]) + (data[5] << 8);
-			Length = (uint16_t)(data[6]) + (data[7] << 8);
+			Value = static_cast<uint16_t>(data[2]) + (data[3] << 8);
+			Index = static_cast<uint16_t>(data[4]) + (data[5] << 8);
+			Length = static_cast<uint16_t>(data[6]) + (data[7] << 8);
 		}
 	} req;
 

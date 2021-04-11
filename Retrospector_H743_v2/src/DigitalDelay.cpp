@@ -9,9 +9,9 @@ void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	float nextSample, oppositeSample;								// nextSample is the delayed sample to be played (oppositeSample form the opposite side)
-	bool reverse = (Mode() == modeReverse);
+	delay_mode delayMode = Mode();										// Long, short or reverse
 
-	LR = (channel)!(bool)LR;
+	LR = static_cast<channel>(!static_cast<bool>(LR));
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
@@ -87,7 +87,7 @@ void DigitalDelay::CalcSample()
 
 
 	// Move write and read heads one sample forwards
-	if (reverse) {
+	if (delayMode == modeReverse) {
 		if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 		if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
 	} else {
@@ -115,29 +115,30 @@ void DigitalDelay::CalcSample()
 		if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
 			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
+			if (delayMode != modeShort) {
+				delayMult[LR] *= 4;
+			}
 		}
 		calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
 
 	} else {
-		if (Mode() != modeShort) {
-			delayClkCV *= SAMPLE_BUFFER_LENGTH / 65356;
-		}
-
 		// If link tempo button active, right delay is multiple of left delay
 		if (linkLR && LR == right) {
-			int32_t leftDelay = calcDelay[left];
-			delayMult[left] = tempoMult[tempoMult.size() * leftDelay / 65536];		// Get the equivalent multiplier for Left delay
-			int32_t leftDelScaled = leftDelay / delayMult[left];					// Normalise the left delay
+			delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
+			int32_t leftDelScaled = calcDelay[left] / delayMult[left];					// Normalise the left delay
 			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
 			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
 		} else {
+			if (delayMode != modeShort) {
+				delayClkCV *= SAMPLE_BUFFER_LENGTH / 65536;
+			}
 			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
 		}
 	}
 
 
 	// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
-	if (reverse) {
+	if (delayMode == modeReverse) {
 		// Create temporary read and write positions that handle circular buffer complications
 		int32_t wp = writePos;
 		int32_t rp = readPos[LR];
@@ -231,7 +232,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 
 	// FIXME - only carry out calculations when needed before send
 	if (reverse) {
-		fract = std::pow(1.0f - (float)remainingDelay / (calcDelay[c] * 2), 4.0f);
+		fract = std::pow(1.0f - static_cast<float>(remainingDelay) / (calcDelay[c] * 2), 4.0f);
 	} else {
 		// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
 		++ledCounter[c];

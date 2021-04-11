@@ -70,7 +70,7 @@ void InitSDRAM_16160(void) {
 	// SDCLK, RPIPE, RBURST in Control register and TRP, TRC in Timing register are shared and must be configured against bank 1 even though using bank 2
 	FMC_Bank5_6_R->SDCR[0] = FMC_SDCRx_RPIPE_0 |			// Read pipe: 01: One HCLK clock cycle delay
 			               FMC_SDCRx_RBURST |				// Burst read: 1: single read requests are always managed as bursts
-	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@200MHz = 5ns period; 2 x period = 10ns)
+	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@200MHz = 5ns period; 2 x period = 10ns); 11: SDCLK period = 3 x HCLK periods
 
 	// 8,192 rows by 1,024 columns by 8 bits OR 8,192 rows by 512 columns by 16 bits
 	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
@@ -88,6 +88,7 @@ void InitSDRAM_16160(void) {
 	                       4 << FMC_SDTRx_TRAS_Pos |		// Self Refresh Time		42ns (5 cycles)
 	                       6 << FMC_SDTRx_TXSR_Pos |		// Exit Self Refresh Time	66ns (7 cycles)
 	                       1 << FMC_SDTRx_TMRD_Pos;			// Load to Active Delay		12ns (2 cycles)
+
 
 	FMC_Bank1_R->BTCR[0] |= FMC_BCR1_FMCEN;					// Enable the FMC Controller (NB datasheet implies only needed for PSRAM/SRAM but SDRAM also requires from testing)
 
@@ -140,6 +141,7 @@ void InitSDRAM_16160(void) {
 		Refresh rate = (7.81uS * 100MHz) + 20 = 801
 	*/
 	FMC_Bank5_6_R->SDRTR = 801 << FMC_SDRTR_COUNT_Pos;
+	//FMC_Bank5_6_R->SDRTR = 1801 << FMC_SDRTR_COUNT_Pos;		// Performance testing
 
 	// 32 megabytes of ram now available at address 0xD0000000 - 0xD2000000 (for SDRAM Bank2 See manual p129)
 }
@@ -252,7 +254,6 @@ void InitSDRAM_16800(void) {
 // SDRAM testing variables
 using memSize = uint32_t;
 constexpr uint32_t startAddr = 0xD0000000;
-constexpr uint32_t maxAddr = 0x2000000 / sizeof(memSize);		// 0x1000000 = 16MB
 bool runMemTest = false;
 
 uint32_t* SDRAMBuffer = (memSize *)(startAddr);
@@ -261,12 +262,13 @@ extern USB usb;
 extern SerialHandler serial;
 
 // Test SDRAM
-void MemoryTest() {
+void MemoryTest(bool test16MB) {
 	uint32_t memTestDuration, memTestCount, memErrs, memAllErrors, testStart, testAddr;
 	memSize* tempAddr;
 	runMemTest = true;
 	memTestCount = 0;
 	memAllErrors = 0;
+	uint32_t maxAddr = (test16MB ? 0x1000000 : 0x2000000) / sizeof(memSize);		// 0x1000000 = 16MB
 
 	while (runMemTest) {
 		testStart = SysTickVal;
@@ -303,4 +305,5 @@ void MemoryTest() {
 		++memTestCount;
 		serial.Command();			// Check for incoming CDC commands
 	}
+
 }

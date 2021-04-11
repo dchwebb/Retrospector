@@ -9,7 +9,6 @@ void Filter::Init()
 	filter.Update(true);
 }
 
-
 void Filter::Update(bool reset)
 {
 	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
@@ -31,7 +30,8 @@ void Filter::Update(bool reset)
 		reset = true;
 	}
 
-	dampedADC = filterADC.FilterSample(std::min((int)ADC_array[ADC_Filter_Pot] + (65535 - ADC_array[ADC_Filter_CV]), 65535));
+	// get filter values from pot and CV and smooth through fixed IIR filter
+	dampedADC = filterADC.FilterSample(std::min(static_cast<uint32_t>(ADC_array[ADC_Filter_Pot]) + (65535UL - ADC_array[ADC_Filter_CV]), 65535UL));
 
 	if (reset || std::abs(dampedADC - previousADC) > hysteresis) {
 		calculatingFilter = true;
@@ -44,12 +44,19 @@ void Filter::Update(bool reset)
 		calculatingFilter = false;
 
 		// Update filter LED
-		float ColourMult = (float)dampedADC / 65535;
-		if (passType == FilterOff) {
-			led.LEDColour(ledFilter, 0x80, 0x80, 0x80);
+
+		if (filterControl == Both) {
+			float colourMult = dampedADC / 65535.0f;
+			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
+		} else 	if (passType == LowPass) {
+			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
+			led.LEDColour(ledFilter, 0xFFBBFF, 0xFF0000, colourMult, 1.0f);
 		} else {
-			led.LEDColour(ledFilter, ColourMult * 0xFF, 0, (1 - ColourMult) * 0xFF);
+			float colourMult = std::pow(1.0f - (dampedADC / 65535.0f), 4.0f);
+			led.LEDColour(ledFilter, 0xFFBBFF, 0x1100FF, colourMult, 1.0f);
 		}
+
+		//led.LEDColour(ledFilter, colourMult * 0xFF, 0, (1 - colourMult) * 0xFF);
 	}
 }
 
@@ -67,7 +74,7 @@ float Filter::CalcFilter(float sample, channel c)
 }
 
 // Rectangular FIR
-void Filter::InitFIRFilter(uint16_t tone)
+void Filter::InitFIRFilter(float tone)
 {
 	float omega;
 	int8_t arg;
@@ -75,10 +82,10 @@ void Filter::InitFIRFilter(uint16_t tone)
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass
 	if (tone < filterPotCentre - 1000) {		// Low Pass
 		passType = LowPass;
-		omega = 1.0f - std::pow(((float)filterPotCentre - tone) / 34000.0f, 0.2f);
+		omega = 1.0f - std::pow((static_cast<float>(filterPotCentre) - tone) / 34000.0f, 0.2f);
 	} else if (tone > filterPotCentre + 1000) {
 		passType = HighPass;
-		omega = 1.0f - std::pow(((float)tone - filterPotCentre)  / 75000.0f, 3.0f);
+		omega = 1.0f - std::pow((tone - filterPotCentre)  / 75000.0f, 3.0f);
 	} else {
 		passType = FilterOff;
 		omega = 1.0f;
@@ -149,7 +156,7 @@ void Filter::FIRFilterWindow()
 
 	// Kaiser window
 	for (uint8_t j = 0; j < firTaps; j++) {
-		arg = beta * sqrt(1.0 - pow( ((float)(2 * j) + 1 - firTaps) / (firTaps + 1), 2.0) );
+		arg = beta * sqrt(1.0 - pow( (static_cast<float>(2 * j) + 1 - firTaps) / (firTaps + 1), 2.0) );
 		winCoeff[j] = Bessel(arg) / Bessel(beta);
 	}
 }
@@ -161,18 +168,18 @@ float Filter::Bessel(float x)
 	float sum = 0.0, xPower;
 	int factorial;
 	for (uint8_t i = 1; i < 10; ++i) {
-		xPower = pow(x / 2.0, (float)i);
+		xPower = pow(x / 2.0, static_cast<float>(i));
 		factorial = 1;
 		for (uint8_t j = 1; j <= i; ++j) {
 			factorial *= j;
 		}
-		sum += pow(xPower / (float)factorial, 2.0);
+		sum += pow(xPower / static_cast<float>(factorial), 2.0);
 	}
 	return(1.0 + sum);
 }
 
 
-void Filter::InitIIRFilter(uint16_t tone)
+void Filter::InitIIRFilter(iirdouble_t tone)
 {
 	iirdouble_t cutoff;
 	constexpr iirdouble_t LPMax = 0.995;
@@ -182,18 +189,18 @@ void Filter::InitIIRFilter(uint16_t tone)
 
 	if (filterControl == HP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
 		passType = HighPass;
-		cutoff = pow(((iirdouble_t)tone / 100000.0), 3.0) + HPMin;
+		cutoff = pow((tone / 100000.0), 3.0) + HPMin;
 		iirLPFilter[inactiveFilter].CalcCoeff(LPMax);
 		iirHPFilter[inactiveFilter].CalcCoeff(cutoff);
 	} else {		// Want a sweep from 0.001 to 0.2-0.3
 		passType = LowPass;
-		cutoff = std::min(0.03 + pow((iirdouble_t)tone / 65536.0, 2.0), LPMax);
+		cutoff = std::min(0.03 + pow(tone / 65536.0, 2.0), LPMax);
 		iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
 		iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
 	}
 
 	activeFilter = inactiveFilter;
-	currentCutoff = cutoff;		// For debug
+	currentCutoff = cutoff;
 }
 
 
@@ -386,7 +393,7 @@ void IIRPrototype::ButterworthPoly(std::array<complex_t, MAX_POLES> &Roots)
 	iirdouble_t theta;
 
 	for (uint8_t j = 0; j < numPoles / 2; j++) {
-		theta = M_PI * (iirdouble_t)(2 * j + numPoles + 1) / (iirdouble_t)(2 * numPoles);
+		theta = M_PI * static_cast<iirdouble_t>(2 * j + numPoles + 1) / static_cast<iirdouble_t>(2 * numPoles);
 		Roots[n++] = complex_t(cos(theta), sin(theta));
 		Roots[n++] = complex_t(cos(theta), -sin(theta));
 	}

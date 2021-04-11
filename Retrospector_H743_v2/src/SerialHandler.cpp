@@ -85,7 +85,9 @@ bool SerialHandler::Command()
 				"help       -  Shows this information\r\n"
 				"info       -  Show diagnostic information\r\n"
 				"f          -  Filter on/off\r\n"
-				"mem        -  Start Memory Test\r\n"
+				"led        -  LEDs on/off\r\n"
+				"mem16      -  Start/stop Memory Test of lower 16MB\r\n"
+				"mem32      -  Start/stop Memory Test of all 32MB\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
@@ -121,13 +123,13 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();
 
-	} else if (ComCmd.compare("mem\n") == 0) {		// Memory test
+	} else if (ComCmd.compare("mem16\n") == 0 || ComCmd.compare("mem32\n") == 0) {		// Memory test
 		extern bool runMemTest;
 		if (!runMemTest) {
 			suspendI2S();
 			usb->SendString("Entering memory test mode - clears, writes and reads external RAM. Type 'mem' again to stop\r\n");
 			CmdPending = false;
-			MemoryTest();
+			MemoryTest(ComCmd.compare("mem16\n") == 0);
 		} else {
 			usb->SendString("Memory test complete\r\n");
 			delay.Init();
@@ -143,6 +145,17 @@ bool SerialHandler::Command()
 		} else {
 			usb->SendString(std::string("Filter off\r\n").c_str());
 		}
+
+	} else if (ComCmd.compare("led\n") == 0) {		// LEDs on/off
+		extern bool activateLEDs;
+
+		activateLEDs = !activateLEDs;
+		if (activateLEDs) {
+			usb->SendString("LEDs on\r\n");
+		} else {
+			usb->SendString("LEDs off\r\n");
+		}
+
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Show IIR Coefficients
 
@@ -248,10 +261,10 @@ void SerialHandler::Handler(uint8_t* data, uint32_t length)
 {
 	static bool newCmd = true;
 	if (newCmd) {
-		ComCmd = std::string((char*)data, length);
+		ComCmd = std::string(reinterpret_cast<char*>(data), length);
 		newCmd = false;
 	} else {
-		ComCmd.append((char*)data, length);
+		ComCmd.append(reinterpret_cast<char*>(data), length);
 	}
 	if (*ComCmd.rbegin() == '\r')
 		*ComCmd.rbegin() = '\n';

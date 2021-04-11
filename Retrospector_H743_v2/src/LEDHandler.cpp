@@ -49,6 +49,10 @@ void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
 
 void LEDHandler::LEDSend()
 {
+	extern bool activateLEDs;
+	if (!activateLEDs)
+		return;
+
 	// Clear DMA errors and transfer complete status flags
 	SPI6->IFCR |= SPI_IFCR_TXTFC;
 
@@ -78,7 +82,7 @@ void LEDHandler::Init()
 	SPI6->CR2 |= sizeof(*this);						// Set the number of items to transfer
 	SPI6->CFG1 |= SPI_CFG1_TXDMAEN;					// Tx DMA stream enable
 	SPI6->CR1 |= SPI_CR1_SPE;						// Enable SPI
-	BDMA_Channel0->CM0AR = (uint32_t)(this);		// Configure the memory data register address
+	BDMA_Channel0->CM0AR = reinterpret_cast<uint32_t>(this);		// Configure the memory data register address
 }
 
 void LEDHandler::TimedSend()
@@ -115,7 +119,7 @@ void LEDHandler::TestPattern()
 		for (uint8_t i = 0; i < 3; ++i) {
 			++ledCounter[i];
 
-			float mult = (float)ledCounter[i] / transition;
+			float mult = static_cast<float>(ledCounter[i]) / transition;
 
 			// Interpolate colours between previous and target
 			uint8_t oldR = ledPrev[i] >> 16;
@@ -125,9 +129,9 @@ void LEDHandler::TestPattern()
 			uint8_t oldB = ledPrev[i] & 0xFF;
 			uint8_t newB = ledTarg[i] & 0xFF;
 
-			newR = (oldR + (float)(newR - oldR) * mult);
-			newG = (oldG + (float)(newG - oldG) * mult);
-			newB = (oldB + (float)(newB - oldB) * mult);
+			newR = (oldR + static_cast<float>(newR - oldR) * mult);
+			newG = (oldG + static_cast<float>(newG - oldG) * mult);
+			newB = (oldB + static_cast<float>(newB - oldB) * mult);
 			uint32_t setColour = (newR << 16) + (newG << 8) + newB;
 
 

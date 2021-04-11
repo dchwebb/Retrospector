@@ -9,12 +9,10 @@
 #include "Bootloader.h"
 
 /* TODO
- * Increase tempo Multiplier times for Long Delay
  * USB hangs when sending over CDC and client disconnects
- * Store config/calibration values to Flash
- * Implement RGB LED functionality
- * Implement Link button
+ * Store config/calibration values to Flash (colours, filter slope)
  * Investigate R channel zero offset
+ * Investigate background noise and interference every 20ms
  */
 
 volatile uint32_t SysTickVal;
@@ -33,11 +31,12 @@ void BootDFU() {
 	NVIC_SystemReset();
 }
 
-int32_t adcZeroOffset[2] = {33870, 34000};			// 0V ADC reading
-uint32_t newOffset[2] = {33870, 34000};
+int32_t adcZeroOffset[2] = {33791, 33791};			// 0V ADC reading
+int32_t newOffset[2] = {33870, 34000};
 uint32_t offsetCounter[2];
 bool linkButton;
 uint32_t linkBtnTest;
+bool activateLEDs = true;
 
 // ADC arrays - place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
@@ -90,7 +89,11 @@ int main(void) {
 			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
 				newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
 				if (offsetCounter[lr] == 1000000) {
-					adcZeroOffset[lr] = newOffset[lr];
+					if (adcZeroOffset[lr] > newOffset[lr])
+						adcZeroOffset[lr]--;
+					else
+						adcZeroOffset[lr]++;
+					//adcZeroOffset[lr] = newOffset[lr];
 					offsetCounter[lr] = 0;
 				}
 				offsetCounter[lr]++;

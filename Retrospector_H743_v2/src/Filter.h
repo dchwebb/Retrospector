@@ -110,7 +110,7 @@ public:
 };
 
 
-class Filter {
+struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
 	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
@@ -141,17 +141,17 @@ private:
 	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP, LowPass), IIRFilter(polesLP, LowPass)};			// Two filters for active and inactive
 	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP, HighPass), IIRFilter(polesHP, HighPass)};
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
-	IIRRegisters iirHPReg[2];				// STore separate shift registers for high and low pass to allow smooth transition
+	IIRRegisters iirHPReg[2];				// Store separate shift registers for high and low pass to allow smooth transition
 
-	uint16_t dampedADC, dampedADC2, previousADC, dampDiff[2];		// ADC readings governing damped cut off level (and previous for hysteresis)
+	float dampedADC, previousADC;		// ADC readings governing damped cut off level (and previous for hysteresis)
 	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
 	static constexpr uint16_t hysteresis = 30;
 
 
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
 	float CalcFIRFilter(float sample, channel c);
-	void InitFIRFilter(uint16_t tone);
-	void InitIIRFilter(uint16_t tone);
+	void InitFIRFilter(float tone);
+	void InitIIRFilter(iirdouble_t tone);
 	float Sinc(float x);
 	void FIRFilterWindow();
 	float Bessel(float x);
