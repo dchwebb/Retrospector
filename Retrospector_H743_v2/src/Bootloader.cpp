@@ -11,10 +11,11 @@ uint8_t bootloaderSamples[BL_SAMPLE_SIZE];
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 // STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
-void Bootloader::BootDFU() {
+void Bootloader::BootDFU()
+{
 	SCB_DisableDCache();
 	__disable_irq();
-	*((unsigned long *)0x20000000) = 0xDEADBEEF; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
+	*reinterpret_cast<unsigned long *>(0x20000000) = 0xDEADBEEF; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
 	__DSB();
 	NVIC_SystemReset();
 }
@@ -100,7 +101,7 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 void Bootloader::CopyToFlash() {
 	SCB_DisableDCache();
 	__disable_irq();
-	*((unsigned long *)0x20000000) = 0xABBACAFE; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
+	*reinterpret_cast<unsigned long *>(0x20000000) = 0xABBACAFE; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
 	__DSB();
 	NVIC_SystemReset();
 }

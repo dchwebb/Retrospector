@@ -44,16 +44,26 @@ bool SerialHandler::Command()
 	}
 
 	// Provide option to switch to USB DFU mode - this allows the MCU to be programmed with STM32CubeProgrammer in DFU mode
-	if (dfuConfirm) {
+	if (state == serialState::dfuConfirm) {
 		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
 			usb->SendString("Switching to DFU Mode ...\r\n");
 			uint32_t old = SysTickVal;
 			while (SysTickVal < old + 100) {};		// Give enough time to send the message
 			bootloader.BootDFU();
 		} else {
-			dfuConfirm = false;
+			state = serialState::pending;
 			usb->SendString("Upgrade cancelled\r\n");
 		}
+
+	} else if (state == serialState::calibConfirm) {
+		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
+			suspendI2S();
+			config.Calibrate();
+			resumeI2S();
+		} else {
+			usb->SendString("Calibration cancelled\r\n");
+		}
+		state = serialState::pending;
 
 	} else if (ComCmd.compare("info\n") == 0) {		// Print diagnostic information
 
@@ -69,7 +79,6 @@ bool SerialHandler::Command()
 			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + ";  Cutoff: " + std::string(buf).append("\r\n"));
 		}
 
-		//extern uint16_t adcZeroOffset[2];
 		usb->SendString("Delay Times L: " + std::to_string(delay.calcDelay[left] / 48) + " ms, R: " + std::to_string(delay.calcDelay[right] / 48) + " ms\r\n" +
 				std::string((delay.clockValid ? "Clock On": "Clock Off")) + ": interval: " + std::to_string(delay.clockInterval / 96) + " ms, " +
 				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
@@ -90,6 +99,7 @@ bool SerialHandler::Command()
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
+				"calib      -  Calibrate device\r\n"
 				"save       -  Save calibration\r\n"
 				"\r\nDebug Data Dump:\r\n"
 				"dl         -  Left delay samples\r\n"
@@ -107,12 +117,18 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("dfu\n") == 0) {		// USB DFU firmware upgrade
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
-		dfuConfirm = true;
+		state = serialState::dfuConfirm;
 
 	} else if (ComCmd.compare("boot\n") == 0) {		// Test bootloader code
 		bootloader.Receive();
 		//void Bootloader();
 		//Bootloader();
+
+	} else if (ComCmd.compare("calib\n") == 0) {	// Calibrate filter pot center and audio offsets
+		suspendI2S();
+		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");
+		state = serialState::calibConfirm;
+		resumeI2S();
 
 	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
 		suspendI2S();

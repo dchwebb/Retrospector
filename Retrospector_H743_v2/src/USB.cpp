@@ -1,5 +1,7 @@
 #include "USB.h"
 
+bool USBDebug;
+
 void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pcd.c
 
 	int epnum, ep_intr, epint;
@@ -216,7 +218,7 @@ void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f
 							outBuffSize = ep_maxPacket;
 						}
 
-						USB_WritePacket(outBuff, epnum, (uint16_t)outBuffSize);
+						USB_WritePacket(outBuff, epnum, static_cast<uint16_t>(outBuffSize));
 
 						outBuff += outBuffSize;		// Move pointer forwards
 						uint32_t fifoemptymsk = (0x1UL << (epnum & EP_ADDR_MASK));
@@ -224,13 +226,13 @@ void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f
 					} else {
 
 						// For regular endpoints keep writing packets to the FIFO while space available [PCD_WriteEmptyTxFifo]
-						uint16_t len = std::min(outBuffSize - outBuffCount, (uint32_t)ep_maxPacket);
+						uint16_t len = std::min(outBuffSize - outBuffCount, static_cast<uint32_t>(ep_maxPacket));
 						uint16_t len32b = (len + 3) / 4;			// FIFO size is in 4 byte words
 
 						// INEPTFSAV[15:0]: IN endpoint Tx FIFO space available: 0x0: Endpoint Tx FIFO is full; 0x1: 1 31-bit word available; 0xn: n words available
 						while (((USBx_INEP(epnum)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= len32b) && (outBuffCount < outBuffSize) && (outBuffSize != 0)) {
 
-							len = std::min(outBuffSize - outBuffCount, (uint32_t)ep_maxPacket);
+							len = std::min(outBuffSize - outBuffCount, static_cast<uint32_t>(ep_maxPacket));
 							len32b = (len + 3) / 4;
 #if (USB_DEBUG)
 							usbDebug[usbDebugNo].PacketSize = outBuffSize - outBuffCount;
@@ -464,19 +466,19 @@ void USB::USB_ActivateEndpoint(uint8_t endpoint, Direction direction, EndPointTy
 	endpoint = endpoint & 0xF;
 
 	if (direction == Direction::in) {
-		USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & (uint32_t)(1UL << (endpoint & EP_ADDR_MASK));
+		USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_IEPM & static_cast<uint32_t>(1UL << (endpoint & EP_ADDR_MASK));
 
 		if ((USBx_INEP(endpoint)->DIEPCTL & USB_OTG_DIEPCTL_USBAEP) == 0U) {
 			USBx_INEP(endpoint)->DIEPCTL |= (ep_maxPacket & USB_OTG_DIEPCTL_MPSIZ) |
-					((uint32_t)eptype << 18) | (endpoint << 22) |
+					(static_cast<uint32_t>(eptype) << 18) | (endpoint << 22) |
 					USB_OTG_DIEPCTL_USBAEP;
 		}
 	} else {
-		USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_OEPM & ((uint32_t)(1UL << (endpoint & EP_ADDR_MASK)) << 16);
+		USBx_DEVICE->DAINTMSK |= USB_OTG_DAINTMSK_OEPM & (static_cast<uint32_t>(1UL << (endpoint & EP_ADDR_MASK)) << 16);
 
 		if (((USBx_OUTEP(endpoint)->DOEPCTL) & USB_OTG_DOEPCTL_USBAEP) == 0U) {
 			USBx_OUTEP(endpoint)->DOEPCTL |= (ep_maxPacket & USB_OTG_DOEPCTL_MPSIZ) |
-					((uint32_t)eptype << 18) |
+					static_cast<uint32_t>(eptype << 18) |
 					USB_OTG_DOEPCTL_USBAEP;
 		}
 	}
@@ -484,9 +486,8 @@ void USB::USB_ActivateEndpoint(uint8_t endpoint, Direction direction, EndPointTy
 }
 
 // USB_ReadPacket : read a packet from the RX FIFO
-void USB::USB_ReadPacket(const uint32_t* dest, uint16_t len) {
-	uint32_t* pDest = (uint32_t*)dest;
-	uint32_t count32b = ((uint32_t)len + 3U) / 4U;
+void USB::USB_ReadPacket(uint32_t* pDest, uint16_t len) {
+	uint32_t count32b = (len + 3) / 4;
 
 	for (uint32_t i = 0; i < count32b; i++)	{
 		*pDest = USBx_DFIFO(0);
@@ -496,7 +497,7 @@ void USB::USB_ReadPacket(const uint32_t* dest, uint16_t len) {
 
 void USB::USB_WritePacket(const uint8_t* src, uint8_t endpoint, uint16_t len) {
 	uint32_t* pSrc = (uint32_t*)src;
-	uint32_t count32b = ((uint32_t)len + 3U) / 4U;
+	uint32_t count32b = (static_cast<uint32_t>(len) + 3U) / 4U;
 
 	for (uint32_t i = 0; i < count32b; i++) {
 		USBx_DFIFO(endpoint) = *pSrc;
@@ -585,7 +586,7 @@ void USB::USBD_GetDescriptor() {
 #endif
 
 		ep0_state = USBD_EP0_DATA_IN;
-		outBuffSize = std::min(outBuffSize, (uint32_t)req.Length);
+		outBuffSize = std::min(outBuffSize, static_cast<uint32_t>(req.Length));
 		USB_EPStartXfer(Direction::in, 0, outBuffSize);
 	}
 
@@ -641,9 +642,9 @@ void USB::USBD_StdDevReq()
 			break;
 
 		case USB_REQ_SET_ADDRESS:
-			dev_addr = (uint8_t)(req.Value) & 0x7FU;
+			dev_addr = static_cast<uint8_t>(req.Value) & 0x7FU;
 			USBx_DEVICE->DCFG &= ~(USB_OTG_DCFG_DAD);
-			USBx_DEVICE->DCFG |= ((uint32_t)dev_addr << 4) & USB_OTG_DCFG_DAD;
+			USBx_DEVICE->DCFG |= (static_cast<uint32_t>(dev_addr) << 4) & USB_OTG_DCFG_DAD;
 			ep0_state = USBD_EP0_STATUS_IN;
 			USB_EPStartXfer(Direction::in, 0, 0);
 			dev_state = USBD_STATE_ADDRESSED;

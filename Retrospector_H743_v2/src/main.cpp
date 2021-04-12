@@ -9,7 +9,7 @@
 #include "Bootloader.h"
 
 /* TODO
- * USB hangs when sending over CDC and client disconnects
+ * USB hangs when sending over CDC and cable removed and reinserted
  * Store config/calibration values to Flash (colours, filter slope)
  * Investigate R channel zero offset
  * Investigate background noise and interference every 20ms
@@ -20,12 +20,12 @@ volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
 
 
-bool USBDebug;
+
 
 
 
 int32_t adcZeroOffset[2] = {33791, 33791};			// 0V ADC reading
-int32_t newOffset[2] = {33870, 34000};
+//int32_t newOffset[2] = {33870, 34000};
 uint32_t offsetCounter[2];
 bool linkButton;
 uint32_t linkBtnTest;
@@ -76,7 +76,7 @@ int main(void) {
 
 	while (1) {
 
-
+/*
 		// When silence is detected for a long enough time recalculate ADC offset
 		for (channel lr : {left, right}) {
 			if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
@@ -95,7 +95,7 @@ int main(void) {
 				offsetCounter[lr] = 0;
 			}
 		}
-
+*/
 		// Implement chorus (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
 		if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != delay.chorusMode) {
 			delay.ChorusMode(!delay.chorusMode);
@@ -120,6 +120,7 @@ int main(void) {
 		serial.Command();			// Check for incoming CDC commands
 
 #if (USB_DEBUG)
+		extern bool USBDebug;
 		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
 			USBDebug = true;
 			usb.OutputDebug();

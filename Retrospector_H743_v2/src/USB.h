@@ -13,11 +13,11 @@
 
 
 // USB Hardware Registers
-#define USBx_PCGCCTL	*(__IO uint32_t *)(USB2_OTG_FS_PERIPH_BASE + USB_OTG_PCGCCTL_BASE)
-#define USBx_DEVICE		((USB_OTG_DeviceTypeDef *)(USB2_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
-#define USBx_INEP(i)	((USB_OTG_INEndpointTypeDef *)(USB2_OTG_FS_PERIPH_BASE + USB_OTG_IN_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
-#define USBx_OUTEP(i)	((USB_OTG_OUTEndpointTypeDef *)(USB2_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
-#define USBx_DFIFO(i)	*(uint32_t*)(USB2_OTG_FS_PERIPH_BASE + USB_OTG_FIFO_BASE + ((i) * USB_OTG_FIFO_SIZE))
+#define USBx_PCGCCTL	*reinterpret_cast<__IO uint32_t*>(USB2_OTG_FS_PERIPH_BASE + USB_OTG_PCGCCTL_BASE)
+#define USBx_DEVICE		reinterpret_cast<USB_OTG_DeviceTypeDef*>(USB2_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE)
+#define USBx_INEP(i)	reinterpret_cast<USB_OTG_INEndpointTypeDef*>(USB2_OTG_FS_PERIPH_BASE + USB_OTG_IN_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE))
+#define USBx_OUTEP(i)	reinterpret_cast<USB_OTG_OUTEndpointTypeDef*>(USB2_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE))
+#define USBx_DFIFO(i)	*reinterpret_cast<uint32_t*>(USB2_OTG_FS_PERIPH_BASE + USB_OTG_FIFO_BASE + ((i) * USB_OTG_FIFO_SIZE))
 
 // USB Transfer status definitions
 #define STS_GOUT_NAK					1U
@@ -93,8 +93,8 @@
 #define USB_LEN_LANGID_STR_DESC			4
 #define USB_CDC_CONFIG_DESC_SIZE		75
 
-#define LOBYTE(x)  ((uint8_t)(x & 0x00FFU))
-#define HIBYTE(x)  ((uint8_t)((x & 0xFF00U) >> 8U))
+#define LOBYTE(x)  (static_cast<uint8_t>(x & 0x00FFU))
+#define HIBYTE(x)  (static_cast<uint8_t>(x & 0xFF00U) >> 8)
 
 class USB {
 public:
@@ -111,7 +111,7 @@ public:
 	enum class Direction {in, out};
 private:
 	void USB_ActivateEndpoint(uint8_t endpoint, Direction direction, EndPointType eptype);
-	void USB_ReadPacket(const uint32_t* dest, uint16_t len);
+	void USB_ReadPacket(uint32_t* dest, uint16_t len);
 	void USB_WritePacket(const uint8_t* src, uint8_t endpoint, uint16_t len);
 	void USBD_GetDescriptor();
 	void USBD_StdDevReq();

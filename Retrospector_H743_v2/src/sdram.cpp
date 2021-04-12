@@ -108,17 +108,17 @@ void InitSDRAM_16160(void) {
 	                     3 << FMC_SDCMR_NRFS_Pos;			// Number of auto-refresh less one (ie 4)
 
 	// These parameters are specified in the SDRAM datasheet (p14 for ISSI SDRAM)
-#define SDRAM_MODE_BURST_LENGTH_1				((uint16_t)0x0000)
-#define SDRAM_MODE_BURST_LENGTH_2				((uint16_t)0x0001)
-#define SDRAM_MODE_BURST_LENGTH_4				((uint16_t)0x0002)
-#define SDRAM_MODE_BURST_LENGTH_8				((uint16_t)0x0004)
-#define SDRAM_MODE_BURST_TYPE_SEQUENTIAL		((uint16_t)0x0000)
-#define SDRAM_MODE_BURST_TYPE_INTERLEAVED		((uint16_t)0x0008)
-#define SDRAM_MODE_CAS_LATENCY_2				((uint16_t)0x0020)
-#define SDRAM_MODE_CAS_LATENCY_3				((uint16_t)0x0030)
-#define SDRAM_MODE_OPERATING_MODE_STANDARD		((uint16_t)0x0000)
-#define SDRAM_MODE_WRITEBURST_MODE_PROGRAMMED	((uint16_t)0x0000)
-#define SDRAM_MODE_WRITEBURST_MODE_SINGLE		((uint16_t)0x0200)
+#define SDRAM_MODE_BURST_LENGTH_1				0x0000
+#define SDRAM_MODE_BURST_LENGTH_2				0x0001
+#define SDRAM_MODE_BURST_LENGTH_4				0x0002
+#define SDRAM_MODE_BURST_LENGTH_8				0x0004
+#define SDRAM_MODE_BURST_TYPE_SEQUENTIAL		0x0000
+#define SDRAM_MODE_BURST_TYPE_INTERLEAVED		0x0008
+#define SDRAM_MODE_CAS_LATENCY_2				0x0020
+#define SDRAM_MODE_CAS_LATENCY_3				0x0030
+#define SDRAM_MODE_OPERATING_MODE_STANDARD		0x0000
+#define SDRAM_MODE_WRITEBURST_MODE_PROGRAMMED	0x0000
+#define SDRAM_MODE_WRITEBURST_MODE_SINGLE		0x0200
 
 	// Set MODE to 100 to issue a "Load Mode Register" command in order to program the SDRAM
 	uint32_t tr_tmp = SDRAM_MODE_BURST_LENGTH_4 |
@@ -256,7 +256,7 @@ using memSize = uint32_t;
 constexpr uint32_t startAddr = 0xD0000000;
 bool runMemTest = false;
 
-uint32_t* SDRAMBuffer = (memSize *)(startAddr);
+uint32_t* SDRAMBuffer = reinterpret_cast<memSize*>(startAddr);
 
 extern USB usb;
 extern SerialHandler serial;
@@ -276,13 +276,13 @@ void MemoryTest(bool test16MB) {
 
 		// Blank Memory
 		for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-			tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
+			tempAddr = reinterpret_cast<memSize*>(startAddr + (testAddr * sizeof(memSize)));
 			*tempAddr = 0;
 		}
 
 		// Write
 		for (testAddr = 0; testAddr < maxAddr; ++testAddr) {
-			tempAddr = (memSize *)(startAddr + (testAddr * sizeof(memSize)));
+			tempAddr = reinterpret_cast<memSize*>(startAddr + (testAddr * sizeof(memSize)));
 			*tempAddr = static_cast<memSize>(testAddr);
 		}
 

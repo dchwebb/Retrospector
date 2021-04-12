@@ -113,7 +113,7 @@ public:
 struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
-	uint16_t filterPotCentre = 29000;		// FIXME - make this configurable in calibration
+	uint16_t potCentre = 29000;		// FIXME - make this configurable in calibration
 
 	void Init();
 	void Update(bool reset = false);

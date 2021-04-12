@@ -77,12 +77,12 @@ void Filter::InitFIRFilter(float tone)
 	int8_t arg;
 
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass
-	if (tone < filterPotCentre - 1000) {		// Low Pass
+	if (tone < potCentre - 1000) {		// Low Pass
 		passType = LowPass;
-		omega = 1.0f - std::pow((static_cast<float>(filterPotCentre) - tone) / 34000.0f, 0.2f);
-	} else if (tone > filterPotCentre + 1000) {
+		omega = 1.0f - std::pow((static_cast<float>(potCentre) - tone) / 34000.0f, 0.2f);
+	} else if (tone > potCentre + 1000) {
 		passType = HighPass;
-		omega = 1.0f - std::pow((tone - filterPotCentre)  / 75000.0f, 3.0f);
+		omega = 1.0f - std::pow((tone - potCentre)  / 75000.0f, 3.0f);
 	} else {
 		passType = FilterOff;
 		omega = 1.0f;

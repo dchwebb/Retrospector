@@ -7,6 +7,8 @@
 #include "Bootloader.h"
 #include "sdram.h"
 
+
+
 class SerialHandler {
 public:
 	SerialHandler(USB& usb);
@@ -16,10 +18,12 @@ public:
 	void resumeI2S();
 
 private:
+	// State machine for multi-stage commands
+	enum class serialState {pending, dfuConfirm, calibConfirm};
+	serialState state = serialState::pending;
+
 	bool CmdPending = false;
 	std::string ComCmd;
-	bool dfuConfirm = false;		// Used to allow confirmation before entering USB DFU mode
 	USB* usb;
-
 };
 
