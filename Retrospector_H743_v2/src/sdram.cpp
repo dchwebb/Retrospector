@@ -73,7 +73,7 @@ void InitSDRAM_16160(void) {
 	                       FMC_SDCRx_SDCLK_1;				// SDRAM clock configuration 10: SDCLK period = 2 x HCLK periods (@200MHz = 5ns period; 2 x period = 10ns); 11: SDCLK period = 3 x HCLK periods
 
 	// 8,192 rows by 1,024 columns by 8 bits OR 8,192 rows by 512 columns by 16 bits
-	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_Msk |			// CAS Latency in number of memory clock cycles: 11: 3 cycles
+	FMC_Bank5_6_R->SDCR[1] = FMC_SDCRx_CAS_1 |				// CAS Latency in number of memory clock cycles: 10: 2 cycles, 11: 3 cycles
 	                       FMC_SDCRx_NB |					// Number of internal banks: 1: Four internal Banks (4M x16 x4 Banks)
 	                       FMC_SDCRx_MWID_0 |				// Memory data bus width.	00: 8 bits	01: 16 bits	10: 32 bits (8,192 rows by 512 columns by 16 bits)
 	                       FMC_SDCRx_NR_1 |					// Number of row address bits 00: 11 bit, 01: 12 bits (4096), 10: 13 bits (8192) - See RAM datasheet p2 Device Overview
@@ -123,7 +123,7 @@ void InitSDRAM_16160(void) {
 	// Set MODE to 100 to issue a "Load Mode Register" command in order to program the SDRAM
 	uint32_t tr_tmp = SDRAM_MODE_BURST_LENGTH_4 |
 				SDRAM_MODE_BURST_TYPE_SEQUENTIAL |
-				SDRAM_MODE_CAS_LATENCY_3 |
+				SDRAM_MODE_CAS_LATENCY_2 |
 				SDRAM_MODE_OPERATING_MODE_STANDARD |
 				SDRAM_MODE_WRITEBURST_MODE_SINGLE;
 
@@ -140,8 +140,8 @@ void InitSDRAM_16160(void) {
 		Eg COUNT = (64ms / 8192) = 7.81uS
 		Refresh rate = (7.81uS * 100MHz) + 20 = 801
 	*/
-	FMC_Bank5_6_R->SDRTR = 801 << FMC_SDRTR_COUNT_Pos;
-	//FMC_Bank5_6_R->SDRTR = 1801 << FMC_SDRTR_COUNT_Pos;		// Performance testing
+	//FMC_Bank5_6_R->SDRTR = 801 << FMC_SDRTR_COUNT_Pos;
+	FMC_Bank5_6_R->SDRTR = 1602 << FMC_SDRTR_COUNT_Pos;		// Performance testing - increasing the time between refreshes improves performance with no obvious penalty
 
 	// 32 megabytes of ram now available at address 0xD0000000 - 0xD2000000 (for SDRAM Bank2 See manual p129)
 }
@@ -299,7 +299,7 @@ void MemoryTest(bool test16MB) {
 
 		if (memErrs > 0 || (memTestCount % 5) == 0) {
 			usb.SendString("Memory Test: Errors: " + std::to_string(memErrs) + "; Duration: " + std::to_string(memTestDuration) +
-					"ms; All Errors: " + std::to_string(memAllErrors) + "; Tests run: " + std::to_string(memTestCount) + "\r\n");
+					"ms; All errors: " + std::to_string(memAllErrors) + "; Tests run: " + std::to_string(memTestCount) + "\r\n");
 		}
 
 		++memTestCount;
