@@ -16,7 +16,6 @@
 #define M_PI           3.14159265358979323846
 
 // For debugging
-extern bool activateFilter;
 extern bool calculatingFilter;
 extern LEDHandler led;
 

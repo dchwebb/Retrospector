@@ -1,7 +1,5 @@
 #include "DigitalDelay.h"
 
-extern float DACLevel;
-
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 
@@ -114,26 +112,33 @@ void DigitalDelay::CalcSample()
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
 	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+
+	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
 	if (clockValid) {
-		if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
+		if (!linkLR && LR == right) {
+			if (delayMode != modeShort) {
+				delayClkCV *= 8;
+			}
+			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		} else if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
 			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
 			if (delayMode != modeShort) {
-				delayMult[LR] *= 4;
+				delayMult[LR] *= 8;
 			}
+			calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
 		}
-		calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
 
 	} else {
 		// If link tempo button active, right delay is multiple of left delay
 		if (linkLR && LR == right) {
 			delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
-			int32_t leftDelScaled = calcDelay[left] / delayMult[left];					// Normalise the left delay
+			int32_t leftDelScaled = calcDelay[left] / delayMult[left];				// Normalise the left delay
 			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
 			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
 		} else {
 			if (delayMode != modeShort) {
-				delayClkCV *= SAMPLE_BUFFER_LENGTH / 65536;
+				delayClkCV *= 8;
 			}
 			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
 		}
@@ -274,13 +279,17 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		ledColourLeft2 = 0xF42204,
 		ledColourRight1 = 0x44FF12,
 		ledColourRight2 = 0x05BB22,
-		ledColourClock1 = 0x00FF22,
-		ledColourClock2 = 0x0022FF,
+		ledColourClock1 = 0x00FF33,
+		ledColourClock2 = 0x0033FF,
 	};
 
 	float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
 	if (clockValid) {
-		led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, fract);
+		if (c == right && !linkLR) {
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, fract);
+		} else {
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, fract);
+		}
 	} else {
 		if (c == right && !linkLR) {
 			led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, fract);

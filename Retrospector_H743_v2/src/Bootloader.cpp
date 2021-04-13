@@ -2,7 +2,6 @@
 
 extern USB usb;
 extern SerialHandler serial;
-extern int32_t adcZeroOffset[2];
 
 #define BL_SAMPLE_SIZE 20000
 //uint8_t __attribute__((section (".sdramSection"))) bootloaderSamples[BL_SAMPLE_SIZE];

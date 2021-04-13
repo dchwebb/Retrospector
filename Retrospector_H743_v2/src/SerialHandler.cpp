@@ -178,8 +178,6 @@ bool SerialHandler::Command()
 		}
 
 	} else if (ComCmd.compare("led\n") == 0) {		// LEDs on/off
-		extern bool activateLEDs;
-
 		activateLEDs = !activateLEDs;
 		if (activateLEDs) {
 			usb->SendString("LEDs on\r\n");

@@ -190,3 +190,31 @@ bool Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 	}
 	return true;
 }
+
+#ifdef UNUSED
+void Config::AutoOffset()
+{
+	// When silence is detected for a long enough time recalculate ADC offset
+	static int32_t newOffset[2] = {33791, 33791};
+	static uint32_t offsetCounter[2];
+
+
+	for (channel lr : {left, right}) {
+		if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
+			newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
+			if (offsetCounter[lr] == 1000000) {
+				if (adcZeroOffset[lr] > newOffset[lr])
+					adcZeroOffset[lr]--;
+				else
+					adcZeroOffset[lr]++;
+				//adcZeroOffset[lr] = newOffset[lr];
+				offsetCounter[lr] = 0;
+			}
+			offsetCounter[lr]++;
+
+		} else {
+			offsetCounter[lr] = 0;
+		}
+	}
+}
+#endif

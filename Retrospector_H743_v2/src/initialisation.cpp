@@ -55,7 +55,7 @@
 // Second PLL used for SDRAM clock - not currently used as was interfering with timing on I2S
 // 8MHz (HSE) / 4 (M) * 200 (N) / 2 (R) = 200MHz (Maximum speed successfully tested 230MHz)
 #define PLL_M2 4
-#define PLL_N2 250
+#define PLL_N2 200
 #define PLL_R2 1			// 1 means Div by 2
 
 void SystemClock_Config()

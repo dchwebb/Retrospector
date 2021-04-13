@@ -1,6 +1,8 @@
 #pragma once
 #include "initialisation.h"
 
+extern bool activateLEDs;
+
 // LED Handler class used with Toshiba 9 channel LED IC TB62781FNG. All 9 values transmitted as SPI using DMA
 
 enum ledSelection {

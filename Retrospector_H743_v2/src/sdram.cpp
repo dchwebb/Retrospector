@@ -93,45 +93,26 @@ void InitSDRAM_16160(void) {
 	FMC_Bank1_R->BTCR[0] |= FMC_BCR1_FMCEN;					// Enable the FMC Controller (NB datasheet implies only needed for PSRAM/SRAM but SDRAM also requires from testing)
 
 	// p1664  Set MODE to 001 and configure Target Bank 2 to start delivering the clock to the memory (SDCKE is driven high)
-	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 | 0b001 << FMC_SDCMR_MODE_Pos;		// Command target bank 2 | Clock enable command
+	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 |					// Command target bank 2
+			             0b001 << FMC_SDCMR_MODE_Pos;		// Clock enable command
 
 	// sleep at least 100uS
 	uint32_t time = SysTickVal;
 	while (time == SysTickVal) {};
 
 	// Set MODE to 010 and configure Target Bank 2 to issue a "Precharge All" command
-	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 | 0b010 << FMC_SDCMR_MODE_Pos;		// Command target bank 2 | Precharge All command
+	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 |					// Command target bank (bank 2)
+			             0b010 << FMC_SDCMR_MODE_Pos;		// Precharge All command
 
-	// Set MODE to 011 to configure number of consecutive Auto-refresh commands (NRFS) in the FMC_SDCMR register. RAM Datashseet says at least two are required (p21)
+	// Set MODE to 011 to configure number of consecutive Auto-refresh commands (NRFS) in the FMC_SDCMR register. RAM Datasheet says at least two are required (p21)
 	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 |					// Command target bank (bank 2)
 	                     0b011 << FMC_SDCMR_MODE_Pos |		// Auto refresh command
 	                     3 << FMC_SDCMR_NRFS_Pos;			// Number of auto-refresh less one (ie 4)
 
-	// These parameters are specified in the SDRAM datasheet (p14 for ISSI SDRAM)
-#define SDRAM_MODE_BURST_LENGTH_1				0x0000
-#define SDRAM_MODE_BURST_LENGTH_2				0x0001
-#define SDRAM_MODE_BURST_LENGTH_4				0x0002
-#define SDRAM_MODE_BURST_LENGTH_8				0x0004
-#define SDRAM_MODE_BURST_TYPE_SEQUENTIAL		0x0000
-#define SDRAM_MODE_BURST_TYPE_INTERLEAVED		0x0008
-#define SDRAM_MODE_CAS_LATENCY_2				0x0020
-#define SDRAM_MODE_CAS_LATENCY_3				0x0030
-#define SDRAM_MODE_OPERATING_MODE_STANDARD		0x0000
-#define SDRAM_MODE_WRITEBURST_MODE_PROGRAMMED	0x0000
-#define SDRAM_MODE_WRITEBURST_MODE_SINGLE		0x0200
-
-	// Set MODE to 100 to issue a "Load Mode Register" command in order to program the SDRAM
-	uint32_t tr_tmp = SDRAM_MODE_BURST_LENGTH_4 |
-				SDRAM_MODE_BURST_TYPE_SEQUENTIAL |
-				SDRAM_MODE_CAS_LATENCY_2 |
-				SDRAM_MODE_OPERATING_MODE_STANDARD |
-				SDRAM_MODE_WRITEBURST_MODE_SINGLE;
-
-
-	//while (FMC_Bank5_6_R->SDSR & FMC_SDSR_BUSY_Msk);
+	// Set MODE to 100 to issue a "Load Mode Register" command in order to program the SDRAM (p14 of datasheet for ISSI SDRAM)
 	FMC_Bank5_6_R->SDCMR = FMC_SDCMR_CTB2 |					// Command target bank (bank 2)
 	                     0b100 << FMC_SDCMR_MODE_Pos |		// Clock enable command
-	                     tr_tmp << FMC_SDCMR_MRD_Pos;		// Mode register direction
+						 (BurstLength4 | BurstTypeSequential | CASLatency2 | OperatingModeStandard | WriteburstModeSingle) << FMC_SDCMR_MRD_Pos;		// Mode register direction
 
 	/* Set the refresh counter to trigger an auto refresh often enough to prevent data loss.
 	 	Datasheet is contradictory and unclear in its example (p877) - best guess is SDRAM clock frequency = SDCLK period as set above
@@ -307,3 +288,4 @@ void MemoryTest(bool test16MB) {
 	}
 
 }
+

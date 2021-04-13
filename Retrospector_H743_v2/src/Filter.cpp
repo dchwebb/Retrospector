@@ -49,10 +49,10 @@ void Filter::Update(bool reset)
 			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
 		} else 	if (passType == LowPass) {
 			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
-			led.LEDColour(ledFilter, 0xFFBBFF, 0xFF0000, colourMult, 1.0f);
+			led.LEDColour(ledFilter, 0xFF5555, 0xFF0000, colourMult, 1.0f);
 		} else {
 			float colourMult = std::pow(1.0f - (dampedADC / 65535.0f), 4.0f);
-			led.LEDColour(ledFilter, 0xFFBBFF, 0x1100FF, colourMult, 1.0f);
+			led.LEDColour(ledFilter, 0x5555FF, 0x1100FF, colourMult, 1.0f);
 		}
 	}
 }

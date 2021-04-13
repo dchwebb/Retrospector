@@ -8,6 +8,7 @@
 #define USB_DEBUG false
 #if (USB_DEBUG)
 #include "uartHandler.h"
+extern bool USBDebug;
 #define USB_DEBUG_COUNT 400
 #endif
 

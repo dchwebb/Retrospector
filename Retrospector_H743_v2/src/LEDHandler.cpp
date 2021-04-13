@@ -1,5 +1,7 @@
 #include "LEDHandler.h"
 
+bool activateLEDs = true;
+
 // Set an individual led brightness
 void LEDHandler::LEDSet(ledSelection l, uint8_t b)
 {
@@ -49,7 +51,6 @@ void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
 
 void LEDHandler::LEDSend()
 {
-	extern bool activateLEDs;
 	if (!activateLEDs)
 		return;
 
