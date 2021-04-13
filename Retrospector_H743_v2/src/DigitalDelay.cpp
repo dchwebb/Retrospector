@@ -16,6 +16,12 @@ void DigitalDelay::CalcSample()
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 
+	// Test modes
+	if (testMode != TestMode::none) {
+		RunTest(recordSample);
+		return;
+	}
+
 	// If chorussing, 'dry' sample is current sample + LFO delayed chorus sample
 	if (chorusMode) {
 
@@ -294,8 +300,6 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 }
 
 
-
-
 delay_mode DigitalDelay::Mode()
 {
 	// Return setting of Mode switch
@@ -304,4 +308,22 @@ delay_mode DigitalDelay::Mode()
 	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
 		return modeShort;
 	return modeLong;
+}
+
+
+// Runs audio tests (audio loopback and 1kHz saw wave)
+void DigitalDelay::RunTest(int32_t sample)
+{
+	static uint16_t testSample;
+	switch (testMode) {
+	case TestMode::none:
+		break;
+	case TestMode::loop:
+		SPI2->TXDR = OutputMix(0, sample);
+		break;
+	case TestMode::saw:
+		testSample += 683;		// 65536/96000 * 1000 = 1 kHz
+		SPI2->TXDR = OutputMix(0, testSample);
+		break;
+	}
 }

@@ -73,6 +73,7 @@ private:
 	void ReverseLED(channel c, int32_t remainingDelay);
 	delay_mode Mode();
 	int32_t OutputMix(float drySample, float wetSample);
+	void RunTest(int32_t s);
 
 	enum class TestMode {loop, saw, none};
 	TestMode testMode = TestMode::none;
