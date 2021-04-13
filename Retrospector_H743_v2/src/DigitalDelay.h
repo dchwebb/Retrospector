@@ -74,4 +74,6 @@ private:
 	delay_mode Mode();
 	int32_t OutputMix(float drySample, float wetSample);
 
+	enum class TestMode {loop, saw, none};
+	TestMode testMode = TestMode::none;
 };

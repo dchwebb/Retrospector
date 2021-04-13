@@ -65,6 +65,11 @@ bool SerialHandler::Command()
 		}
 		state = serialState::pending;
 
+	} else if (state == serialState::cancelAudioTest) {
+		delay.testMode = delay.TestMode::none;
+		usb->SendString("Audio test cancelled\r\n");
+		state = serialState::pending;
+
 	} else if (ComCmd.compare("info\n") == 0) {		// Print diagnostic information
 
 		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n"
@@ -94,13 +99,16 @@ bool SerialHandler::Command()
 				"info       -  Show diagnostic information\r\n"
 				"f          -  Filter on/off\r\n"
 				"led        -  LEDs on/off\r\n"
-				"mem16      -  Start/stop Memory Test of lower 16MB\r\n"
-				"mem32      -  Start/stop Memory Test of all 32MB\r\n"
 				"resume     -  Resume I2S after debugging\r\n"
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
 				"calib      -  Calibrate device\r\n"
 				"save       -  Save calibration\r\n"
+				"\r\nRun Tests:\r\n"
+				"mem16      -  Start/stop Memory Test of lower 16MB\r\n"
+				"mem32      -  Start/stop Memory Test of all 32MB\r\n"
+				"loop       -  Run an audio loopback test"
+				"saw        -  Generate a 1kHz saw tooth wave"
 				"\r\nDebug Data Dump:\r\n"
 				"dl         -  Left delay samples\r\n"
 				"dr         -  Right delay samples\r\n"
@@ -113,7 +121,15 @@ bool SerialHandler::Command()
 				"\r\n"
 		);
 
+	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
+		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");
+		delay.testMode = delay.TestMode::loop;
+		state = serialState::cancelAudioTest;
 
+	} else if (ComCmd.compare("Saw\n") == 0) {		// Audio loopback test
+		usb->SendString("Generating saw wave. Press any key to cancel\r\n");
+		delay.testMode = delay.TestMode::saw;
+		state = serialState::cancelAudioTest;
 
 	} else if (ComCmd.compare("dfu\n") == 0) {		// USB DFU firmware upgrade
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
