@@ -126,7 +126,7 @@ bool SerialHandler::Command()
 		delay.testMode = delay.TestMode::loop;
 		state = serialState::cancelAudioTest;
 
-	} else if (ComCmd.compare("Saw\n") == 0) {		// Audio loopback test
+	} else if (ComCmd.compare("saw\n") == 0) {		// Audio loopback test
 		usb->SendString("Generating saw wave. Press any key to cancel\r\n");
 		delay.testMode = delay.TestMode::saw;
 		state = serialState::cancelAudioTest;

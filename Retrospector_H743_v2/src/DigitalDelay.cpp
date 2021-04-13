@@ -43,8 +43,6 @@ void DigitalDelay::CalcSample()
 	}
 
 
-//	TIM3->CNT = 0;		// Debug
-
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
 		StereoSample oldreadSamples = {samples[oldReadPos[LR]]};
@@ -88,7 +86,6 @@ void DigitalDelay::CalcSample()
 		samples[writePos] = writeSample.bothSamples;
 
 		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
-
 	}
 
 
@@ -314,7 +311,7 @@ delay_mode DigitalDelay::Mode()
 // Runs audio tests (audio loopback and 1kHz saw wave)
 void DigitalDelay::RunTest(int32_t sample)
 {
-	static uint16_t testSample;
+	static int16_t testSample;
 	switch (testMode) {
 	case TestMode::none:
 		break;
@@ -322,7 +319,7 @@ void DigitalDelay::RunTest(int32_t sample)
 		SPI2->TXDR = OutputMix(0, sample);
 		break;
 	case TestMode::saw:
-		testSample += 683;		// 65536/96000 * 1000 = 1 kHz
+		testSample += 683;		// 65536/96000 * 1kHz
 		SPI2->TXDR = OutputMix(0, testSample);
 		break;
 	}
