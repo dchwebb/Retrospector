@@ -19,27 +19,18 @@
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
 
-
-
-
-
-
 int32_t adcZeroOffset[2] = {33791, 33791};			// 0V ADC reading
-//int32_t newOffset[2] = {33870, 34000};
+//int32_t newOffset[2] = {33791, 33791};
 uint32_t offsetCounter[2];
 bool linkButton;
 uint32_t linkBtnTest;
 bool activateLEDs = true;
 
-// ADC arrays - place in separate memory area with caching disabled
-volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];
+// Store buffers that need to live in special memory areas
+volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];		// Place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
-
-__attribute__((section (".led_buffer"))) LEDHandler led;			// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
-
-// Place delay sample buffers in external SDRAM and chorus samples in RAM_D1 (slower, but more space)
-int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];
-//int32_t  samples[SAMPLE_BUFFER_LENGTH];
+__attribute__((section (".led_buffer"))) LEDHandler led;						// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
+int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];	// Place delay sample buffers in external SDRAM
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
 
 USB usb;
@@ -68,6 +59,7 @@ int main(void) {
 	InitLEDSPI();					// Initialise SPI/DAM for LED controller
 	led.Init();
 	InitIO();						// Initialise switches and LEDs
+	config.RestoreConfig();			// Restore configuration settings (ADC offsets etc)
 //	InitDebugTimer();
 	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();

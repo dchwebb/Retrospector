@@ -74,17 +74,19 @@ void Config::SetConfig(configValues &cv)
 
 
 // Restore configuration settings from flash memory
-void Config::RestoreConfig()
+bool Config::RestoreConfig()
 {
 	// create temporary copy of settings from memory to check if they are valid
 	configValues cv;
 	memcpy(reinterpret_cast<uint32_t*>(&cv), ADDR_FLASH_SECTOR_7, sizeof(cv));
 
-	if (strcmp(cv.StartMarker, "CFG") == 0 && strcmp(cv.EndMarker, "END") == 0 && cv.Version == 1) {
+	if (strcmp(cv.StartMarker, "CFG") == 0 && strcmp(cv.EndMarker, "END") == 0 && cv.Version == CONFIG_VERSION) {
 		filter.potCentre = cv.filter_pot_center;
 		adcZeroOffset[left]  = cv.audio_offset_left;
 		adcZeroOffset[right] = cv.audio_offset_right;
+		return true;
 	}
+	return false;
 }
 
 
