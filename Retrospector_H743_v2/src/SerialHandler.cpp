@@ -110,8 +110,8 @@ bool SerialHandler::Command()
 				"loop       -  Run an audio loopback test\r\n"
 				"saw        -  Generate a 1kHz saw tooth wave\r\n"
 				"\r\nDebug Data Dump:\r\n"
-				"dl         -  Left delay samples\r\n"
-				"dr         -  Right delay samples\r\n"
+				"dl         -  Most recent Left delay samples\r\n"
+				"dr         -  Most recent Right delay samples\r\n"
 				"fir        -  FIR coefficients\r\n"
 				"iir        -  IIR coefficients\r\n"
 				"fdl        -  Left filter buffer\r\n"
@@ -231,11 +231,22 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("dl\n") == 0 || ComCmd.compare("dr\n") == 0) {		// Dump sample buffer for L or R output
 		suspendI2S();
 
+		int32_t dumpCount = 2000;
 		channel LR = ComCmd.compare("dl\n") == 0 ? left : right;
-		usb->SendString("Read Pos: " + std::to_string(delay.readPos[LR]) + "; Write Pos: " + std::to_string(delay.writePos) + "\r\n");
-		for (int s = 0; s < 1000; ++s) {
-			StereoSample samp = {samples[s]};
-			usb->SendString(std::to_string(samp.sample[LR]).append("\r\n").c_str());
+		usb->SendString("Samples: " + std::to_string(dumpCount) + "; Read Pos: " + std::to_string(delay.readPos[LR]) + "; Write Pos: " + std::to_string(delay.writePos) + "\r\n");
+
+		int32_t wp;
+
+		if (delay.writePos < dumpCount)
+			wp = delay.writePos + SAMPLE_BUFFER_LENGTH - dumpCount;
+		else
+			wp = delay.writePos - dumpCount;
+
+		for (int s = 0; s < dumpCount; ++s) {
+			StereoSample samp = {samples[wp]};
+			usb->SendString(std::to_string(wp) + ": " + std::to_string(samp.sample[LR]) + "\r\n");
+			if (++wp == SAMPLE_BUFFER_LENGTH)
+				wp = 0;
 		}
 
 		resumeI2S();

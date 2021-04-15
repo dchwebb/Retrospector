@@ -4973,4 +4973,95 @@ Text Label 1600 3850 2    50   ~ 0
 FMC_A12
 Wire Wire Line
 	1750 3850 1600 3850
+$Comp
+L Hyperram:Hyperram_BGA U?
+U 1 1 6081A4E3
+P -1800 3950
+F 0 "U?" H -2400 4200 50  0000 C CNN
+F 1 "Hyperram_BGA" H -2400 4100 50  0000 C CNN
+F 2 "" H -1950 4150 50  0001 C CNN
+F 3 "" H -1950 4150 50  0001 C CNN
+	1    -1800 3950
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 6081CB90
+P -1800 3600
+F 0 "#PWR?" H -1800 3450 50  0001 C CNN
+F 1 "+3.3V" H -1785 3773 50  0000 C CNN
+F 2 "" H -1800 3600 50  0001 C CNN
+F 3 "" H -1800 3600 50  0001 C CNN
+	1    -1800 3600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	-1900 3700 -1800 3700
+Connection ~ -1800 3700
+Wire Wire Line
+	-1800 3700 -1700 3700
+Wire Wire Line
+	-1800 3700 -1800 3600
+$Comp
+L power:GND #PWR?
+U 1 1 6099F694
+P -1800 5200
+F 0 "#PWR?" H -1800 4950 50  0001 C CNN
+F 1 "GND" H -1795 5027 50  0000 C CNN
+F 2 "" H -1800 5200 50  0001 C CNN
+F 3 "" H -1800 5200 50  0001 C CNN
+	1    -1800 5200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	-1900 5100 -1800 5100
+Connection ~ -1800 5100
+Wire Wire Line
+	-1800 5100 -1700 5100
+Wire Wire Line
+	-1800 5100 -1800 5200
+Text Label -850 4250 0    50   ~ 0
+OCTOSPIM_P1_IO2
+Text Label -850 4050 0    50   ~ 0
+OCTOSPIM_P2_IO0
+Text Label -850 4150 0    50   ~ 0
+OCTOSPIM_P2_IO1
+Text Label -100 4250 0    50   ~ 0
+OCTOSPIM_P2_IO2
+Text Label -850 4350 0    50   ~ 0
+OCTOSPIM_P2_IO3
+Text Label -2750 4500 2    50   ~ 0
+OCTOSPIM_P2_CLK
+Text Label -2750 4400 2    50   ~ 0
+OCTOSPIM_P2_NCLK
+Text Label -100 4350 0    50   ~ 0
+OCTOSPIM_P1_IO3
+Text Label -100 4050 0    50   ~ 0
+OCTOSPIM_P1_IO0
+Text Label -100 4150 0    50   ~ 0
+OCTOSPIM_P1_IO1
+Text Label -850 4450 0    50   ~ 0
+OCTOSPIM_P1_IO4
+Text Label -2750 6550 0    50   ~ 0
+OCTOSPIM_P1_IO5
+Text Label -2750 6650 0    50   ~ 0
+OCTOSPIM_P1_IO6
+Text Label -2750 4600 2    50   ~ 0
+OCTOSPIM_P1_DQS
+Text Label -3600 4400 2    50   ~ 0
+OCTOSPIM_P1_NCLK
+Text Label -3600 4600 2    50   ~ 0
+OCTOSPIM_P2_DQS
+Text Label -100 4450 0    50   ~ 0
+OCTOSPIM_P2_IO4
+Text Label -100 4550 0    50   ~ 0
+OCTOSPIM_P2_IO5
+Text Label -850 4550 0    50   ~ 0
+OCTOSPIM_P1_IO5
+Text Label -850 4650 0    50   ~ 0
+OCTOSPIM_P1_IO6
+Text Label -850 4750 0    50   ~ 0
+OCTOSPIM_P1_IO7
+Text Label -2750 4200 2    50   ~ 0
+OCTOSPIM_P1_NCS
 $EndSCHEMATC

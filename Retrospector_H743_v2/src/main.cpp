@@ -13,7 +13,7 @@
  * Increase speed of LED SPI
  * Investigate R channel zero offset
  * Investigate background noise and interference every 20ms
- * Link button to unlink right delay in clocked mode
+ * Bug where very short delay times do not activate delay LED correctly
  * USB hangs when sending over CDC and cable removed and reinserted
  */
 

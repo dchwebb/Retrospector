@@ -235,12 +235,12 @@ void DigitalDelay::Init()
 
 void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 {
-	float fract;
+	float brightness;
 	ledOnTimer++;
 
 	// FIXME - only carry out calculations when needed before send
 	if (reverse) {
-		fract = std::pow(1.0f - static_cast<float>(remainingDelay) / (calcDelay[c] * 2), 4.0f);
+		brightness = std::pow(1.0f - static_cast<float>(remainingDelay) / (calcDelay[c] * 2), 4.0f);
 	} else {
 		// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
 		++ledCounter[c];
@@ -271,7 +271,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		}*/
 
 		// Exponential fade out
-		fract = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
+		brightness = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
 	}
 
 	enum ledColours {
@@ -286,18 +286,18 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 	float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
 	if (clockValid) {
 		if (c == right && !linkLR) {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, fract);
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
 		} else {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, fract);
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, brightness);
 		}
 	} else {
 		if (c == right && !linkLR) {
-			led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, fract);
+			led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, brightness);
 		} else {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, fract);
+			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
 		}
 	}
-	if (ledOnTimer > 4) {
+	if (ledOnTimer > 8) {
 		led.LEDSend();
 		ledOnTimer = 0;
 	}

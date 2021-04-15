@@ -231,7 +231,8 @@ void InitADCAudio()
 	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
 
 	// FIXME - currently ADC clock is set to HSI @ 64MHz - might be more accurate to use HSE
-	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
+	// 00: pll2_p_ck default, 01: pll3_r_ck clock, 10: per_ck clock*
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// ADC clock selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
 
 	// Initialize ADC peripheral
@@ -566,7 +567,7 @@ void InitLEDSPI()
 
 	// Configure SPI
 	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI6->CFG1 |= SPI_CFG1_MBR_2;					// Master Baud rate p2238:  100: SPI master clock/32; 101: SPI master clock/64
+	SPI6->CFG1 |= SPI_CFG1_MBR_2 | SPI_CFG1_MBR_0;					// Master Baud rate p2238: 100: SPI clock/32; 101: SPI clock/64
 	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
