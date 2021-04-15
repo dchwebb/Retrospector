@@ -297,7 +297,7 @@ void InitADCAudio()
 	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
 	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
 
-	DMA1_Stream2->NDTR |= 2;						// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream2->NDTR |= AUDIO_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
 	DMA1_Stream2->PAR = (uint32_t)(&(ADC2->DR));	// Configure the peripheral data register address 0x40022040
 	DMA1_Stream2->M0AR = (uint32_t)(ADC_audio);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
 

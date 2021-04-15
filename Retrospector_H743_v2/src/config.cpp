@@ -11,11 +11,12 @@ void Config::Calibrate()
 	int32_t filterCenter = ADC_array[ADC_Filter_Pot];
 
 	for (int32_t i = 0; i < 40000000; ++i) {
-		audioOffsetL = (ADC_audio[left] + (63 * audioOffsetL)) >> 6;
-		audioOffsetR = (ADC_audio[right] + (63 * audioOffsetR)) >> 6;
-		filterCenter = (ADC_array[ADC_Filter_Pot] + (63 * filterCenter)) >> 6;
+		audioOffsetL = std::round((static_cast<float>(ADC_audio[left]) + (63.0f * audioOffsetL)) / 64.0f);
+		audioOffsetR = std::round((static_cast<float>(ADC_audio[right]) + (63.0f * audioOffsetR)) / 64.0f);
+		filterCenter = std::round((static_cast<float>(ADC_array[ADC_Filter_Pot]) + (63.0f * filterCenter)) / 64.0f);
 	}
-	usb.SendString("Calibration Audio L: " + std::to_string(audioOffsetL) + "; Audio R: " + std::to_string(audioOffsetR) + "; Filter: " + std::to_string(filterCenter) + "\r\n");
+
+	usb.SendString("Calibration Audio L: " + std::to_string(audioOffsetL) + "; Audio R: " + std::to_string(audioOffsetR) + "; Filter: " + std::to_string(filterCenter) + " Err: " + std::to_string(outOfRange) + "\r\n");
 
 	if (audioOffsetL < 33000 || audioOffsetL > 34500) {
 		usb.SendString("Calibration failed. Audio L out of range\r\n");

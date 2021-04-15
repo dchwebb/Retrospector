@@ -25,7 +25,7 @@ bool linkButton;
 uint32_t linkBtnTest;
 
 // Store buffers that need to live in special memory areas
-volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[2];		// Place in separate memory area with caching disabled
+volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[AUDIO_BUFFER_LENGTH];		// Place in separate memory area with caching disabled
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
 __attribute__((section (".led_buffer"))) LEDHandler led;						// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];	// Place delay sample buffers in external SDRAM

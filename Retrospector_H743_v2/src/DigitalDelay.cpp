@@ -324,9 +324,18 @@ void DigitalDelay::RunTest(int32_t sample)
 	switch (testMode) {
 	case TestMode::none:
 		break;
-	case TestMode::loop:
+	case TestMode::loop: {
+//		volatile int capt0 = ADC_audio[0];
+//		volatile int capt1 = ADC_audio[2];
+//		volatile int capt2 = ADC_audio[4];
+//		volatile int capt3 = ADC_audio[6];
+//		if (capt0 > 33991 || capt1 > 33991 || capt2 > 33991 || capt3 > 33991) {
+//			volatile int susp = 1;
+//			susp++;
+//		}
 		SPI2->TXDR = OutputMix(0, sample);
 		break;
+	}
 	case TestMode::saw:
 		testSample += 683;		// 65536/96000 * 1kHz
 		SPI2->TXDR = OutputMix(0, testSample);
