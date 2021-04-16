@@ -41,6 +41,7 @@ void InitSysTick();
 void uartSendChar(char c);
 void uartSendString(const char* s);
 void InitADCAudio();
+void InitADCAudioNoDMA();
 void InitADCControls();
 void InitDAC();
 void InitI2S();

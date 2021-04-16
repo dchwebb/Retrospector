@@ -224,6 +224,54 @@ void InitAdcPins(ADC_TypeDef* ADC_No, std::initializer_list<uint8_t> channels) {
 	}
 }
 
+
+
+void InitADCAudioNoDMA()
+{
+	// Configure clocks
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+
+	// FIXME - currently ADC clock is set to HSI @ 64MHz - might be more accurate to use HSE
+	// 00: pll2_p_ck default, 01: pll3_r_ck clock, 10: per_ck clock*
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// ADC clock selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
+
+	ADC2->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC2->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
+
+	// Wait until voltage regulator settled
+	volatile uint32_t wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+		wait_loop_index--;
+	}
+	while ((ADC2->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
+
+	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;			// Set prescaler to ADC clock divided by 2 (if 64MHz = 32MHz)
+
+	//ADC2->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
+	ADC2->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
+	//ADC2->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
+
+	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
+	ADC2->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
+	ADC2->SQR1 |= (2 - 1);							// For scan mode: set number of channels to be converted
+
+	// Start calibration
+	ADC2->CR |= ADC_CR_ADCAL;
+	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
+
+	// Configure ADC Channels to be converted: PA3 ADC12_INP15 (AUDIO_IN_L), PA2 ADC12_INP14 (AUDIO_IN_R)
+	InitAdcPins(ADC2, {15, 14});
+
+	// Enable ADC
+	ADC2->CR |= ADC_CR_ADEN;
+	while ((ADC2->ISR & ADC_ISR_ADRDY) == 0) {}
+
+//	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+}
+
+
+
 void InitADCAudio()
 {
 	// Configure clocks

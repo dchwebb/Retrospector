@@ -42,6 +42,7 @@ extern "C" {
 #include "interrupts.h"
 }
 
+volatile int adcErrs = 0;		// Debug
 
 int main(void) {
 
@@ -50,6 +51,8 @@ int main(void) {
 	InitSysTick();
 
 	InitADCAudio();					// Initialise ADC to capture audio samples
+//	InitADCAudioNoDMA();
+
 	InitADCControls();				// Initialise ADC to capture knob and CV data
 	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();				// Initialise larger SDRAM
@@ -64,6 +67,21 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
+/*
+		// Test ADC code
+		GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+		ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+		while ((ADC2->ISR & ADC_ISR_EOC) == 0) {};
+		ADC_audio[0] = ADC2->DR;
+		ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+		while ((ADC2->ISR & ADC_ISR_EOC) == 0) {};
+		ADC_audio[1] = ADC2->DR;
+		GPIOB->ODR &= ~GPIO_ODR_OD8;
+*/
+		if (abs(ADC_audio[0] - 33791) > 20 || abs(ADC_audio[1] - 33791) > 20) {
+			adcErrs++;
+		}
+
 
 		// Implement chorus (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
 		if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != delay.chorusMode) {
