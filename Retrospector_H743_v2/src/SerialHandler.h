@@ -27,3 +27,4 @@ private:
 	USB* usb;
 };
 
+extern SerialHandler serial;

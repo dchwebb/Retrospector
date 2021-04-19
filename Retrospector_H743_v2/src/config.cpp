@@ -10,7 +10,7 @@ void Config::Calibrate()
 	int32_t audioOffsetR = ADC_audio[right];
 	int32_t filterCenter = ADC_array[ADC_Filter_Pot];
 
-	for (int32_t i = 0; i < 40000000; ++i) {
+	for (int32_t i = 0; i < 10000000; ++i) {
 		audioOffsetL = std::round((static_cast<float>(ADC_audio[left]) + (63.0f * audioOffsetL)) / 64.0f);
 		audioOffsetR = std::round((static_cast<float>(ADC_audio[right]) + (63.0f * audioOffsetR)) / 64.0f);
 		filterCenter = std::round((static_cast<float>(ADC_array[ADC_Filter_Pot]) + (63.0f * filterCenter)) / 64.0f);
@@ -26,15 +26,16 @@ void Config::Calibrate()
 		usb.SendString("Calibration failed. Audio R out of range\r\n");
 		return;
 	}
-	if (filterCenter < 30000 || filterCenter > 35000) {
-		usb.SendString("Calibration failed. Filter pot out of range\r\n");
-		return;
-	}
+//	if (filterCenter < 30000 || filterCenter > 35000) {
+//		usb.SendString("Calibration failed. Filter pot out of range\r\n");
+//		return;
+//	}
 
 	// If calibration in acceptable range save to config
 	adcZeroOffset[left] = audioOffsetL;
 	adcZeroOffset[right] = audioOffsetR;
-	filter.potCentre = filterCenter;
+//	filter.potCentre = filterCenter;
+	serial.suspendI2S();
 	SaveConfig();
 }
 

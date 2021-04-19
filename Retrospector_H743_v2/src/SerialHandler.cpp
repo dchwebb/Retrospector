@@ -57,7 +57,7 @@ bool SerialHandler::Command()
 
 	} else if (state == serialState::calibConfirm) {
 		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
-			suspendI2S();
+			//suspendI2S();
 			config.Calibrate();
 			resumeI2S();
 		} else {
@@ -65,7 +65,7 @@ bool SerialHandler::Command()
 		}
 		state = serialState::pending;
 
-	} else if (state == serialState::cancelAudioTest) {
+	} else if (state == serialState::cancelAudioTest && ComCmd.compare("dl\n") != 0 && ComCmd.compare("dr\n") != 0) {
 		delay.testMode = delay.TestMode::none;
 		usb->SendString("Audio test cancelled\r\n");
 		state = serialState::pending;
@@ -141,10 +141,9 @@ bool SerialHandler::Command()
 		//Bootloader();
 
 	} else if (ComCmd.compare("calib\n") == 0) {	// Calibrate filter pot center and audio offsets
-		suspendI2S();
+
 		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");
 		state = serialState::calibConfirm;
-		resumeI2S();
 
 	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
 		suspendI2S();

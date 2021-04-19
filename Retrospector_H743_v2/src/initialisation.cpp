@@ -52,11 +52,15 @@
 #define PLL_R1 2
 #endif
 
-// Second PLL used for SDRAM clock - not currently used as was interfering with timing on I2S
+#ifdef PLL2ON
+// PLL2R used for SDRAM clock - not currently used as was interfering with timing on I2S
 // 8MHz (HSE) / 4 (M) * 200 (N) / 2 (R) = 200MHz (Maximum speed successfully tested 230MHz)
+// PPL2P used for ADC: 8MHz / 4 (M) * 200 (N) / 5 (P) = 80MHz
 #define PLL_M2 4
 #define PLL_N2 200
-#define PLL_R2 1			// 1 means Div by 2
+#define PLL_R2 1			// 0000001: pll2_r_ck = vco2_ck / 2
+#define PLL_P2 4			// 0000100: pll2_p_ck = vco2_ck / 5
+#endif
 
 void SystemClock_Config()
 {
@@ -88,8 +92,7 @@ void SystemClock_Config()
 
 	// Clock source to High speed external and main (M) dividers
 	RCC->PLLCKSELR = RCC_PLLCKSELR_PLLSRC_HSE |
-	                 PLL_M1 << RCC_PLLCKSELR_DIVM1_Pos |
-					 PLL_M2 << RCC_PLLCKSELR_DIVM2_Pos;
+	                 PLL_M1 << RCC_PLLCKSELR_DIVM1_Pos;
 
 	// PLL 1 dividers
 	RCC->PLL1DIVR = (PLL_N1 - 1) << RCC_PLL1DIVR_N1_Pos |
@@ -104,16 +107,22 @@ void SystemClock_Config()
 	RCC->CR |= RCC_CR_PLL1ON;						// Turn on main PLL
 	while ((RCC->CR & RCC_CR_PLL1RDY) == 0);		// Wait till PLL is ready
 
+#ifdef PLL2ON
+	RCC->PLLCKSELR |= PLL_M2 << RCC_PLLCKSELR_DIVM2_Pos;
+
 	// PLL 2 dividers
 	RCC->PLL2DIVR = (PLL_N2 - 1) << RCC_PLL2DIVR_N2_Pos |
-			        PLL_R2 << RCC_PLL2DIVR_R2_Pos;
+			        PLL_R2 << RCC_PLL2DIVR_R2_Pos |
+					PLL_P2 << RCC_PLL2DIVR_P2_Pos;
 
 	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2RGE_1;			// 01: The PLL2 input (ref1_ck) clock range frequency is between 2 and 4 MHz (Will be 2MHz for 8MHz clock divided by 4)
 	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2VCOSEL;			// 1: Medium VCO range:150 to 420 MHz
 	RCC->PLLCFGR |= RCC_PLLCFGR_DIVR2EN;			// Enable R divider output for SDRAM clock
+	RCC->PLLCFGR |= RCC_PLLCFGR_DIVP2EN;			// Enable P divider output for ADC clock
 
 	RCC->CR |= RCC_CR_PLL2ON;						// Turn on PLL 2
 	while ((RCC->CR & RCC_CR_PLL2RDY) == 0);		// Wait till PLL is ready
+#endif
 
 	// Peripheral scalers
 	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide 400MHz by 2 for 200MHz - this is then divided for all APB clocks below
@@ -247,10 +256,72 @@ void InitADCAudioNoDMA()
 	while ((ADC2->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
 
 	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;			// Set prescaler to ADC clock divided by 2 (if 64MHz = 32MHz)
-
-	//ADC2->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
 	ADC2->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
-	//ADC2->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
+
+	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
+	ADC2->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
+	ADC2->SQR1 |= (2 - 1);							// For scan mode: set number of channels to be converted
+
+	// Start calibration
+	ADC2->CR |= ADC_CR_ADCAL;
+	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
+
+	// Configure ADC Channels to be converted: PA3 ADC12_INP15 (AUDIO_IN_L), PA2 ADC12_INP14 (AUDIO_IN_R)
+	InitAdcPins(ADC2, {15, 14});
+
+	// Activate interrupts
+	ADC2->IER |= ADC_IER_EOCIE;						// Enable End of Conversion interrupt
+	NVIC_SetPriority(ADC_IRQn, 1);					// Lower is higher priority
+	NVIC_EnableIRQ(ADC_IRQn);
+
+	ADC2->CR |= ADC_CR_ADEN;						// Enable ADC
+
+	while ((ADC2->ISR & ADC_ISR_ADRDY) == 0) {}
+
+//	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+}
+
+
+void InitADCAudioDMAOne()
+{
+	// Configure clocks
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+
+	// FIXME - currently ADC clock is set to HSI @ 64MHz - might be more accurate to use HSE
+	// 00: pll2_p_ck default, 01: pll3_r_ck clock, 10: per_ck clock*
+	//RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// ADC clock selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	// Initialize ADC peripheral
+	DMA1_Stream2->CR &= ~DMA_SxCR_EN;
+	//DMA1_Stream2->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
+	DMA1_Stream2->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream2->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream2->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream2->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+
+	DMA1_Stream2->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
+
+	DMAMUX1_Channel2->CCR |= 10; 					// DMA request MUX input 10 = adc2_dma (See p.695)
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
+
+	ADC2->CR &= ~ADC_CR_DEEPPWD;					// Deep power down: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC2->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
+
+	// Wait until voltage regulator settled
+	volatile uint32_t wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+		wait_loop_index--;
+	}
+	while ((ADC2->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
+
+	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;			// Set prescaler to ADC clock divided by 2 (if 64MHz = 32MHz)
+
+	ADC2->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
+	ADC2->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
+	ADC2->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
 
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
 	ADC2->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
@@ -267,9 +338,21 @@ void InitADCAudioNoDMA()
 	ADC2->CR |= ADC_CR_ADEN;
 	while ((ADC2->ISR & ADC_ISR_ADRDY) == 0) {}
 
-//	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
-}
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF2; // Channel 2 Clear synchronization overrun event flag
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF2_Pos;		// clear all five interrupts for this stream
 
+	DMA1_Stream2->NDTR |= AUDIO_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream2->PAR = (uint32_t)(&(ADC2->DR));	// Configure the peripheral data register address 0x40022040
+	DMA1_Stream2->M0AR = (uint32_t)(ADC_audio);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
+
+	DMA1_Stream2->CR |= DMA_SxCR_EN;				// Enable DMA and wait
+	wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+	  wait_loop_index--;
+	}
+
+	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
+}
 
 
 void InitADCAudio()
@@ -329,6 +412,7 @@ void InitADCAudio()
 	ADC2->SQR1 |= (2 - 1);							// For scan mode: set number of channels to be converted
 
 	// Start calibration
+	ADC2->CR |= ADC_CR_ADCALLIN;					// Activate linearity calibration (as well as offset calibration)
 	ADC2->CR |= ADC_CR_ADCAL;
 	while ((ADC2->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
@@ -357,6 +441,86 @@ void InitADCAudio()
 
 	ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
 }
+
+
+
+void InitADCAudioADC1()
+{
+	// Configure clocks
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;			// GPIO port clock
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+	RCC->D3CCIPR |= RCC_D3CCIPR_ADCSEL_1;			// SAR ADC kernel clock source selection: 10: per_ck clock (hse_ck, hsi_ker_ck or csi_ker_ck according to CKPERSEL in RCC->D1CCIPR p.353)
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+
+	// Initialize ADC peripheral
+	DMA1_Stream1->CR &= ~DMA_SxCR_EN;
+	DMA1_Stream1->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
+	DMA1_Stream1->CR |= DMA_SxCR_MINC;				// Memory in increment mode
+	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
+	DMA1_Stream1->CR |= DMA_SxCR_PL_0;				// Priority: 00 = low; 01 = Medium; 10 = High; 11 = Very High
+
+	DMA1_Stream1->FCR &= ~DMA_SxFCR_FTH;			// Disable FIFO Threshold selection
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF1_Pos;		// clear all five interrupts for this stream
+
+	DMAMUX1_Channel1->CCR |= 9; 					// DMA request MUX input 9 = adc1_dma (See p.695)
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
+
+	ADC1->CR &= ~ADC_CR_DEEPPWD;					// Deep powDMA1_Stream2own: 0: ADC not in deep-power down	1: ADC in deep-power-down (default reset state)
+	ADC1->CR |= ADC_CR_ADVREGEN;					// Enable ADC internal voltage regulator
+
+	// Wait until voltage regulator settled
+	volatile uint32_t wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+		wait_loop_index--;
+	}
+	while ((ADC1->CR & ADC_CR_ADVREGEN) != ADC_CR_ADVREGEN) {}
+
+//	ADC12_COMMON->CCR |= ADC_CCR_PRESC_0;
+	ADC1->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
+	ADC1->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
+	ADC1->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
+
+	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
+	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
+
+	// For scan mode: set number of channels to be converted
+	ADC1->SQR1 |= (AUDIO_BUFFER_LENGTH - 1);
+
+	// Start calibration
+	ADC1->CR |= ADC_CR_ADCALLIN;					// Activate linearity calibration (as well as offset calibration)
+	ADC1->CR |= ADC_CR_ADCAL;
+	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
+
+	// Configure ADC Channels to be converted: PA3 ADC12_INP15 (AUDIO_IN_L), PA2 ADC12_INP14 (AUDIO_IN_R)
+	InitAdcPins(ADC1, {15, 14});
+
+	// Enable ADC
+	ADC1->CR |= ADC_CR_ADEN;
+	while ((ADC1->ISR & ADC_ISR_ADRDY) == 0) {}
+
+	// With DMA, overrun event is always considered as an error even if hadc->Init.Overrun is set to ADC_OVR_DATA_OVERWRITTEN. Therefore, ADC_IT_OVR is enabled.
+	//ADC1->IER |= ADC_IER_OVRIE;
+
+	DMAMUX1_ChannelStatus->CFR |= DMAMUX_CFR_CSOF1; // Channel 1 Clear synchronization overrun event flag
+	DMA1->LIFCR = 0x3F << DMA_LIFCR_CFEIF1_Pos;		// clear all five interrupts for this stream
+
+	DMA1_Stream1->NDTR |= AUDIO_BUFFER_LENGTH;		// Number of data items to transfer (ie size of ADC buffer)
+	DMA1_Stream1->PAR = (uint32_t)(&(ADC1->DR));	// Configure the peripheral data register address 0x40022040
+	DMA1_Stream1->M0AR = (uint32_t)(ADC_audio);		// Configure the memory address (note that M1AR is used for double-buffer mode) 0x24000040
+
+	DMA1_Stream1->CR |= DMA_SxCR_EN;				// Enable DMA and wait
+	wait_loop_index = (SystemCoreClock / (100000UL * 2UL));
+	while (wait_loop_index != 0UL) {
+	  wait_loop_index--;
+	}
+
+	ADC1->CR |= ADC_CR_ADSTART;						// Start ADC
+}
+
 
 void InitADCControls()
 {
@@ -406,6 +570,7 @@ void InitADCControls()
 	ADC1->SQR1 |= (ADC_BUFFER_LENGTH - 1);
 
 	// Start calibration
+	ADC1->CR |= ADC_CR_ADCALLIN;					// Activate linearity calibration (as well as offset calibration)
 	ADC1->CR |= ADC_CR_ADCAL;
 	while ((ADC1->CR & ADC_CR_ADCAL) == ADC_CR_ADCAL) {};
 
@@ -484,7 +649,7 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 
 	// Configure SPI (Shown as SPI2->CGFR in SFR)
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
-	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit; 11=Master receive
+	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit*; 11=Master receive
 
 	// Use a 16bit data length but pack into the upper 16 bits of a 32 bit word
 	SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit

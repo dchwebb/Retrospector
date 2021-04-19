@@ -7,7 +7,7 @@ void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	float nextSample, oppositeSample;								// nextSample is the delayed sample to be played (oppositeSample form the opposite side)
-	delay_mode delayMode = Mode();										// Long, short or reverse
+	delay_mode delayMode = Mode();									// Long, short or reverse
 
 	LR = static_cast<channel>(!static_cast<bool>(LR));
 	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
@@ -325,14 +325,13 @@ void DigitalDelay::RunTest(int32_t sample)
 	case TestMode::none:
 		break;
 	case TestMode::loop: {
-//		volatile int capt0 = ADC_audio[0];
-//		volatile int capt1 = ADC_audio[2];
-//		volatile int capt2 = ADC_audio[4];
-//		volatile int capt3 = ADC_audio[6];
-//		if (capt0 > 33991 || capt1 > 33991 || capt2 > 33991 || capt3 > 33991) {
-//			volatile int susp = 1;
-//			susp++;
-//		}
+		// Capture the samples to the buffer
+		StereoSample writeSample;
+		writeSample.sample[left] = static_cast<int32_t>(ADC_audio[left]) - adcZeroOffset[left];
+		writeSample.sample[right] = static_cast<int32_t>(ADC_audio[right]) - adcZeroOffset[right];
+		samples[writePos] = writeSample.bothSamples;
+		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
+
 		SPI2->TXDR = OutputMix(0, sample);
 		break;
 	}

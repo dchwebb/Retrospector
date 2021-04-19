@@ -20,9 +20,15 @@
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
 
-int32_t adcZeroOffset[2] = {33791, 33791};			// 0V ADC reading
+int32_t adcZeroOffset[2] = {33673, 33660};			// 0V ADC reading
 bool linkButton;
 uint32_t linkBtnTest;
+
+volatile int adcErrs = 0;		// Debug
+volatile int adcErrsPerSec = 0;		// Debug
+volatile int adcErrsTemp = 0;		// Debug
+volatile int adcErrsTime = 0;		// Debug
+volatile bool adcReady = true;
 
 // Store buffers that need to live in special memory areas
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[AUDIO_BUFFER_LENGTH];		// Place in separate memory area with caching disabled
@@ -42,7 +48,7 @@ extern "C" {
 #include "interrupts.h"
 }
 
-volatile int adcErrs = 0;		// Debug
+
 
 int main(void) {
 
@@ -50,10 +56,10 @@ int main(void) {
 	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
 
-	InitADCAudio();					// Initialise ADC to capture audio samples
-//	InitADCAudioNoDMA();
+//	InitADCAudio();					// Initialise ADC to capture audio samples
+	InitADCAudioADC1();
 
-	InitADCControls();				// Initialise ADC to capture knob and CV data
+//	InitADCControls();				// Initialise ADC to capture knob and CV data
 	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();				// Initialise larger SDRAM
 	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
@@ -78,8 +84,19 @@ int main(void) {
 		ADC_audio[1] = ADC2->DR;
 		GPIOB->ODR &= ~GPIO_ODR_OD8;
 */
-		if (abs(ADC_audio[0] - 33791) > 20 || abs(ADC_audio[1] - 33791) > 20) {
+//		if (adcReady) {
+//			GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+//			ADC2->CR |= ADC_CR_ADSTART;
+//		}
+
+		if (abs(ADC_audio[left] - adcZeroOffset[left]) > 40 || abs(ADC_audio[1] - adcZeroOffset[right]) > 40) {
 			adcErrs++;
+			adcErrsTemp++;
+			if (adcErrsTime + 1000 < SysTickVal) {
+				adcErrsTime = SysTickVal;
+				adcErrsPerSec = adcErrsTemp;
+				adcErrsTemp = 0;
+			}
 		}
 
 

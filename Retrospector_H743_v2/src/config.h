@@ -3,6 +3,7 @@
 #include "initialisation.h"
 #include "DigitalDelay.h"
 #include "USB.h"
+#include "SerialHandler.h"
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
 #define CONFIG_VERSION 1
