@@ -3,6 +3,48 @@
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 
+int32_t DigitalDelay::GateSample()
+{
+	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
+
+	if (std::abs(recordSample - gateOffset[LR]) < gateThreshold) {
+		overThreshold[LR] = 0;
+		gateOffset[LR] = std::clamp((gateOffset[LR] + (127.0f * recordSample)) / 128.0f, -50.0f, 50.0f);
+
+		if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
+			if (LR == left) {
+				GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
+			}
+
+			gateShut[LR] = true;
+			return 0;
+		} else {
+			belowThresholdCount[LR]++;
+		}
+	} else {
+		// check if previous sample exceeded threshold
+		if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {
+			belowThresholdCount[LR] = 0;
+			if (LR == left) {
+				debugOutput = recordSample;
+			}
+		} else {
+			overThreshold[LR] = recordSample;
+			if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
+				gateShut[LR] = true;
+				return 0;
+			}
+		}
+	}
+
+	if (LR == left) {
+		GPIOB->ODR &= ~GPIO_ODR_OD8;
+	}
+	gateShut[LR] = false;
+
+	return recordSample;
+}
+
 void DigitalDelay::CalcSample()
 {
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
@@ -10,7 +52,7 @@ void DigitalDelay::CalcSample()
 	delay_mode delayMode = Mode();									// Long, short or reverse
 
 	LR = static_cast<channel>(!static_cast<bool>(LR));
-	int32_t recordSample = static_cast<int32_t>(ADC_audio[LR]) - adcZeroOffset[LR];		// Capture recording sample here to avoid jitter
+	int32_t recordSample = GateSample();							// Capture recording sample here to avoid jitter
 	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 
@@ -24,8 +66,8 @@ void DigitalDelay::CalcSample()
 	if (chorusMode) {
 
 		// Capture samples for L and R channels each time to get double speed sampling
-		chorusSamples[left][chorusWrite++] = ADC_audio[left];
-		chorusSamples[right][chorusWrite] = ADC_audio[right];
+		chorusSamples[left][chorusWrite++] = ADC_array[left];
+		chorusSamples[right][chorusWrite] = ADC_array[right];
 
 		// Get the LFO delayed sample from the chorus buffer
 		chorusLFO[LR] += chorusAdd[LR];
@@ -321,20 +363,48 @@ delay_mode DigitalDelay::Mode()
 void DigitalDelay::RunTest(int32_t sample)
 {
 	static int16_t testSample;
+	static int32_t oldPotL, oldPotR;
 	switch (testMode) {
 	case TestMode::none:
 		break;
 	case TestMode::loop: {
 		// Capture the samples to the buffer
 		StereoSample writeSample;
-		writeSample.sample[left] = static_cast<int32_t>(ADC_audio[left]) - adcZeroOffset[left];
-		writeSample.sample[right] = static_cast<int32_t>(ADC_audio[right]) - adcZeroOffset[right];
+		writeSample.sample[left] = static_cast<int32_t>(ADC_array[left]) - adcZeroOffset[left];
+		writeSample.sample[right] = static_cast<int32_t>(ADC_array[right]) - adcZeroOffset[right];
 		samples[writePos] = writeSample.bothSamples;
 		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
 
 		SPI2->TXDR = OutputMix(0, sample);
 		break;
 	}
+	case TestMode::configGate:
+
+		// Use the delay pots to set threshold and activate time
+		if (std::abs(oldPotL - ADC_array[ADC_Delay_Pot_L]) > 500) {
+			gateThreshold = static_cast<uint16_t>(static_cast<float>(ADC_array[ADC_Delay_Pot_L] / 65536.0f) * 400);
+			oldPotL = (oldPotL + ADC_array[ADC_Delay_Pot_L]) / 2;
+		}
+		if (std::abs(oldPotR - ADC_array[ADC_Delay_Pot_R]) > 500) {
+			gateHoldCount = static_cast<uint32_t>(static_cast<float>(ADC_array[ADC_Delay_Pot_R] / 65536.0f) * 200) * 500;
+			oldPotR = (oldPotR + ADC_array[ADC_Delay_Pot_R]) / 2;
+		}
+
+		SPI2->TXDR = OutputMix(0, GateSample());
+
+		// Update led as this is used when configuring to display gate status
+		ledOnTimer++;
+		if (ledOnTimer > 8) {
+			if (gateShut[left]) {
+				led.LEDColour(ledFilter, 0xFF0000);
+			} else {
+				led.LEDColour(ledFilter, 0x00FF00);
+			}
+			led.LEDSend();
+			ledOnTimer = 0;
+		}
+		break;
+
 	case TestMode::saw:
 		testSample += 683;		// 65536/96000 * 1kHz
 		SPI2->TXDR = OutputMix(0, testSample);

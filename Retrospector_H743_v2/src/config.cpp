@@ -6,13 +6,13 @@ void Config::Calibrate()
 {
 	usb.SendString("Calibrating ...\r\n");
 
-	int32_t audioOffsetL = ADC_audio[left];
-	int32_t audioOffsetR = ADC_audio[right];
+	int32_t audioOffsetL = ADC_array[left];
+	int32_t audioOffsetR = ADC_array[right];
 	int32_t filterCenter = ADC_array[ADC_Filter_Pot];
 
 	for (int32_t i = 0; i < 10000000; ++i) {
-		audioOffsetL = std::round((static_cast<float>(ADC_audio[left]) + (63.0f * audioOffsetL)) / 64.0f);
-		audioOffsetR = std::round((static_cast<float>(ADC_audio[right]) + (63.0f * audioOffsetR)) / 64.0f);
+		audioOffsetL = std::round((static_cast<float>(ADC_array[left]) + (63.0f * audioOffsetL)) / 64.0f);
+		audioOffsetR = std::round((static_cast<float>(ADC_array[right]) + (63.0f * audioOffsetR)) / 64.0f);
 		filterCenter = std::round((static_cast<float>(ADC_array[ADC_Filter_Pot]) + (63.0f * filterCenter)) / 64.0f);
 	}
 
@@ -202,8 +202,8 @@ void Config::AutoOffset()
 
 
 	for (channel lr : {left, right}) {
-		if (ADC_audio[lr] > 33000 && ADC_audio[lr] < 34500) {
-			newOffset[lr] = (ADC_audio[lr] + (127 * newOffset[lr])) >> 7;
+		if (ADC_array[lr] > 33000 && ADC_array[lr] < 34500) {
+			newOffset[lr] = (ADC_array[lr] + (127 * newOffset[lr])) >> 7;
 			if (offsetCounter[lr] == 1000000) {
 				if (adcZeroOffset[lr] > newOffset[lr])
 					adcZeroOffset[lr]--;

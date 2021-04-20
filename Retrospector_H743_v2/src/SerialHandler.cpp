@@ -57,12 +57,21 @@ bool SerialHandler::Command()
 
 	} else if (state == serialState::calibConfirm) {
 		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
-			//suspendI2S();
 			config.Calibrate();
 			resumeI2S();
 		} else {
 			usb->SendString("Calibration cancelled\r\n");
 		}
+		state = serialState::pending;
+
+	} else if (state == serialState::configureGate) {
+		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
+//			config.Calibrate();
+		} else {
+			usb->SendString("Calibration cancelled\r\n");
+
+		}
+		delay.testMode = delay.TestMode::none;
 		state = serialState::pending;
 
 	} else if (state == serialState::cancelAudioTest && ComCmd.compare("dl\n") != 0 && ComCmd.compare("dr\n") != 0) {
@@ -103,6 +112,7 @@ bool SerialHandler::Command()
 				"dfu        -  USB firmware upgrade\r\n"
 				"boot       -  Bootloader test\r\n"
 				"calib      -  Calibrate device\r\n"
+				"cnfgate    -  Configure gate\r\n"
 				"save       -  Save calibration\r\n"
 				"\r\nRun Tests:\r\n"
 				"mem16      -  Start/stop Memory Test of lower 16MB\r\n"
@@ -120,6 +130,11 @@ bool SerialHandler::Command()
 				"cb         -  Chorus samples\r\n"
 				"\r\n"
 		);
+
+	} else if (ComCmd.compare("cnfgate\n") == 0) {	// Configure gate
+		usb->SendString("Use left delay to set threshold, right delay to set activate time. Press 'y' to save, anything else to cancel.\r\n");
+		delay.testMode = delay.TestMode::configGate;
+		state = serialState::configureGate;
 
 	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");

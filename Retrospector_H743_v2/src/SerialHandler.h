@@ -19,7 +19,7 @@ public:
 
 private:
 	// State machine for multi-stage commands
-	enum class serialState {pending, dfuConfirm, calibConfirm, cancelAudioTest};
+	enum class serialState {pending, dfuConfirm, calibConfirm, cancelAudioTest, configureGate};
 	serialState state = serialState::pending;
 
 	bool CmdPending = false;

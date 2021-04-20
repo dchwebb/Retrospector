@@ -9,10 +9,8 @@
 #include "Bootloader.h"
 
 /* TODO
- * config to adjust: slope of filters; length multiplier of long delay and reverse
+ * config to adjust: slope of filters; length multiplier of long delay and reverse, gate settings
  * Increase speed of LED SPI
- * Investigate R channel zero offset
- * Investigate background noise and interference every 20ms
  * Bug where very short delay times do not activate delay LED correctly
  * USB hangs when sending over CDC and cable removed and reinserted
  */
@@ -24,15 +22,14 @@ int32_t adcZeroOffset[2] = {33673, 33660};			// 0V ADC reading
 bool linkButton;
 uint32_t linkBtnTest;
 
-volatile int adcErrs = 0;		// Debug
-volatile int adcErrsPerSec = 0;		// Debug
-volatile int adcErrsTemp = 0;		// Debug
-volatile int adcErrsTime = 0;		// Debug
+volatile uint32_t adcErrs = 0;			// Debug
+volatile uint32_t adcErrsPerSec = 0;		// Debug
+volatile uint32_t adcErrsTemp = 0;		// Debug
+volatile uint32_t adcErrsTime = 0;		// Debug
 volatile bool adcReady = true;
 
 // Store buffers that need to live in special memory areas
-volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_audio[AUDIO_BUFFER_LENGTH];		// Place in separate memory area with caching disabled
-volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC_BUFFER_LENGTH];
+volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC1_BUFFER_LENGTH + ADC2_BUFFER_LENGTH];
 __attribute__((section (".led_buffer"))) LEDHandler led;						// led handler in RAM_D3 as SPI6 uses BDMA which only works on this memory region
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];	// Place delay sample buffers in external SDRAM
 uint16_t __attribute__((section (".chorus_data"))) chorusSamples[2][65536];		// Place in RAM_D1 as no room in DTCRAM
@@ -56,10 +53,7 @@ int main(void) {
 	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
 	InitSysTick();
 
-//	InitADCAudio();					// Initialise ADC to capture audio samples
-	InitADCAudioADC1();
-
-//	InitADCControls();				// Initialise ADC to capture knob and CV data
+	InitADC();
 	InitDAC();						// DAC used to output Wet/Dry mix levels
 	InitSDRAM_16160();				// Initialise larger SDRAM
 	InitCache();					// Configure MPU to not cache RAM_D3 where the ADC DMA memory resides
@@ -73,23 +67,9 @@ int main(void) {
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 
 	while (1) {
-/*
-		// Test ADC code
-		GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
-		ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
-		while ((ADC2->ISR & ADC_ISR_EOC) == 0) {};
-		ADC_audio[0] = ADC2->DR;
-		ADC2->CR |= ADC_CR_ADSTART;						// Start ADC
-		while ((ADC2->ISR & ADC_ISR_EOC) == 0) {};
-		ADC_audio[1] = ADC2->DR;
-		GPIOB->ODR &= ~GPIO_ODR_OD8;
-*/
-//		if (adcReady) {
-//			GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
-//			ADC2->CR |= ADC_CR_ADSTART;
-//		}
 
-		if (abs(ADC_audio[left] - adcZeroOffset[left]) > 40 || abs(ADC_audio[1] - adcZeroOffset[right]) > 40) {
+
+		if (abs((int32_t)ADC_array[left] - adcZeroOffset[left]) > 40 || abs((int32_t)ADC_array[right] - adcZeroOffset[right]) > 40) {
 			adcErrs++;
 			adcErrsTemp++;
 			if (adcErrsTime + 1000 < SysTickVal) {

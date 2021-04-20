@@ -32,7 +32,7 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 	static bool potentiallyLate;
 	static int highestSample = 0;
 	static int16_t lastSample = 0;
-	recordSample = static_cast<int16_t>(adcZeroOffset[left]) - ADC_audio[left];
+	recordSample = static_cast<int16_t>(adcZeroOffset[left]) - ADC_array[left];
 
 	// Signal starts with a high low pattern - wait for highest value to get offset
 	switch (state) {

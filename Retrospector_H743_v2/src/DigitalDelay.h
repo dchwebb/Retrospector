@@ -60,6 +60,13 @@ private:
 	uint16_t chorusWrite = 0;
 	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};		// Need 2 filters as uses IIR filter with feedback
 
+	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold
+	int32_t overThreshold[2];				// Enabled when signal exceeds gate threshold
+	bool gateShut[2];
+	uint16_t gateThreshold = 200;			// Gate threshold level
+	uint32_t gateHoldCount = 50000;			// Number of samples beneath threshold before applying gate
+	float gateOffset[2];
+
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;
 	const int16_t tempoHysteresis = 100;
@@ -68,12 +75,13 @@ private:
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
 	// Private class functions
+	int32_t GateSample();
 	void UpdateLED(channel c, bool reverse, int32_t remainingDelay = 0);
 	void ReverseLED(channel c, int32_t remainingDelay);
 	delay_mode Mode();
 	int32_t OutputMix(float drySample, float wetSample);
 	void RunTest(int32_t s);
 
-	enum class TestMode {loop, saw, none};
+	enum class TestMode {loop, saw, configGate, none};
 	TestMode testMode = TestMode::none;
 };

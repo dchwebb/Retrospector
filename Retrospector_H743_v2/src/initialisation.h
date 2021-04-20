@@ -7,8 +7,8 @@
 
 extern volatile uint32_t SysTickVal;
 
-#define ADC_BUFFER_LENGTH 9
-#define AUDIO_BUFFER_LENGTH 2
+#define ADC1_BUFFER_LENGTH 4
+#define ADC2_BUFFER_LENGTH 7
 #define SAMPLE_BUFFER_LENGTH 1048576		// Currently 2^20 (4MB of 16MB)
 #define SAMPLE_RATE 48000
 #define SYSTICK 1000						// Set in uS so 1000uS = 1ms
@@ -16,21 +16,20 @@ extern volatile uint32_t SysTickVal;
 #define CPUCLOCK 400
 
 
-extern volatile uint16_t ADC_audio[AUDIO_BUFFER_LENGTH];
-extern volatile uint16_t ADC_array[ADC_BUFFER_LENGTH];
+extern volatile uint16_t ADC_array[ADC1_BUFFER_LENGTH + ADC2_BUFFER_LENGTH];
 extern int32_t adcZeroOffset[2];
 
 // Define ADC array positions of various controls
 enum ADC_Controls {
-	ADC_Mix          = 0,
-	ADC_Delay_Pot_L  = 1,
+	ADC_Mix          = 4,
+	ADC_Delay_Pot_L  = 5,
 	ADC_Delay_Pot_R  = 2,
-	ADC_Delay_CV_L   = 3,
-	ADC_Delay_CV_R   = 4,
-	ADC_Feedback_Pot = 5,
-	ADC_Feedback_CV  = 6,
-	ADC_Filter_CV    = 7,
-	ADC_Filter_Pot   = 8
+	ADC_Delay_CV_L   = 6,
+	ADC_Delay_CV_R   = 3,
+	ADC_Feedback_Pot = 7,
+	ADC_Feedback_CV  = 8,
+	ADC_Filter_CV    = 9,
+	ADC_Filter_Pot   = 10
 };
 enum channel {left = 0, right = 1};
 
@@ -40,11 +39,9 @@ void InitCache();
 void InitSysTick();
 void uartSendChar(char c);
 void uartSendString(const char* s);
-void InitADCAudio();
-void InitADCAudioNoDMA();
-void InitADCAudioDMAOne();
-void InitADCAudioADC1();
-void InitADCControls();
+void InitADC();
+void InitADC1();
+void InitADC2();
 void InitDAC();
 void InitI2S();
 void InitTempoClock();
