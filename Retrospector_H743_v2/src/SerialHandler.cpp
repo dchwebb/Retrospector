@@ -6,6 +6,15 @@ extern DigitalDelay delay;
 extern Config config;
 extern Bootloader bootloader;
 
+int16_t ParseInt(const std::string cmd, const char precedingChar) {
+	uint16_t val = -1;
+	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
+	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789") > 0) {
+		val = stoi(cmd.substr(pos + 1));
+	}
+	return val;
+}
+
 SerialHandler::SerialHandler(USB& usbObj)
 {
 	usb = &usbObj;
@@ -64,16 +73,6 @@ bool SerialHandler::Command()
 		}
 		state = serialState::pending;
 
-	} else if (state == serialState::configureGate) {
-		if (ComCmd.compare("y\n") == 0 || ComCmd.compare("Y\n") == 0) {
-//			config.Calibrate();
-		} else {
-			usb->SendString("Calibration cancelled\r\n");
-
-		}
-		delay.testMode = delay.TestMode::none;
-		state = serialState::pending;
-
 	} else if (state == serialState::cancelAudioTest && ComCmd.compare("dl\n") != 0 && ComCmd.compare("dr\n") != 0) {
 		delay.testMode = delay.TestMode::none;
 		usb->SendString("Audio test cancelled\r\n");
@@ -98,43 +97,64 @@ bool SerialHandler::Command()
 				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
 				"ADC Zero offset L: " + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n" +
 				"LEDs Filter R:" + std::to_string(led.colour[6]) + " G: " + std::to_string(led.colour[7]) + " B: " + std::to_string(led.colour[8]) + "\r\n" +
+				"Gate threshold: " + std::to_string(delay.gateThreshold) + " Activation time: " + std::to_string(delay.gateHoldCount)+ "\r\n" +
 				"\r\n");
 
 	} else if (ComCmd.compare("help\n") == 0) {
 
 		usb->SendString("Mountjoy Retrospector\r\n"
 				"\r\nSupported commands:\r\n"
-				"help       -  Shows this information\r\n"
-				"info       -  Show diagnostic information\r\n"
-				"f          -  Filter on/off\r\n"
-				"led        -  LEDs on/off\r\n"
-				"resume     -  Resume I2S after debugging\r\n"
-				"dfu        -  USB firmware upgrade\r\n"
-				"boot       -  Bootloader test\r\n"
-				"calib      -  Calibrate device\r\n"
-				"cnfgate    -  Configure gate\r\n"
-				"save       -  Save calibration\r\n"
+				"help        -  Shows this information\r\n"
+				"info        -  Show diagnostic information\r\n"
+				"f           -  Filter on/off\r\n"
+				"led         -  LEDs on/off\r\n"
+				"resume      -  Resume I2S after debugging\r\n"
+				"dfu         -  USB firmware upgrade\r\n"
+				"boot        -  Bootloader test\r\n"
+				"calib       -  Calibrate device\r\n"
+				"threshold:x -  Configure gate threshold to x (default 100)\r\n"
+				"gateact:x   -  Configure gate activate time to x samples (default 20000)\r\n"
+				"gateled     -  Show gate status on filter LED\r\n"
+				"save        -  Save calibration\r\n"
 				"\r\nRun Tests:\r\n"
-				"mem16      -  Start/stop Memory Test of lower 16MB\r\n"
-				"mem32      -  Start/stop Memory Test of all 32MB\r\n"
-				"loop       -  Run an audio loopback test\r\n"
-				"saw        -  Generate a 1kHz saw tooth wave\r\n"
+				"mem16       -  Start/stop Memory Test of lower 16MB\r\n"
+				"mem32       -  Start/stop Memory Test of all 32MB\r\n"
+				"loop        -  Run an audio loopback test\r\n"
+				"saw         -  Generate a 1kHz saw tooth wave\r\n"
 				"\r\nDebug Data Dump:\r\n"
-				"dl         -  Most recent Left delay samples\r\n"
-				"dr         -  Most recent Right delay samples\r\n"
-				"fir        -  FIR coefficients\r\n"
-				"iir        -  IIR coefficients\r\n"
-				"fdl        -  Left filter buffer\r\n"
-				"wd         -  FIR window coefficients\r\n"
-				"imp        -  IIR impulse response\r\n"
-				"cb         -  Chorus samples\r\n"
+				"dl          -  Most recent Left delay samples\r\n"
+				"dr          -  Most recent Right delay samples\r\n"
+				"fir         -  FIR coefficients\r\n"
+				"iir         -  IIR coefficients\r\n"
+				"fdl         -  Left filter buffer\r\n"
+				"wd          -  FIR window coefficients\r\n"
+				"imp         -  IIR impulse response\r\n"
+				"cb          -  Chorus samples\r\n"
 				"\r\n"
 		);
 
-	} else if (ComCmd.compare("cnfgate\n") == 0) {	// Configure gate
-		usb->SendString("Use left delay to set threshold, right delay to set activate time. Press 'y' to save, anything else to cancel.\r\n");
-		delay.testMode = delay.TestMode::configGate;
-		state = serialState::configureGate;
+	} else if (ComCmd.compare("gateled\n") == 0) {	// Configure gate LED
+		delay.gateLED = !delay.gateLED;
+		usb->SendString("Toggle Filter LED displaying gate status\r\n");
+		if (!delay.gateLED) {
+			filter.Update(true);
+		}
+
+	} else if (ComCmd.compare(0, 10, "threshold:") == 0) {	// Configure gate threshold
+		uint16_t threshold = ParseInt(ComCmd, ':');
+		delay.gateThreshold = threshold;
+		usb->SendString("Gate threshold set to: " + std::to_string(delay.gateThreshold) + "\r\n");
+		suspendI2S();
+		config.SaveConfig();
+		resumeI2S();
+
+	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {	// Configure gate threshold
+		uint16_t gate = ParseInt(ComCmd, ':');
+		delay.gateHoldCount = gate;
+		usb->SendString("Gate activate time set to: " + std::to_string(delay.gateHoldCount) + "\r\n");
+		suspendI2S();
+		config.SaveConfig();
+		resumeI2S();
 
 	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");

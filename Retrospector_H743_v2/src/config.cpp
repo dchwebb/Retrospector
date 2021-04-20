@@ -2,6 +2,8 @@
 
 #define FLASH_ALL_ERRORS (FLASH_SR_WRPERR | FLASH_SR_PGSERR | FLASH_SR_STRBERR | FLASH_SR_INCERR | FLASH_SR_OPERR | FLASH_SR_RDPERR | FLASH_SR_RDSERR | FLASH_SR_SNECCERR | FLASH_SR_DBECCERR | FLASH_SR_CRCRDERR)
 
+extern DigitalDelay delay;
+
 void Config::Calibrate()
 {
 	usb.SendString("Calibrating ...\r\n");
@@ -26,15 +28,15 @@ void Config::Calibrate()
 		usb.SendString("Calibration failed. Audio R out of range\r\n");
 		return;
 	}
-//	if (filterCenter < 30000 || filterCenter > 35000) {
-//		usb.SendString("Calibration failed. Filter pot out of range\r\n");
-//		return;
-//	}
+	if (filterCenter < 30000 || filterCenter > 35000) {
+		usb.SendString("Calibration failed. Filter pot out of range\r\n");
+		return;
+	}
 
 	// If calibration in acceptable range save to config
 	adcZeroOffset[left] = audioOffsetL;
 	adcZeroOffset[right] = audioOffsetR;
-//	filter.potCentre = filterCenter;
+	filter.potCentre = filterCenter;
 	serial.suspendI2S();
 	SaveConfig();
 }
@@ -72,6 +74,8 @@ void Config::SetConfig(configValues &cv)
 	cv.filter_pot_center = filter.potCentre;
 	cv.audio_offset_left = adcZeroOffset[left];
 	cv.audio_offset_right = adcZeroOffset[right];
+	cv.delay_gate_threshold = delay.gateThreshold;
+	cv.delay_gate_activate = delay.gateHoldCount;
 }
 
 
@@ -86,6 +90,8 @@ bool Config::RestoreConfig()
 		filter.potCentre = cv.filter_pot_center;
 		adcZeroOffset[left]  = cv.audio_offset_left;
 		adcZeroOffset[right] = cv.audio_offset_right;
+		delay.gateThreshold = cv.delay_gate_threshold;
+		delay.gateHoldCount = cv.delay_gate_activate;
 		return true;
 	}
 	return false;

@@ -2,36 +2,43 @@
 
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
+float fadeout = 0.0f;
 
 int32_t DigitalDelay::GateSample()
 {
 	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
 
-	if (std::abs(recordSample - gateOffset[LR]) < gateThreshold) {
+	if (std::abs(recordSample) < gateThreshold) {
 		overThreshold[LR] = 0;
-		gateOffset[LR] = std::clamp((gateOffset[LR] + (127.0f * recordSample)) / 128.0f, -50.0f, 50.0f);
-
 		if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
 			if (LR == left) {
 				GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
 			}
-
-			gateShut[LR] = true;
+			gateShut[LR] = gateStatus::closed;
 			return 0;
 		} else {
+			if (belowThresholdCount[LR] > gateHoldCount / 2) {
+				//fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
+				recordSample = static_cast<float>(recordSample) * fadeout;
+				gateShut[LR] = gateStatus::closing;
+			}
 			belowThresholdCount[LR]++;
 		}
+		fadeout = 1.0f - (static_cast<float>(belowThresholdCount[LR]) / gateHoldCount);
+		recordSample = static_cast<float>(recordSample) * fadeout;
+
 	} else {
 		// check if previous sample exceeded threshold
 		if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {
 			belowThresholdCount[LR] = 0;
+			gateShut[LR] = gateStatus::open;
 			if (LR == left) {
 				debugOutput = recordSample;
 			}
 		} else {
 			overThreshold[LR] = recordSample;
 			if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
-				gateShut[LR] = true;
+				gateShut[LR] = gateStatus::closed;
 				return 0;
 			}
 		}
@@ -40,7 +47,7 @@ int32_t DigitalDelay::GateSample()
 	if (LR == left) {
 		GPIOB->ODR &= ~GPIO_ODR_OD8;
 	}
-	gateShut[LR] = false;
+
 
 	return recordSample;
 }
@@ -339,6 +346,21 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
 		}
 	}
+
+	if (gateLED) {
+		switch (gateShut[left]) {
+		case gateStatus::open:
+			led.LEDColour(ledFilter, 0x00FF00);
+			break;
+		case gateStatus::closed:
+			led.LEDColour(ledFilter, 0xFF0000);
+			break;
+		case gateStatus::closing:
+			led.LEDColour(ledFilter, 0xFFAA00);
+			break;
+		}
+	}
+
 	if (ledOnTimer > 8) {
 		led.LEDSend();
 		ledOnTimer = 0;
@@ -363,7 +385,6 @@ delay_mode DigitalDelay::Mode()
 void DigitalDelay::RunTest(int32_t sample)
 {
 	static int16_t testSample;
-	static int32_t oldPotL, oldPotR;
 	switch (testMode) {
 	case TestMode::none:
 		break;
@@ -378,33 +399,6 @@ void DigitalDelay::RunTest(int32_t sample)
 		SPI2->TXDR = OutputMix(0, sample);
 		break;
 	}
-	case TestMode::configGate:
-
-		// Use the delay pots to set threshold and activate time
-		if (std::abs(oldPotL - ADC_array[ADC_Delay_Pot_L]) > 500) {
-			gateThreshold = static_cast<uint16_t>(static_cast<float>(ADC_array[ADC_Delay_Pot_L] / 65536.0f) * 400);
-			oldPotL = (oldPotL + ADC_array[ADC_Delay_Pot_L]) / 2;
-		}
-		if (std::abs(oldPotR - ADC_array[ADC_Delay_Pot_R]) > 500) {
-			gateHoldCount = static_cast<uint32_t>(static_cast<float>(ADC_array[ADC_Delay_Pot_R] / 65536.0f) * 200) * 500;
-			oldPotR = (oldPotR + ADC_array[ADC_Delay_Pot_R]) / 2;
-		}
-
-		SPI2->TXDR = OutputMix(0, GateSample());
-
-		// Update led as this is used when configuring to display gate status
-		ledOnTimer++;
-		if (ledOnTimer > 8) {
-			if (gateShut[left]) {
-				led.LEDColour(ledFilter, 0xFF0000);
-			} else {
-				led.LEDColour(ledFilter, 0x00FF00);
-			}
-			led.LEDSend();
-			ledOnTimer = 0;
-		}
-		break;
-
 	case TestMode::saw:
 		testSample += 683;		// 65536/96000 * 1kHz
 		SPI2->TXDR = OutputMix(0, testSample);

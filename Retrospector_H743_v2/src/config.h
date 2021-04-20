@@ -6,9 +6,10 @@
 #include "SerialHandler.h"
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
-#define CONFIG_VERSION 1
+#define CONFIG_VERSION 2
 
 extern USB usb;
+
 
 struct configValues {
 	char StartMarker[4] = "CFG";		// Start Marker
@@ -20,6 +21,8 @@ struct configValues {
 	uint16_t filter_pot_center = 0;
 	uint16_t audio_offset_left = 0;
 	uint16_t audio_offset_right = 0;
+	uint16_t delay_gate_threshold = 0;
+	uint16_t delay_gate_activate = 0;
 	uint32_t test_value1 = 0xABBACAFE;
 	uint32_t test_value2 = 0xDEADBABE;
 	uint32_t test_value3 = 0xCEDECAFE;

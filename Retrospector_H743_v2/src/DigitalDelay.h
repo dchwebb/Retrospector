@@ -22,6 +22,7 @@ enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
 struct DigitalDelay {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+	friend class Config;					// Allow the config access to private data to save settings
 public:
 	void CalcSample();						// Called by interrupt handler to generate next sample
 	void Init();							// Initialise caches, buffers etc
@@ -29,7 +30,7 @@ public:
 
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool chorusMode = false;
-	bool linkLR = true;					// Makes tempo of right delay a multiple of left delay
+	bool linkLR = true;						// Makes tempo of right delay a multiple of left delay
 
 private:
 	delay_mode delayMode;					// Long/short/reverse
@@ -60,12 +61,12 @@ private:
 	uint16_t chorusWrite = 0;
 	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};		// Need 2 filters as uses IIR filter with feedback
 
+	enum class gateStatus {open, closed, closing} gateShut[2];
 	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold
 	int32_t overThreshold[2];				// Enabled when signal exceeds gate threshold
-	bool gateShut[2];
-	uint16_t gateThreshold = 200;			// Gate threshold level
-	uint32_t gateHoldCount = 50000;			// Number of samples beneath threshold before applying gate
-	float gateOffset[2];
+	uint16_t gateThreshold = 100;			// Gate threshold level
+	uint32_t gateHoldCount = 20000;			// Number of samples beneath threshold before applying gate
+	bool gateLED;
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;
@@ -82,6 +83,6 @@ private:
 	int32_t OutputMix(float drySample, float wetSample);
 	void RunTest(int32_t s);
 
-	enum class TestMode {loop, saw, configGate, none};
+	enum class TestMode {loop, saw, none};
 	TestMode testMode = TestMode::none;
 };
