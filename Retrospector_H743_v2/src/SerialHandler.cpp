@@ -112,8 +112,8 @@ bool SerialHandler::Command()
 				"dfu         -  USB firmware upgrade\r\n"
 				"boot        -  Bootloader test\r\n"
 				"calib       -  Calibrate device\r\n"
-				"threshold:x -  Configure gate threshold to x (default 100)\r\n"
-				"gateact:x   -  Configure gate activate time to x samples (default 20000)\r\n"
+				"threshold:x -  Configure gate threshold to x (default 200, 0 to deactivate)\r\n"
+				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
 				"gateled     -  Show gate status on filter LED\r\n"
 				"save        -  Save calibration\r\n"
 				"\r\nRun Tests:\r\n"
@@ -148,7 +148,7 @@ bool SerialHandler::Command()
 		config.SaveConfig();
 		resumeI2S();
 
-	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {	// Configure gate threshold
+	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {	// Configure gate activation time
 		uint16_t gate = ParseInt(ComCmd, ':');
 		delay.gateHoldCount = gate;
 		usb->SendString("Gate activate time set to: " + std::to_string(delay.gateHoldCount) + "\r\n");

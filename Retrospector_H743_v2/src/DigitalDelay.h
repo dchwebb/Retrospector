@@ -27,6 +27,7 @@ public:
 	void CalcSample();						// Called by interrupt handler to generate next sample
 	void Init();							// Initialise caches, buffers etc
 	void ChorusMode(bool on);
+	void CheckSwitches();
 
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool chorusMode = false;
@@ -44,6 +45,7 @@ private:
 	int32_t calcDelay[2];					// Delay time according to whether clocked and with multipliers applied
 	int16_t delayPotVal[2];					// For hysteresis checking
 	float delayMult[2];						// Multipliers for delay in clocked mode
+
 
 	uint32_t delayCounter;					// Counter used to calculate clock times in sample time
 	uint32_t lastClock;						// Time last clock signal received in sample time
@@ -66,7 +68,7 @@ private:
 	int32_t overThreshold[2];				// Enabled when signal exceeds gate threshold
 	uint16_t gateThreshold = 100;			// Gate threshold level
 	uint32_t gateHoldCount = 20000;			// Number of samples beneath threshold before applying gate
-	bool gateLED;
+	bool gateLED = true;
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

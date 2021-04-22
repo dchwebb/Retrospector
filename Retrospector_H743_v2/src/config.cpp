@@ -41,6 +41,28 @@ void Config::Calibrate()
 	SaveConfig();
 }
 
+void Config::AutoZeroOffset()
+{
+	// When silence is detected for a long enough time recalculate ADC offset
+	for (channel lr : {left, right}) {
+		if (ADC_array[lr] > adcZeroOffset[lr] - 500 && ADC_array[lr] < adcZeroOffset[lr] + 500) {
+			newOffset[lr] = (static_cast<float>(ADC_array[lr]) + (799.0f * newOffset[lr])) / 800.0f;
+			if (offsetCounter[lr] == 200000) {
+				if (newOffset[lr] > adcZeroOffset[lr])
+					adcZeroOffset[lr]++;
+				else
+					adcZeroOffset[lr]--;
+				offsetCounter[lr] = 0;
+			}
+			offsetCounter[lr]++;
+
+		} else {
+			offsetCounter[lr] = 0;
+		}
+	}
+}
+
+
 
 // called whenever a config setting is changed to schedule a save after waiting to see if any more changes are being made
 void Config::ScheduleSave()
@@ -80,7 +102,7 @@ void Config::SetConfig(configValues &cv)
 
 
 // Restore configuration settings from flash memory
-bool Config::RestoreConfig()
+void Config::RestoreConfig()
 {
 	// create temporary copy of settings from memory to check if they are valid
 	configValues cv;
@@ -92,9 +114,11 @@ bool Config::RestoreConfig()
 		adcZeroOffset[right] = cv.audio_offset_right;
 		delay.gateThreshold = cv.delay_gate_threshold;
 		delay.gateHoldCount = cv.delay_gate_activate;
-		return true;
 	}
-	return false;
+
+	// Set up averaging values for ongoing ADC offset calibration
+	newOffset[0] = adcZeroOffset[0];
+	newOffset[1] = adcZeroOffset[1];
 }
 
 

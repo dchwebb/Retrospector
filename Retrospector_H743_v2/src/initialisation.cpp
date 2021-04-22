@@ -276,7 +276,7 @@ void InitADC1()
 {
 	// Initialize ADC peripheral
 	DMA1_Stream1->CR &= ~DMA_SxCR_EN;
-	DMA1_Stream1->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
+//	DMA1_Stream1->CR |= DMA_SxCR_CIRC;				// Circular mode to keep refilling buffer
 	DMA1_Stream1->CR |= DMA_SxCR_MINC;				// Memory in increment mode
 	DMA1_Stream1->CR |= DMA_SxCR_PSIZE_0;			// Peripheral size: 8 bit; 01 = 16 bit; 10 = 32 bit
 	DMA1_Stream1->CR |= DMA_SxCR_MSIZE_0;			// Memory size: 8 bit; 01 = 16 bit; 10 = 32 bit
@@ -300,7 +300,7 @@ void InitADC1()
 
 	ADC1->CFGR |= ADC_CFGR_CONT;					// 1: Continuous conversion mode for regular conversions
 	ADC1->CFGR |= ADC_CFGR_OVRMOD;					// Overrun Mode 1: ADC_DR register is overwritten with the last conversion result when an overrun is detected.
-	ADC1->CFGR |= ADC_CFGR_DMNGT;					// Data Management configuration 11: DMA Circular Mode selected
+	ADC1->CFGR |= ADC_CFGR_DMNGT_0;					// Data Management configuration 01: DMA One Shot Mode selected, 11: DMA Circular Mode selected
 
 	// Boost mode 1: Boost mode on. Must be used when ADC clock > 20 MHz.
 	ADC1->CR |= ADC_CR_BOOST_1;						// Note this sets reserved bit according to SFR - HAL has notes about silicon revision
@@ -323,6 +323,13 @@ void InitADC1()
 	*/
 	InitAdcPins(ADC1, {15, 14, 17, 16});
 
+	// Debug - initialise interrupt on end of sequence
+	ADC1->IER |= ADC_IER_EOSIE;
+
+	NVIC_SetPriority(ADC_IRQn, 1);					// Lower is higher priority
+	NVIC_EnableIRQ(ADC_IRQn);
+
+
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
 	while ((ADC1->ISR & ADC_ISR_ADRDY) == 0) {}
@@ -342,6 +349,7 @@ void InitADC1()
 
 	ADC1->CR |= ADC_CR_ADSTART;						// Start ADC
 }
+
 
 void InitADC2()
 {
@@ -557,7 +565,7 @@ void InitIO()
 
 	// PB7 (D), PB8 (C) - I2C/debug
 	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
-	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB7: debug pin
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB8: debug pin
 
 }
 

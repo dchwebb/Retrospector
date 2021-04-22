@@ -7,47 +7,46 @@ float fadeout = 0.0f;
 int32_t DigitalDelay::GateSample()
 {
 	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
+	if (gateThreshold == 0) {
+		return recordSample;
+	}
 
 	if (std::abs(recordSample) < gateThreshold) {
 		overThreshold[LR] = 0;
-		if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
-			if (LR == left) {
-				GPIOB->ODR |= GPIO_ODR_OD8;		// Toggle LED for debugging
-			}
+		if (belowThresholdCount[LR] > gateHoldCount) {				// there have been enough samples around zero
 			gateShut[LR] = gateStatus::closed;
 			return 0;
 		} else {
-			if (belowThresholdCount[LR] > gateHoldCount / 2) {
-				//fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
+			if (belowThresholdCount[LR] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
+				fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
 				recordSample = static_cast<float>(recordSample) * fadeout;
 				gateShut[LR] = gateStatus::closing;
 			}
 			belowThresholdCount[LR]++;
 		}
-		fadeout = 1.0f - (static_cast<float>(belowThresholdCount[LR]) / gateHoldCount);
-		recordSample = static_cast<float>(recordSample) * fadeout;
 
-	} else {
-		// check if previous sample exceeded threshold
-		if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {
-			belowThresholdCount[LR] = 0;
-			gateShut[LR] = gateStatus::open;
-			if (LR == left) {
+	} else  {
+		//if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {		// Last two samples have exceeded threshold in same direction
+		if (overThreshold[LR] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
+			if (gateShut[LR] != gateStatus::open) {
 				debugOutput = recordSample;
 			}
+			belowThresholdCount[LR] = 0;
+			gateShut[LR] = gateStatus::open;
 		} else {
-			overThreshold[LR] = recordSample;
-			if (belowThresholdCount[LR] > gateHoldCount) {		// there have been at least 50 samples around zero
+			if (std::abs(recordSample) > gateThreshold + 100) {		// Use hysteresis to avoid gate continually opening and closing on continous low level signals
+				overThreshold[LR] = recordSample;
+			}
+			if (belowThresholdCount[LR] > gateHoldCount) {			// there have been enough samples around zero
 				gateShut[LR] = gateStatus::closed;
 				return 0;
 			}
 		}
 	}
 
-	if (LR == left) {
-		GPIOB->ODR &= ~GPIO_ODR_OD8;
-	}
-
+//	if (LR == left) {
+//		GPIOB->ODR &= ~GPIO_ODR_OD8;
+//	}
 
 	return recordSample;
 }
@@ -319,8 +318,13 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 			}
 		}*/
 
-		// Exponential fade out
-		brightness = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);
+		// For very short delays just display a continuous colour
+		if (calcDelay[c] < 1000) {
+			brightness = 0.06f;
+		} else {
+			brightness = 1.0f - std::pow(2.0f * ledCounter[c] / calcDelay[c], 0.1f);					// Exponential fade out
+		}
+
 	}
 
 	enum ledColours {
@@ -347,6 +351,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		}
 	}
 
+	// Filter LED can be configured to display status of gate
 	if (gateLED) {
 		switch (gateShut[left]) {
 		case gateStatus::open:
@@ -380,6 +385,31 @@ delay_mode DigitalDelay::Mode()
 	return modeLong;
 }
 
+
+void DigitalDelay::CheckSwitches()
+{
+	static uint32_t linkBtnTest;
+	static bool linkButton;
+
+	// Implement chorus (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
+	if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != chorusMode) {
+		ChorusMode(!chorusMode);
+	}
+	if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != stereoWide) {
+		stereoWide = !stereoWide;
+	}
+	if (SysTickVal > linkBtnTest + 1) {			// Test if link button pressed with some debouncing
+		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0) {
+			if (!linkButton) {
+				linkLR = !linkLR;
+				linkButton = true;
+			}
+		} else {
+			linkButton = false;
+		}
+		linkBtnTest = SysTickVal;
+	}
+}
 
 // Runs audio tests (audio loopback and 1kHz saw wave)
 void DigitalDelay::RunTest(int32_t sample)
