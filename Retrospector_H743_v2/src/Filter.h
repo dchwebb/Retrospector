@@ -13,6 +13,8 @@
 
 #define MAX_POLES 8		// For declaring IIR arrays
 #define MAX_SECTIONS (MAX_POLES + 1) / 2
+#define MAX_FIR_TAPS 93
+
 #define M_PI           3.14159265358979323846
 
 // For debugging
@@ -20,7 +22,7 @@ extern bool calculatingFilter;
 extern LEDHandler led;
 
 enum FilterControl {LP, HP, Both};
-enum PassType {FilterOff, LowPass, HighPass, BandPass};
+enum PassType {FilterOff, LowPass, HighPass};
 enum FilterType {FIR, IIR};
 
 typedef double iirdouble_t;			// to allow easy testing with floats or doubles
@@ -119,7 +121,7 @@ public:
 	float CalcFilter(float sample, channel c);
 
 private:
-	static constexpr uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
+	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
 
 	bool activateFilter = true;				// For debug
 	FilterType filterType = FIR;
@@ -129,8 +131,8 @@ private:
 	float currentCutoff;
 
 	// FIR Settings
-	float firCoeff[2][firTaps];
-	float winCoeff[firTaps];
+	float firCoeff[2][MAX_FIR_TAPS];
+	float winCoeff[MAX_FIR_TAPS];
 	float filterBuffer[2][256];				// Ring buffer containing most recent playback samples for quicker filtering from SRAM (NB using 256 to speed up ring buffer navigation)
 	uint8_t filterBuffPos[2];
 

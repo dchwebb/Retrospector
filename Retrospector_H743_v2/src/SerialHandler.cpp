@@ -156,6 +156,16 @@ bool SerialHandler::Command()
 		config.SaveConfig();
 		resumeI2S();
 
+	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {	// Configure fir taps
+		uint16_t taps = ParseInt(ComCmd, ':');
+		filter.firTaps = taps;
+		filter.Init();		// forces recalculation of coefficients and window
+		usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
+
+//		suspendI2S();
+//		config.SaveConfig();
+//		resumeI2S();
+
 	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");
 		delay.testMode = delay.TestMode::loop;
@@ -219,7 +229,6 @@ bool SerialHandler::Command()
 			usb->SendString("LEDs off\r\n");
 		}
 
-
 	} else if (ComCmd.compare("iir\n") == 0) {		// Show IIR Coefficients
 
 		usb->SendString((filter.passType == LowPass) ? "Low Pass\r\n" : "High Pass\r\n");
@@ -228,7 +237,7 @@ bool SerialHandler::Command()
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
 			usb->SendString(std::to_string(i) + ": b0=" + std::to_string(activeFilter.iirCoeff.b0[i]) + " b1=" + std::to_string(activeFilter.iirCoeff.b1[i]) + " b2=" + std::to_string(activeFilter.iirCoeff.b2[i]).append("\r\n").c_str());
-			usb->SendString(std::to_string(i) + ": a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\r\n").c_str());
+			usb->SendString("   a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\r\n").c_str());
 		}
 
 
@@ -291,7 +300,7 @@ bool SerialHandler::Command()
 		// NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		// or add manually "-u _printf_float" in linker flags
 		char buf[50];
-		for (int f = 0; f < Filter::firTaps; ++f) {
+		for (int f = 0; f < filter.firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb->SendString(ts.append("\r\n").c_str());
@@ -303,7 +312,7 @@ bool SerialHandler::Command()
 		suspendI2S();
 
 		char buf[50];
-		for (int f = 0; f < Filter::firTaps; ++f) {
+		for (int f = 0; f < filter.firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
 			std::string ts = std::string(buf);
 			usb->SendString(ts.append("\r\n").c_str());
@@ -315,9 +324,9 @@ bool SerialHandler::Command()
 		suspendI2S();
 
 		uint16_t pos = filter.filterBuffPos[0];
-		for (int f = 0; f < Filter::firTaps; ++f) {
+		for (int f = 0; f < filter.firTaps; ++f) {
 			usb->SendString(std::to_string(filter.filterBuffer[0][pos]).append("\r\n").c_str());
-			if (++pos == Filter::firTaps) pos = 0;
+			if (++pos == filter.firTaps) pos = 0;
 		}
 
 		resumeI2S();

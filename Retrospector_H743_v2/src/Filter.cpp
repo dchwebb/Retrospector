@@ -288,8 +288,6 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 
 	// Set the number of IIR filter sections we will be generating.
 	numSections = (numPoles + 1) / 2;
-	 if (passType == BandPass)
-		 numSections = numPoles;
 
 	// T sets the IIR filter's corner frequency, or center freqency.
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z)/(1 + z)
@@ -304,7 +302,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 		E = iirProto.Coeff.N1[j];			// N1 is always zero, except for the all pass. Consequently, the equations below can be simplified a bit by removing E.
 		F = iirProto.Coeff.N0[j];
 
-		// b's are the numerator  a's are the denominator
+		// b's are the numerator, a's are the denominator
 		if (passType == LowPass) {
 			if (A == 0.0 && D == 0.0) {					// 1 pole case
 				arg = (2.0 * B + C * T);
@@ -345,7 +343,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 				iirCoeff.a1[j] = (2.0 * A * T * T - 8.0 * C) / arg;
 				iirCoeff.a0[j] = 1.0;
 
-				// With all pole filters, our HPF numerator is (z-1)^2, so all our Z Plane zeros are at 1
+				// With all pole filters, HPF numerator is (z-1)^2, so all Z Plane zeros are at 1
 				iirCoeff.b2[j] = (D * T * T - 2.0 * E * T + 4.0 * F) / arg * C/F;
 				iirCoeff.b1[j] = (2.0 * D * T * T - 8.0 * F) / arg * C/F;
 				iirCoeff.b0[j] = (D * T * T + 4.0 * F + 2.0 * E * T) / arg * C/F;

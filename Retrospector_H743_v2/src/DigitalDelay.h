@@ -68,7 +68,7 @@ private:
 	int32_t overThreshold[2];				// Enabled when signal exceeds gate threshold
 	uint16_t gateThreshold = 100;			// Gate threshold level
 	uint32_t gateHoldCount = 20000;			// Number of samples beneath threshold before applying gate
-	bool gateLED = true;
+	bool gateLED = false;					// Filter LED displays gate open/closing/closed status as green/red/yellow
 
 	const int16_t delayHysteresis = 40;
 	const int16_t crossfade = 6000;

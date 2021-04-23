@@ -12,9 +12,10 @@
  * config to adjust: slope of filters; length multiplier of long delay and reverse
  * USB hangs when sending over CDC and cable removed and reinserted
  * Investigate tanh function for filter
- * Trigger audio ADC conversion at precise timing
  * Check ADC Boost mode silicon revision
  * exponential closing of gate
+ * Config: when setting values enforce sensible limits
+ * config: turn off leds when disabling
  */
 
 volatile uint32_t SysTickVal;
