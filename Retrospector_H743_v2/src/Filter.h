@@ -24,6 +24,7 @@ extern LEDHandler led;
 enum FilterControl {LP, HP, Both};
 enum PassType {FilterOff, LowPass, HighPass};
 enum FilterType {FIR, IIR};
+enum IIRType {Butterworth, Custom};
 
 typedef double iirdouble_t;			// to allow easy testing with floats or doubles
 typedef std::complex<double> complex_t;
@@ -39,11 +40,8 @@ struct IIRCoeff {
 	iirdouble_t b2[MAX_SECTIONS];
 };
 
-// These coeff form H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
+// These coeff form H(s) = 1 / (D2*s^2 + D1*s + D0)
 struct SPlaneCoeff {
-	iirdouble_t N2[MAX_POLES];
-	iirdouble_t N1[MAX_POLES];
-	iirdouble_t N0[MAX_POLES];
 	iirdouble_t D2[MAX_POLES];
 	iirdouble_t D1[MAX_POLES];
 	iirdouble_t D0[MAX_POLES];
@@ -83,8 +81,10 @@ private:
 	uint8_t numSections = 0;
 	PassType passType = LowPass;
 	iirdouble_t cutoffFreq = 0.0f;
+	iirdouble_t zeta[2] = {1.847759 / 2.0, 0.765367 / 2.0};				// Damping factor for IIR filter
 	IIRPrototype iirProto;
 	IIRCoeff iirCoeff;
+	IIRType iirType = Butterworth;
 
 	iirdouble_t CalcSection(int k, iirdouble_t x, IIRRegisters& registers);
 
@@ -94,6 +94,7 @@ public:
 	IIRFilter() {};
 
 	void CalcCoeff(iirdouble_t omega);
+	void CalcCustomLowPass(iirdouble_t omega);
 	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
 };
 
@@ -114,7 +115,7 @@ public:
 struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
-	uint16_t potCentre = 29000;		// FIXME - make this configurable in calibration
+	uint16_t potCentre = 29000;				// Configurable in calibration
 
 	void Init();
 	void Update(bool reset = false);
@@ -144,7 +145,7 @@ private:
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
 	IIRRegisters iirHPReg[2];				// Store separate shift registers for high and low pass to allow smooth transition
 
-	float dampedADC, previousADC;		// ADC readings governing damped cut off level (and previous for hysteresis)
+	float dampedADC, previousADC;			// ADC readings governing damped cut off level (and previous for hysteresis)
 	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
 	static constexpr uint16_t hysteresis = 30;
 

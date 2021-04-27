@@ -15,6 +15,15 @@ int16_t ParseInt(const std::string cmd, const char precedingChar) {
 	return val;
 }
 
+float ParseFloat(const std::string cmd, const char precedingChar) {
+	float val = -1;
+	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
+	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789.") > 0) {
+		val = stof(cmd.substr(pos + 1));
+	}
+	return val;
+}
+
 SerialHandler::SerialHandler(USB& usbObj)
 {
 	usb = &usbObj;
@@ -86,10 +95,16 @@ bool SerialHandler::Command()
 
 		char buf[50];
 
-		usb->SendString(!filter.activateFilter ? "Filter: Off\r\n" : (filter.filterType == IIR) ? "Filter: IIR" : "Filter: FIR");
 		if (filter.activateFilter) {
+			if (filter.filterType == IIR)
+				usb->SendString("Filter: IIR");
+			else
+				usb->SendString("Filter: FIR; Taps: " + std::to_string(filter.firTaps) + "; ");
+
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
-			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + ";  Cutoff: " + std::string(buf).append("\r\n"));
+			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + "; Cutoff: " + std::string(buf).append("\r\n"));
+		} else {
+			usb->SendString("Filter: Off\r\n");
 		}
 
 		usb->SendString("Delay Times L: " + std::to_string(delay.calcDelay[left] / 48) + " ms, R: " + std::to_string(delay.calcDelay[right] / 48) + " ms\r\n" +
@@ -166,6 +181,42 @@ bool SerialHandler::Command()
 //		config.SaveConfig();
 //		resumeI2S();
 
+	} else if (ComCmd.compare(0, 6, "zeta0:") == 0) {	// Configure iir zeta (damping factor)
+		float zeta = ParseFloat(ComCmd, ':');
+		filter.iirLPFilter[0].zeta[0] = zeta;
+		filter.iirLPFilter[1].zeta[0] = zeta;
+		filter.Init();		// forces recalculation of coefficients and window
+		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
+
+//		suspendI2S();
+//		config.SaveConfig();
+//		resumeI2S();
+
+	} else if (ComCmd.compare(0, 6, "zeta1:") == 0) {	// Configure iir zeta (damping factor)
+		float zeta = ParseFloat(ComCmd, ':');
+		filter.iirLPFilter[0].zeta[1] = zeta;
+		filter.iirLPFilter[1].zeta[1] = zeta;
+		filter.Init();		// forces recalculation of coefficients and window
+		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
+
+//		suspendI2S();
+//		config.SaveConfig();
+//		resumeI2S();
+
+	} else if (ComCmd.compare("iirtype\n") == 0) {	// Switch between Butterworth and Custom IIR filters
+		if (filter.iirLPFilter[0].iirType == Butterworth) {
+			filter.iirLPFilter[0].iirType = Custom;
+			filter.iirLPFilter[1].iirType = Custom;
+			usb->SendString("Filter type set to custom\r\n");
+
+		} else {
+			filter.iirLPFilter[0].iirType = Butterworth;
+			filter.iirLPFilter[1].iirType = Butterworth;
+			usb->SendString("Filter type set to Butterworth\r\n");
+		}
+		filter.Init();		// forces recalculation of coefficients and window
+
+
 	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");
 		delay.testMode = delay.TestMode::loop;
@@ -236,8 +287,10 @@ bool SerialHandler::Command()
 		// Output coefficients
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
-			usb->SendString(std::to_string(i) + ": b0=" + std::to_string(activeFilter.iirCoeff.b0[i]) + " b1=" + std::to_string(activeFilter.iirCoeff.b1[i]) + " b2=" + std::to_string(activeFilter.iirCoeff.b2[i]).append("\r\n").c_str());
-			usb->SendString("   a0=" + std::to_string(activeFilter.iirCoeff.a0[i]) + " a1=" + std::to_string(activeFilter.iirCoeff.a1[i]) + " a2=" + std::to_string(activeFilter.iirCoeff.a2[i]).append("\r\n").c_str());
+			usb->SendString("Stage " + std::to_string(i+1) + ": Omega: " + std::to_string(activeFilter.cutoffFreq) + "; Zeta: " + std::to_string(activeFilter.zeta[i]) + "\r\n");
+			usb->SendString("       Y(z)   " + std::to_string(activeFilter.iirCoeff.b2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.b1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.b0[i]) + "\r\n");
+			usb->SendString("H(z) = ---- = -----------------------------------------\r\n");
+			usb->SendString("       X(z)   " + std::to_string(activeFilter.iirCoeff.a2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.a1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.a0[i]) + "\r\n\r\n");
 		}
 
 
