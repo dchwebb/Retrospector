@@ -60,13 +60,20 @@ public:
 		numPoles = poles;
 		CalcLowPassProtoCoeff();
 	}
+	IIRPrototype(uint8_t poles, iirdouble_t* damping) {
+		numPoles = poles;
+		for (uint8_t j = 0; j < numPoles / 2; j++) {
+			Coeff.D2[j] = 1.0;
+			Coeff.D1[j] = 2 * damping[j];
+			Coeff.D0[j] = 1.0;
+		}
+	}
 	IIRPrototype() {};
 
 	SPlaneCoeff Coeff;
 
 private:
 	uint8_t numPoles = 0;
-	uint8_t numSections = 0;
 
 	void CalcLowPassProtoCoeff();
 	void ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots);
@@ -81,8 +88,9 @@ private:
 	uint8_t numSections = 0;
 	PassType passType = LowPass;
 	iirdouble_t cutoffFreq = 0.0f;
-	iirdouble_t zeta[2] = {1.847759 / 2.0, 0.765367 / 2.0};				// Damping factor for IIR filter
-	IIRPrototype iirProto;
+	iirdouble_t damping[2] = {0.923879, 0.382684};				// Damping factor for custom IIR filter - default to Butterworth values
+	IIRPrototype iirProto;					// Standard Butterworth is default
+	IIRPrototype iirProtoCustom;
 	IIRCoeff iirCoeff;
 	IIRType iirType = Butterworth;
 
@@ -90,9 +98,10 @@ private:
 
 public:
 	// constructors
-	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto(IIRPrototype(poles)) {}
+	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto(IIRPrototype(poles)), iirProtoCustom(IIRPrototype(poles, damping)) {};
 	IIRFilter() {};
 
+	void UpdateProto(uint8_t section, iirdouble_t damping);
 	void CalcCoeff(iirdouble_t omega);
 	void CalcCustomLowPass(iirdouble_t omega);
 	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
@@ -112,6 +121,7 @@ public:
 };
 
 
+
 struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
@@ -120,6 +130,7 @@ public:
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
+	void CustomIIR(uint8_t section, iirdouble_t damping);
 
 private:
 	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP

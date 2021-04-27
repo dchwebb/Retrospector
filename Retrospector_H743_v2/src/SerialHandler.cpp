@@ -183,8 +183,9 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare(0, 6, "zeta0:") == 0) {	// Configure iir zeta (damping factor)
 		float zeta = ParseFloat(ComCmd, ':');
-		filter.iirLPFilter[0].zeta[0] = zeta;
-		filter.iirLPFilter[1].zeta[0] = zeta;
+		filter.CustomIIR(0, zeta);
+		//filter.iirLPFilter[0].damping[0] = zeta;
+		//filter.iirLPFilter[1].damping[0] = zeta;
 		filter.Init();		// forces recalculation of coefficients and window
 		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
 
@@ -194,8 +195,9 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare(0, 6, "zeta1:") == 0) {	// Configure iir zeta (damping factor)
 		float zeta = ParseFloat(ComCmd, ':');
-		filter.iirLPFilter[0].zeta[1] = zeta;
-		filter.iirLPFilter[1].zeta[1] = zeta;
+		filter.CustomIIR(1, zeta);
+//		filter.iirLPFilter[0].damping[1] = zeta;
+//		filter.iirLPFilter[1].damping[1] = zeta;
 		filter.Init();		// forces recalculation of coefficients and window
 		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
 
@@ -287,7 +289,7 @@ bool SerialHandler::Command()
 		// Output coefficients
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
-			usb->SendString("Stage " + std::to_string(i+1) + ": Omega: " + std::to_string(activeFilter.cutoffFreq) + "; Zeta: " + std::to_string(activeFilter.zeta[i]) + "\r\n");
+			usb->SendString("Stage " + std::to_string(i+1) + ": Omega: " + std::to_string(activeFilter.cutoffFreq) + "; Zeta: " + std::to_string(activeFilter.damping[i]) + "\r\n");
 			usb->SendString("       Y(z)   " + std::to_string(activeFilter.iirCoeff.b2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.b1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.b0[i]) + "\r\n");
 			usb->SendString("H(z) = ---- = -----------------------------------------\r\n");
 			usb->SendString("       X(z)   " + std::to_string(activeFilter.iirCoeff.a2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.a1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.a0[i]) + "\r\n\r\n");

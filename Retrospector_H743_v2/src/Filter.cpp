@@ -194,7 +194,6 @@ void Filter::InitIIRFilter(iirdouble_t tone)
 		cutoff = std::min(0.03 + pow(tone / 65536.0, 2.0), LPMax);
 		iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
 		iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
-		//iirLPFilter[inactiveFilter].CalcCustomLowPass(cutoff);
 	}
 
 	activeFilter = inactiveFilter;
@@ -213,6 +212,12 @@ iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 
 }
 
+void Filter::CustomIIR(uint8_t section, iirdouble_t dampAmt)
+{
+	for (auto& iir : iirLPFilter) {
+		iir.UpdateProto(section, dampAmt);
+	}
+}
 
 //	Take a new sample and return filtered value
 iirdouble_t IIRFilter::FilterSample(iirdouble_t sample, IIRRegisters& registers)
@@ -280,33 +285,35 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 	else
 		cutoffFreq = omega;
 
-	if (iirType == Custom) {
-		return CalcCustomLowPass(omega);
-	}
+//	if (iirType == Custom) {
+//		return CalcCustomLowPass(omega);
+//	}
+
+	// Set the number of IIR filter sections we will be generating.
+	numSections = (numPoles + 1) / 2;
 
 	// Init the IIR structure.
-	for (j = 0; j < MAX_SECTIONS; j++)	{
+	for (j = 0; j < numSections; j++)	{
 		iirCoeff.a0[j] = 0.0;  iirCoeff.b0[j] = 0.0;
 		iirCoeff.a1[j] = 0.0;  iirCoeff.b1[j] = 0.0;
 		iirCoeff.a2[j] = 0.0;  iirCoeff.b2[j] = 0.0;
 	}
 
-	// Set the number of IIR filter sections we will be generating.
-	numSections = (numPoles + 1) / 2;
-
 	// T sets the IIR filter's corner frequency, or center frequency
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z^-1)/(1 + z^-1)
 	T = 2.0 * tan(omega * M_PI / 2);
 
+	SPlaneCoeff sCoeff = (iirType == Butterworth) ? iirProto.Coeff : iirProtoCustom.Coeff;
+
 	// Calc the IIR coefficients. SPlaneCoeff.NumSections is the number of 1st and 2nd order s plane factors.
 	for (j = 0; j < numSections; j++) {
-		A = iirProto.Coeff.D2[j];			// Always one
-		B = iirProto.Coeff.D1[j];
-		C = iirProto.Coeff.D0[j];			// Always one
+		A = sCoeff.D2[j];				// Always one
+		B = sCoeff.D1[j];
+		C = sCoeff.D0[j];				// Always one
 
 		// b's are the numerator, a's are the denominator
 		if (passType == LowPass) {
-			if (A == 0.0) {					// 1 pole case
+			if (A == 0.0) {						// 1 pole case
 				arg = (2.0 * B + C * T);
 				iirCoeff.a2[j] = 0.0;
 				iirCoeff.a1[j] = (-2.0 * B + C * T) / arg;
@@ -315,7 +322,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 				iirCoeff.b2[j] = 0.0;
 				iirCoeff.b1[j] = (T) / arg * C;
 				iirCoeff.b0[j] = (T) / arg * C;
-			} else {									// 2 poles
+			} else {							// 2 poles
 
 				arg = (4.0 * A + 2.0 * B * T + C * T * T);
 				iirCoeff.a2[j] = (4.0 * A - 2.0 * B * T + C * T * T) / arg;
@@ -329,8 +336,8 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 			}
 		}
 
-		if (passType == HighPass) {						// High Pass
-			if (A == 0.0) {					// 1 pole
+		if (passType == HighPass) {				// High Pass
+			if (A == 0.0) {						// 1 pole
 				arg = 2.0 * C + B * T;
 				iirCoeff.a2[j] = 0.0;
 				iirCoeff.a1[j] = (B * T - 2.0 * C) / arg;
@@ -339,7 +346,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 				iirCoeff.b2[j] = 0.0;
 				iirCoeff.b1[j] = -2.0 / arg * C;
 				iirCoeff.b0[j] = 2.0 / arg * C;
-			} else {									// 2 poles
+			} else {							// 2 poles
 				arg = A * T * T + 4.0 * C + 2.0 * B * T;
 				iirCoeff.a2[j] = (A * T * T + 4.0 * C - 2.0 * B * T) / arg;
 				iirCoeff.a1[j] = (2.0 * A * T * T - 8.0 * C) / arg;
@@ -347,7 +354,7 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 
 				// With all pole filters, HPF numerator is (z-1)^2, so all Z Plane zeros are at 1
 				iirCoeff.b2[j] = 4.0 / arg * C;
-				iirCoeff.b1[j] = - 8.0 / arg * C;
+				iirCoeff.b1[j] = -8.0 / arg * C;
 				iirCoeff.b0[j] = 4.0 / arg * C;
 			}
 		}
@@ -361,8 +368,8 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 void IIRFilter::CalcCustomLowPass(iirdouble_t omega)
 {
 	iirdouble_t A = 1.0;
-	iirdouble_t B0 = 2.0 * zeta[0];		//  * omega
-	iirdouble_t B1 = 2.0 * zeta[1];		// * omega
+	iirdouble_t B0 = 2.0 * damping[0];		//  * omega
+	iirdouble_t B1 = 2.0 * damping[1];		// * omega
 	iirdouble_t C = 1.0;		//omega * omega;
 	iirdouble_t D = 0.0;
 	iirdouble_t E = 0.0;
@@ -391,6 +398,11 @@ void IIRFilter::CalcCustomLowPass(iirdouble_t omega)
 	numSections = 2;
 }
 
+void IIRFilter::UpdateProto(uint8_t section, iirdouble_t dampAmt)
+{
+	damping[section] = dampAmt;
+	iirProtoCustom.Coeff.D1[section] = 2 * dampAmt;
+}
 
 
 // Calculate the S Plane Coefficients:  H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
@@ -398,8 +410,7 @@ void IIRPrototype::CalcLowPassProtoCoeff()
 {
 	std::array<complex_t, MAX_POLES> Poles;
 
-	for (uint8_t j = 0; j < MAX_POLES; j++) {
-
+	for (uint8_t j = 0; j < numPoles; j++) {
 		Coeff.D2[j] = 0.0;
 		Coeff.D1[j] = 0.0;
 		Coeff.D0[j] = 1.0;
@@ -408,12 +419,11 @@ void IIRPrototype::CalcLowPassProtoCoeff()
 	// A one pole filter is simply 1/(s+1)
 	if (numPoles == 1) {
 		Coeff.D1[0] = 1.0;
-	} else {				// Always use Butterworth
+	} else {
 		Poles[0] = complex_t(0.0, 0.0);
 		ButterworthPoly(Poles);
 		GetFilterCoeff(Poles);
 	}
-
 }
 
 
@@ -472,6 +482,7 @@ void IIRPrototype::GetFilterCoeff(std::array<complex_t, MAX_POLES> &Roots)
 		}
 	}
 }
+
 
 iirdouble_t FixedFilter::FilterSample(iirdouble_t sample)
 {
