@@ -9,13 +9,11 @@
 #include "Bootloader.h"
 
 /* TODO
- * config to adjust: slope of filters; length multiplier of long delay and reverse
+ * config to adjust: length multiplier of long delay and reverse
  * USB hangs when sending over CDC and cable removed and reinserted
- * Investigate tanh function for filter
+ * Investigate TANH function for filter
  * Check ADC Boost mode silicon revision
  * exponential closing of gate
- * Config: when setting values enforce sensible limits
- * config: turn off leds when disabling
  */
 
 volatile uint32_t SysTickVal;

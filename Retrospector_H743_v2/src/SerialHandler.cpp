@@ -172,7 +172,7 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("iirdefault\n") == 0) {			// Reset IIR filter to default Butterworth coefficients
 		filter.DefaultIIR();
-		usb->SendString("Filter type reset to Butterworth\r\n");
+		usb->SendString("Filter coefficients set to Butterworth defaults\r\n");
 		filter.Update(true);		// forces recalculation of coefficients
 
 	} else if (ComCmd.compare(0, 6, "poles:") == 0) {			// Configure number of iir poles
@@ -241,10 +241,16 @@ bool SerialHandler::Command()
 		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
 
 	} else if (ComCmd.compare("led\n") == 0) {					// LEDs on/off
-		activateLEDs = !activateLEDs;
-		usb->SendString("LEDs " + std::string(activateLEDs ? "on" : "off") + "\r\n");
+		if (ledState == ledOn) {
+			ledState = ledTurnOff;
+		} else {
+			ledState = ledOn;
+			filter.Update(true);								// Force the Filter LED to refresh
+		}
+		usb->SendString("LEDs " + std::string(ledState == ledOn ? "on" : "off") + "\r\n");
 
-	} else if (ComCmd.compare("iir\n") == 0) {		// Show IIR Coefficients
+
+	} else if (ComCmd.compare("iir\n") == 0) {					// Show IIR Coefficients
 
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		usb->SendString(std::to_string(activeFilter.numPoles) + " Pole " + std::string((filter.passType == LowPass) ? "Low Pass\r\n" : "High Pass\r\n"));

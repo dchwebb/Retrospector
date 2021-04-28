@@ -1,6 +1,6 @@
 #include "LEDHandler.h"
 
-bool activateLEDs = true;
+ledStatus ledState = ledOn;
 
 // Set an individual led brightness
 void LEDHandler::LEDSet(ledSelection l, uint8_t b)
@@ -10,27 +10,27 @@ void LEDHandler::LEDSet(ledSelection l, uint8_t b)
 }
 
 // Set colour of RGB led group
-void LEDHandler::LEDColour(uint8_t g, uint32_t rgb)
+void LEDHandler::LEDColour(ledType l, uint32_t rgb)
 {
 	// Brightness is from 0 to 255, with lowest bit cleared
 	rgb &= ~0x010101;				// Clear lowest bit
-	colour[g * 3] = rgb >> 16;
-	colour[g * 3 + 1] = (rgb >> 8) & 0xFF;
-	colour[g * 3 + 2] = rgb & 0xFF;
+	colour[l * 3] = rgb >> 16;
+	colour[l * 3 + 1] = (rgb >> 8) & 0xFF;
+	colour[l * 3 + 2] = rgb & 0xFF;
 }
 
 // Set colour of RGB led group, applying a fractional reduction to each colour separately
-void LEDHandler::LEDColour(uint8_t g, uint32_t rgb, float fract)
+void LEDHandler::LEDColour(ledType l, uint32_t rgb, float fract)
 {
 	// Brightness is from 0 to 255, with lowest bit cleared
 	rgb &= ~0x010101;				// Clear lowest bit
-	colour[g * 3] = static_cast<uint8_t>(fract * (rgb >> 16));
-	colour[g * 3 + 1] = static_cast<uint8_t>(fract * ((rgb >> 8) & 0xFF));
-	colour[g * 3 + 2] = static_cast<uint8_t>(fract * (rgb & 0xFF));
+	colour[l * 3] = static_cast<uint8_t>(fract * (rgb >> 16));
+	colour[l * 3 + 1] = static_cast<uint8_t>(fract * ((rgb >> 8) & 0xFF));
+	colour[l * 3 + 2] = static_cast<uint8_t>(fract * (rgb & 0xFF));
 }
 
 // Set colour of RGB led group, blending from/to colour and darkening by applying a fractional reduction to each colour separately
-void LEDHandler::LEDColour(uint8_t grp, uint32_t rgbFrom, uint32_t rgbTo, float blend, float brightness)
+void LEDHandler::LEDColour(ledType l, uint32_t rgbFrom, uint32_t rgbTo, float blend, float brightness)
 {
 	// Interpolate from to colours
 	float r = brightness * ((blend * (rgbFrom >> 16)) + ((1.0f - blend) * (rgbTo >> 16)));
@@ -38,9 +38,9 @@ void LEDHandler::LEDColour(uint8_t grp, uint32_t rgbFrom, uint32_t rgbTo, float 
 	float b = brightness * ((blend * (rgbFrom & 0xFF)) + ((1.0f - blend) * (rgbTo & 0xFF)));
 
 	// Brightness is from 0 to 255, with lowest bit cleared
-	colour[grp * 3] = static_cast<uint8_t>(r) & 0xFE;
-	colour[grp * 3 + 1] = static_cast<uint8_t>(g) & 0xFE;
-	colour[grp * 3 + 2] = static_cast<uint8_t>(b) & 0xFE;
+	colour[l * 3] = static_cast<uint8_t>(r) & 0xFE;
+	colour[l * 3 + 1] = static_cast<uint8_t>(g) & 0xFE;
+	colour[l * 3 + 2] = static_cast<uint8_t>(b) & 0xFE;
 }
 
 void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
@@ -51,8 +51,14 @@ void LEDHandler::LEDColour(ledType l, uint8_t r, uint8_t g, uint8_t b) {
 
 void LEDHandler::LEDSend()
 {
-	if (!activateLEDs)
+	// LED disabling handling through simple state machine for timing reasons
+	if (ledState == ledTurnOff) {
+		LEDColour(ledDelL, 0);
+		LEDColour(ledDelR, 0);
+		LEDColour(ledFilter, 0);
+	} else if (ledState == ledOff) {
 		return;
+	}
 
 	// Clear DMA errors and transfer complete status flags
 	SPI6->IFCR |= SPI_IFCR_TXTFC;
@@ -137,7 +143,7 @@ void LEDHandler::TestPattern()
 
 
 			if (ledCounter[i] < transition) {
-				LEDColour(i, setColour);
+				LEDColour(static_cast<ledType>(i), setColour);
 			} else {
 				ledPrev[i] = ledTarg[i];
 

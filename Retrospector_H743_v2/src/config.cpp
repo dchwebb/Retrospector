@@ -123,7 +123,7 @@ void Config::RestoreConfig()
 		delay.gateHoldCount = cv.delay_gate_activate;
 		filter.potCentre = cv.filter_pot_center;
 
-		if (cv.filter_num_poles != filter.defaultPoles) {
+		if (cv.filter_num_poles != filter.defaultPoles && cv.filter_num_poles > 0 && cv.filter_num_poles < MAX_POLES) {
 			filter.CustomiseIIR(cv.filter_num_poles);
 		}
 		filter.customDamping = cv.filter_custom_damping;
