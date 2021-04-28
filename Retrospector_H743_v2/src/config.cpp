@@ -62,13 +62,13 @@ void Config::AutoZeroOffset()
 }
 
 
-
 // called whenever a config setting is changed to schedule a save after waiting to see if any more changes are being made
 void Config::ScheduleSave()
 {
 	scheduleSave = true;
 	saveBooked = SysTickVal;
 }
+
 
 // Write calibration settings to Flash memory (H743 see programming manual p152 for sector layout)
 bool Config::SaveConfig()
@@ -94,11 +94,18 @@ bool Config::SaveConfig()
 
 void Config::SetConfig(configValues &cv)
 {
-	cv.filter_pot_center = filter.potCentre;
 	cv.audio_offset_left = adcZeroOffset[left];
 	cv.audio_offset_right = adcZeroOffset[right];
+
 	cv.delay_gate_threshold = delay.gateThreshold;
 	cv.delay_gate_activate = delay.gateHoldCount;
+
+	cv.filter_pot_center = filter.potCentre;
+	cv.filter_num_poles = filter.iirLPFilter[0].numPoles;
+	cv.filter_custom_damping = filter.customDamping;
+	for (uint8_t i = 0; i < 4; ++i) {
+		cv.filter_damping[i] = filter.iirLPFilter[0].damping[i];
+	}
 }
 
 
@@ -110,11 +117,21 @@ void Config::RestoreConfig()
 	memcpy(reinterpret_cast<uint32_t*>(&cv), ADDR_FLASH_SECTOR_7, sizeof(cv));
 
 	if (strcmp(cv.StartMarker, "CFG") == 0 && strcmp(cv.EndMarker, "END") == 0 && cv.Version == CONFIG_VERSION) {
-		filter.potCentre = cv.filter_pot_center;
 		adcZeroOffset[left]  = cv.audio_offset_left;
 		adcZeroOffset[right] = cv.audio_offset_right;
 		delay.gateThreshold = cv.delay_gate_threshold;
 		delay.gateHoldCount = cv.delay_gate_activate;
+		filter.potCentre = cv.filter_pot_center;
+
+		if (cv.filter_num_poles != filter.defaultPoles) {
+			filter.CustomiseIIR(cv.filter_num_poles);
+		}
+		filter.customDamping = cv.filter_custom_damping;
+		if (filter.customDamping) {
+			for (uint8_t i = 0; i < 4; ++i) {
+				filter.CustomiseIIR(i, cv.filter_damping[i]);
+			}
+		}
 	}
 
 	// Set up averaging values for ongoing ADC offset calibration

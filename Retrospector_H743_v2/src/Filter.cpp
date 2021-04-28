@@ -215,6 +215,7 @@ iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 // Edit damping of individual sections
 void Filter::CustomiseIIR(uint8_t section, iirdouble_t dampAmt)
 {
+	customDamping = true;									// Set to true if using custom damping coefficients (otherwise will default to Butterworth)
 	for (auto& iir : iirLPFilter) {
 		iir.UpdateProto(section, dampAmt);
 	}
@@ -232,16 +233,19 @@ void Filter::CustomiseIIR(uint8_t poleCount)
 	for (auto& iir : iirHPFilter) {
 		iir.UpdateProto(poleCount);
 	}
+	DefaultIIR();											// Reset coefficients to Butterworth (According to pole count)
 }
 
 void Filter::DefaultIIR()
 {
+	customDamping = false;									// Set to true if using custom damping coefficients (otherwise will default to Butterworth)
 	for (auto& iir : iirLPFilter) {
 		iir.DefaultProto();
 	}
 	for (auto& iir : iirHPFilter) {
 		iir.DefaultProto();
 	}
+	Update(true);											// Force recalculation of coefficients
 }
 
 //	Take a new sample and return filtered value
@@ -262,7 +266,6 @@ iirdouble_t IIRFilter::CalcSection(int k, iirdouble_t x, IIRRegisters& registers
 
 	// Zero the registers on an overflow condition
 	if (MaxRegVal > 1.0E6) {
-
 		MaxRegVal = 1.0E-12;
 		for (uint8_t i = 0; i < MAX_SECTIONS; i++) {
 			registers.X1[i] = 0.0;
@@ -388,13 +391,19 @@ void IIRFilter::UpdateProto(uint8_t poleCount)
 
 void IIRFilter::UpdateProto(uint8_t section, iirdouble_t dampAmt)
 {
+	customDamping = true;
 	damping[section] = dampAmt;
-	iirProto.Coeff.D1[section] = 2 * dampAmt;
+	if (iirProto.Coeff.D2[section] == 0.0) {		// One pole
+		iirProto.Coeff.D1[section] = dampAmt;
+	} else {
+		iirProto.Coeff.D1[section] = 2 * dampAmt;
+	}
 }
 
 
 void IIRFilter::DefaultProto()
 {
+	customDamping = false;
 	iirProto.DefaultProtoCoeff();
 }
 
@@ -427,8 +436,9 @@ void IIRPrototype::ButterworthPoly(std::array<complex_t, MAX_POLES> &Roots)
 		Roots[n++] = complex_t(cos(theta), sin(theta));
 		Roots[n++] = complex_t(cos(theta), -sin(theta));
 	}
-	if (numPoles % 2 == 1)
+	if (numPoles % 2 == 1) {
 		Roots[n++] = complex_t(-1.0, 0.0);		// The real root for odd pole counts
+	}
 
 }
 

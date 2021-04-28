@@ -6,20 +6,28 @@ extern DigitalDelay delay;
 extern Config config;
 extern Bootloader bootloader;
 
-int16_t ParseInt(const std::string cmd, const char precedingChar) {
+int16_t SerialHandler::ParseInt(const std::string cmd, const char precedingChar, int low = 0, int high = 0) {
 	uint16_t val = -1;
 	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
 	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789") > 0) {
 		val = stoi(cmd.substr(pos + 1));
 	}
+	if (high > low && (val > high || val < low)) {
+		usb->SendString("Must be a value between " + std::to_string(high) + " and " + std::to_string(low) + "\r\n");
+		return 0;
+	}
 	return val;
 }
 
-float ParseFloat(const std::string cmd, const char precedingChar) {
+float SerialHandler::ParseFloat(const std::string cmd, const char precedingChar, float low = 0.0, float high = 0.0) {
 	float val = -1;
 	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
 	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789.") > 0) {
 		val = stof(cmd.substr(pos + 1));
+		if (high > low && (val > high || val < low)) {
+			usb->SendString("Must be a value between " + std::to_string(high) + " and " + std::to_string(low) + "\r\n");
+			return 0.0;
+		}
 	}
 	return val;
 }
@@ -31,7 +39,6 @@ SerialHandler::SerialHandler(USB& usbObj)
 	// bind the usb's CDC caller to the CDC handler in this class
 	usb->cdcDataHandler = std::bind(&SerialHandler::Handler, this, std::placeholders::_1, std::placeholders::_2);
 }
-
 
 
 
@@ -78,9 +85,9 @@ bool SerialHandler::Command()
 
 		if (filter.activateFilter) {
 			if (filter.filterType == IIR)
-				usb->SendString("Filter: IIR");
+				usb->SendString("IIR Filter: ");
 			else
-				usb->SendString("Filter: FIR; Taps: " + std::to_string(filter.firTaps) + "; ");
+				usb->SendString("FIR Filter; Taps: " + std::to_string(filter.firTaps) + "; ");
 
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
 			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + "; Cutoff: " + std::string(buf).append("\r\n"));
@@ -134,87 +141,85 @@ bool SerialHandler::Command()
 				"\r\n"
 		);
 
-	} else if (ComCmd.compare("gateled\n") == 0) {	// Configure gate LED
+	} else if (ComCmd.compare("gateled\n") == 0) {				// Configure gate LED
 		delay.gateLED = !delay.gateLED;
 		usb->SendString("Toggle Filter LED displaying gate status\r\n");
 		if (!delay.gateLED) {
 			filter.Update(true);
 		}
 
-	} else if (ComCmd.compare(0, 10, "threshold:") == 0) {	// Configure gate threshold
+	} else if (ComCmd.compare(0, 10, "threshold:") == 0) {		// Configure gate threshold
 		uint16_t threshold = ParseInt(ComCmd, ':');
 		delay.gateThreshold = threshold;
 		usb->SendString("Gate threshold set to: " + std::to_string(delay.gateThreshold) + "\r\n");
 //		config.SaveConfig();
 
-	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {	// Configure gate activation time
+	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {			// Configure gate activation time
 		uint16_t gate = ParseInt(ComCmd, ':');
 		delay.gateHoldCount = gate;
 		usb->SendString("Gate activate time set to: " + std::to_string(delay.gateHoldCount) + "\r\n");
 //		config.SaveConfig();
 
-	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {	// Configure fir taps
-		uint16_t taps = ParseInt(ComCmd, ':');
-		filter.firTaps = taps;
-		filter.Init();		// forces recalculation of coefficients and window
-		usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
-//		config.SaveConfig();
+	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {			// Configure fir taps
+		uint16_t taps = ParseInt(ComCmd, ':', 5, 93);
+		if (taps > 0) {
+			taps = ((taps / 4) * 4) + 1;						// taps must be a multiple of four + 1
+			filter.firTaps = taps;
+			filter.Init();										// forces recalculation of coefficients and window
+			usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
+			config.SaveConfig();
+		}
 
-	} else if (ComCmd.compare("iirdefault\n") == 0) {	// Reset IIR filter to default Butterworth coefficients
+	} else if (ComCmd.compare("iirdefault\n") == 0) {			// Reset IIR filter to default Butterworth coefficients
 		filter.DefaultIIR();
 		usb->SendString("Filter type reset to Butterworth\r\n");
 		filter.Update(true);		// forces recalculation of coefficients
 
-	} else if (ComCmd.compare(0, 6, "poles:") == 0) {	// Configure number of iir poles
+	} else if (ComCmd.compare(0, 6, "poles:") == 0) {			// Configure number of iir poles
 		uint8_t poles = ParseInt(ComCmd, ':');
 		filter.CustomiseIIR(poles);
-		filter.DefaultIIR();
-		filter.Update(true);		// forces recalculation of coefficients
 		usb->SendString("Poles set to: " + std::to_string(poles) + "\r\n");
-//		config.SaveConfig();
+		config.SaveConfig();
 
-	} else if (ComCmd.compare(0, 6, "damp1:") == 0) {	// Configure iir zeta (damping factor)
-		float zeta = ParseFloat(ComCmd, ':');
-		filter.CustomiseIIR(0, zeta);
-		filter.Update(true);		// forces recalculation of coefficients
-		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
-//		config.SaveConfig();
+	} else if (ComCmd.compare(0, 4, "damp") == 0) {				// Configure iir zeta damping factor (format dampx:y where x is section and y is amount)
+		int section = ParseInt(ComCmd, 'p', 1, 4);
+		if (section > 0) {
+			float zeta = ParseFloat(ComCmd, ':', 0.000001, 2.0);
+			if (zeta > 0.0) {
+				filter.CustomiseIIR(section - 1, zeta);
+				filter.Update(true);		// forces recalculation of coefficients
+				usb->SendString("Damping (zeta) set to: " + std::to_string(zeta) + "\r\n");
+				config.SaveConfig();
+			}
+		}
 
-	} else if (ComCmd.compare(0, 6, "damp2:") == 0) {	// Configure iir zeta (damping factor)
-		float zeta = ParseFloat(ComCmd, ':');
-		filter.CustomiseIIR(1, zeta);
-		filter.Update(true);		// forces recalculation of coefficients
-		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
-//		config.SaveConfig();
-
-	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
+	} else if (ComCmd.compare("loop\n") == 0) {					// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");
 		delay.testMode = delay.TestMode::loop;
 		state = serialState::cancelAudioTest;
 
-	} else if (ComCmd.compare("saw\n") == 0) {		// Audio loopback test
+	} else if (ComCmd.compare("saw\n") == 0) {					// Audio loopback test
 		usb->SendString("Generating saw wave. Press any key to cancel\r\n");
 		delay.testMode = delay.TestMode::saw;
 		state = serialState::cancelAudioTest;
 
-	} else if (ComCmd.compare("dfu\n") == 0) {		// USB DFU firmware upgrade
+	} else if (ComCmd.compare("dfu\n") == 0) {					// USB DFU firmware upgrade
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
 		state = serialState::dfuConfirm;
 
-	} else if (ComCmd.compare("boot\n") == 0) {		// Test bootloader code
+	} else if (ComCmd.compare("boot\n") == 0) {					// Test bootloader code
 		bootloader.Receive();
 		//void Bootloader();
 		//Bootloader();
 
-	} else if (ComCmd.compare("calib\n") == 0) {	// Calibrate filter pot center and audio offsets
-
+	} else if (ComCmd.compare("calib\n") == 0) {				// Calibrate filter pot center and audio offsets
 		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");
 		state = serialState::calibConfirm;
 
-	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
+	} else if (ComCmd.compare("save\n") == 0) {					// Save calibration information
 		config.SaveConfig();
 
-	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
+	} else if (ComCmd.compare("resume\n") == 0) {				// Resume I2S after debugging
 		resumeI2S();
 
 	} else if (ComCmd.compare("mem16\n") == 0 || ComCmd.compare("mem32\n") == 0) {		// Memory test
@@ -231,29 +236,20 @@ bool SerialHandler::Command()
 			runMemTest = false;
 		}
 
-	} else if (ComCmd.compare("f\n") == 0) {		// Activate filter
-
+	} else if (ComCmd.compare("f\n") == 0) {					// Activate filter
 		filter.activateFilter = !filter.activateFilter;
-		if (filter.activateFilter) {
-			usb->SendString(std::string("Filter on\r\n").c_str());
-		} else {
-			usb->SendString(std::string("Filter off\r\n").c_str());
-		}
+		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
 
-	} else if (ComCmd.compare("led\n") == 0) {		// LEDs on/off
+	} else if (ComCmd.compare("led\n") == 0) {					// LEDs on/off
 		activateLEDs = !activateLEDs;
-		if (activateLEDs) {
-			usb->SendString("LEDs on\r\n");
-		} else {
-			usb->SendString("LEDs off\r\n");
-		}
+		usb->SendString("LEDs " + std::string(activateLEDs ? "on" : "off") + "\r\n");
 
 	} else if (ComCmd.compare("iir\n") == 0) {		// Show IIR Coefficients
 
-		usb->SendString((filter.passType == LowPass) ? "Low Pass\r\n" : "High Pass\r\n");
+		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
+		usb->SendString(std::to_string(activeFilter.numPoles) + " Pole " + std::string((filter.passType == LowPass) ? "Low Pass\r\n" : "High Pass\r\n"));
 
 		// Output coefficients
-		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
 			usb->SendString("Stage " + std::to_string(i+1) + ": Cutoff: " + std::to_string(activeFilter.cutoffFreq)
 				+ "; Damping: " + std::to_string(activeFilter.iirProto.Coeff.D1[i] / (activeFilter.iirProto.Coeff.D2[i] == 0.0 ? 1.0 : 2.0)) + "\r\n");

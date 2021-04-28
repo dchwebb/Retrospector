@@ -74,12 +74,14 @@ private:
 
 class IIRFilter {
 	friend class SerialHandler;									// Allow the serial handler access to private data for debug printing
+	friend class Config;										// Allow access to config to store values
 private:
 	uint8_t numPoles = 1;
 	uint8_t numSections = 0;
 	PassType passType = LowPass;
 	iirdouble_t cutoffFreq = 0.0f;
-	iirdouble_t damping[2] = {0.923879, 0.382684};				// Damping factor for custom IIR filter - default to Butterworth values
+	bool customDamping = false;									// Set to true if using custom damping coefficients (otherwise will default to Butterworth)
+	iirdouble_t damping[MAX_SECTIONS] = {0.923879, 0.382684};	// Damping factor for custom IIR filter - default to Butterworth values
 	IIRPrototype iirProto;										// Standard Butterworth is default
 	IIRCoeff iirCoeff;
 
@@ -116,9 +118,8 @@ public:
 
 struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+	friend class Config;					// Allow access to config to store values
 public:
-	uint16_t potCentre = 29000;				// Configurable in calibration
-
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
@@ -128,6 +129,7 @@ public:
 
 private:
 	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
+	uint16_t potCentre = 29000;				// Configurable in calibration
 
 	bool activateFilter = true;				// For debug
 	FilterType filterType = FIR;
@@ -143,17 +145,16 @@ private:
 	uint8_t filterBuffPos[2];
 
 	// IIR settings
-	const uint8_t polesLP = 4;
-	const uint8_t polesHP = 4;
-	IIRFilter iirLPFilter[2] = {IIRFilter(polesLP, LowPass), IIRFilter(polesLP, LowPass)};			// Two filters for active and inactive
-	IIRFilter iirHPFilter[2] = {IIRFilter(polesHP, HighPass), IIRFilter(polesHP, HighPass)};
+	bool customDamping = false;				// Set to true if using custom damping coefficients (otherwise will default to Butterworth)
+	const uint8_t defaultPoles = 4;
+	IIRFilter iirLPFilter[2] = {IIRFilter(defaultPoles, LowPass), IIRFilter(defaultPoles, LowPass)};			// Two filters for active and inactive
+	IIRFilter iirHPFilter[2] = {IIRFilter(defaultPoles, HighPass), IIRFilter(defaultPoles, HighPass)};
 	IIRRegisters iirLPReg[2];				// Two channels (left and right)
 	IIRRegisters iirHPReg[2];				// Store separate shift registers for high and low pass to allow smooth transition
 
 	float dampedADC, previousADC;			// ADC readings governing damped cut off level (and previous for hysteresis)
 	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
 	static constexpr uint16_t hysteresis = 30;
-
 
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
 	float CalcFIRFilter(float sample, channel c);

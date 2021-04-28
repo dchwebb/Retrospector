@@ -6,7 +6,7 @@
 #include "SerialHandler.h"
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
-#define CONFIG_VERSION 2
+#define CONFIG_VERSION 4
 
 extern USB usb;
 
@@ -18,19 +18,15 @@ struct configValues {
 	uint8_t Version = CONFIG_VERSION;				// version of saved config struct format
 
 	// Settings
-	uint16_t filter_pot_center = 0;
 	uint16_t audio_offset_left = 0;
 	uint16_t audio_offset_right = 0;
 	uint16_t delay_gate_threshold = 0;
 	uint16_t delay_gate_activate = 0;
-	uint32_t test_value1 = 0xABBACAFE;
-	uint32_t test_value2 = 0xDEADBABE;
-	uint32_t test_value3 = 0xCEDECAFE;
-	uint32_t test_value4 = 0xACEDABBA;
-	uint32_t test_value5 = 0xABBACAFE;
-	uint32_t test_value6 = 0xDEADBABE;
-	uint32_t test_value7 = 0xCEDECAFE;
-	uint32_t test_value8 = 0xACEDABBA;
+
+	uint16_t filter_pot_center = 0;
+	uint8_t  filter_num_poles = 0;
+	bool filter_custom_damping = false;
+	float filter_damping[4] = {0.0, 0.0, 0.0, 0.0};
 
 	char EndMarker[4] = "END";			// End Marker
 };
