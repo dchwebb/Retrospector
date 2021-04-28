@@ -37,7 +37,6 @@ void Config::Calibrate()
 	adcZeroOffset[left] = audioOffsetL;
 	adcZeroOffset[right] = audioOffsetR;
 	filter.potCentre = filterCenter;
-	serial.suspendI2S();
 	SaveConfig();
 }
 
@@ -75,6 +74,7 @@ void Config::ScheduleSave()
 bool Config::SaveConfig()
 {
 	scheduleSave = false;
+	suspendI2S();
 
 	configValues cv;
 	SetConfig(cv);
@@ -87,6 +87,7 @@ bool Config::SaveConfig()
 	FlashLock(2);						// Lock Bank 2 Flash
 	__enable_irq(); 					// Enable Interrupts
 
+	resumeI2S();
 	return result;
 }
 

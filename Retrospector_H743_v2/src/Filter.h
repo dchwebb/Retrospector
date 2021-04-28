@@ -58,50 +58,41 @@ class IIRPrototype {
 public:
 	IIRPrototype(uint8_t poles) {
 		numPoles = poles;
-		CalcLowPassProtoCoeff();
-	}
-	IIRPrototype(uint8_t poles, iirdouble_t* damping) {
-		numPoles = poles;
-		for (uint8_t j = 0; j < numPoles / 2; j++) {
-			Coeff.D2[j] = 1.0;
-			Coeff.D1[j] = 2 * damping[j];
-			Coeff.D0[j] = 1.0;
-		}
+		DefaultProtoCoeff();
 	}
 	IIRPrototype() {};
 
 	SPlaneCoeff Coeff;
-
-private:
 	uint8_t numPoles = 0;
 
-	void CalcLowPassProtoCoeff();
+	void DefaultProtoCoeff();
+private:
 	void ButterworthPoly(std::array<std::complex<double>, MAX_POLES> &Roots);
 	void GetFilterCoeff(std::array<std::complex<double>, MAX_POLES> &Roots);
 };
 
 
 class IIRFilter {
-	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+	friend class SerialHandler;									// Allow the serial handler access to private data for debug printing
 private:
 	uint8_t numPoles = 1;
 	uint8_t numSections = 0;
 	PassType passType = LowPass;
 	iirdouble_t cutoffFreq = 0.0f;
 	iirdouble_t damping[2] = {0.923879, 0.382684};				// Damping factor for custom IIR filter - default to Butterworth values
-	IIRPrototype iirProto;					// Standard Butterworth is default
-	IIRPrototype iirProtoCustom;
+	IIRPrototype iirProto;										// Standard Butterworth is default
 	IIRCoeff iirCoeff;
-	IIRType iirType = Butterworth;
 
 	iirdouble_t CalcSection(int k, iirdouble_t x, IIRRegisters& registers);
 
 public:
 	// constructors
-	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto(IIRPrototype(poles)), iirProtoCustom(IIRPrototype(poles, damping)) {};
+	IIRFilter(uint8_t poles, PassType pass) : numPoles{poles}, passType{pass}, iirProto(IIRPrototype(poles)) {};
 	IIRFilter() {};
 
-	void UpdateProto(uint8_t section, iirdouble_t damping);
+	void UpdateProto(uint8_t section, iirdouble_t damping);		// Allows custom damping values to be used in place of Butterworth defaults
+	void UpdateProto(uint8_t poles);							// Edit number of poles
+	void DefaultProto();										// Resets prototype to Butterworth defaults
 	void CalcCoeff(iirdouble_t omega);
 	void CalcCustomLowPass(iirdouble_t omega);
 	iirdouble_t FilterSample(iirdouble_t sample, IIRRegisters& registers);
@@ -122,6 +113,7 @@ public:
 
 
 
+
 struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 public:
@@ -130,7 +122,9 @@ public:
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
-	void CustomIIR(uint8_t section, iirdouble_t damping);
+	void CustomiseIIR(uint8_t section, iirdouble_t damping);
+	void CustomiseIIR(uint8_t sectionCount);
+	void DefaultIIR();						// Reset default IIR coefficients for all IIR filters
 
 private:
 	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP

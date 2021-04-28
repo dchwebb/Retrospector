@@ -1,5 +1,6 @@
 #include "stm32h743xx.h"
 #include "initialisation.h"
+#include "DigitalDelay.h"
 
 // Clock overview:
 // Main clock 4MHz: 8MHz (HSE) / 2 (M) * 200 (N) / 2 (P) = 400MHz
@@ -524,6 +525,28 @@ x	PB13 I2S2_CK		on nucleo jumpered to Ethernet and not working
 }
 
 
+void suspendI2S()
+{
+	SPI2->CR1 |= SPI_CR1_CSUSP;
+	while ((SPI2->SR & SPI_SR_SUSP) == 0);
+}
+
+void resumeI2S()
+{
+	extern DigitalDelay delay;
+	delay.LR = left;
+
+	// to allow resume from debugging ensure suspended then clear buffer underrun flag
+	SPI2->CR1 |= SPI_CR1_CSUSP;
+	while ((SPI2->SR & SPI_SR_SUSP) == 0);
+	SPI2->IFCR |= SPI_IFCR_UDRC;
+
+	// Clear suspend state and resume
+	SPI2->IFCR |= SPI_IFCR_SUSPC;
+	while ((SPI2->SR & SPI_SR_SUSP) != 0);
+	SPI2->CR1 |= SPI_CR1_CSTART;
+}
+
 void InitDebugTimer()
 {
 	// Configure timer to use in internal debug timing
@@ -568,6 +591,7 @@ void InitIO()
 	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB8: debug pin
 
 }
+
 
 
 void InitLEDSPI()

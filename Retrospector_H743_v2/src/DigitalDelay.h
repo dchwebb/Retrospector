@@ -32,10 +32,10 @@ public:
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool chorusMode = false;
 	bool linkLR = true;						// Makes tempo of right delay a multiple of left delay
+	channel LR = right;						// Alternates between left and right channel each time sample is calculated
 
 private:
 	delay_mode delayMode;					// Long/short/reverse
-	channel LR = right;						// Alternates between left and right channel each time sample is calculated
 
 	int32_t writePos = 1;					// Write position in sample buffer (same for both channels)
 	int32_t readPos[2];

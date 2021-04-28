@@ -21,7 +21,7 @@ void Bootloader::BootDFU()
 
 void Bootloader::Receive()
 {
-	serial.suspendI2S();
+	suspendI2S();
 	InitBootloaderTimer();
 	state = RecordState::waiting;
 	usb.SendString("Ready to receive audio ...\r\n");

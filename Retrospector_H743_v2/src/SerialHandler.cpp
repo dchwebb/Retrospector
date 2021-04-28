@@ -32,26 +32,7 @@ SerialHandler::SerialHandler(USB& usbObj)
 	usb->cdcDataHandler = std::bind(&SerialHandler::Handler, this, std::placeholders::_1, std::placeholders::_2);
 }
 
-void SerialHandler::suspendI2S()
-{
-	SPI2->CR1 |= SPI_CR1_CSUSP;
-	while ((SPI2->SR & SPI_SR_SUSP) == 0);
-}
 
-void SerialHandler::resumeI2S()
-{
-	delay.LR = left;
-
-	// to allow resume from debugging ensure suspended then clear buffer underrun flag
-	SPI2->CR1 |= SPI_CR1_CSUSP;
-	while ((SPI2->SR & SPI_SR_SUSP) == 0);
-	SPI2->IFCR |= SPI_IFCR_UDRC;
-
-	// Clear suspend state and resume
-	SPI2->IFCR |= SPI_IFCR_SUSPC;
-	while ((SPI2->SR & SPI_SR_SUSP) != 0);
-	SPI2->CR1 |= SPI_CR1_CSTART;
-}
 
 
 // Check if a command has been received from USB, parse and action as required
@@ -121,7 +102,6 @@ bool SerialHandler::Command()
 				"\r\nSupported commands:\r\n"
 				"help        -  Shows this information\r\n"
 				"info        -  Show diagnostic information\r\n"
-				"f           -  Filter on/off\r\n"
 				"led         -  LEDs on/off\r\n"
 				"resume      -  Resume I2S after debugging\r\n"
 				"dfu         -  USB firmware upgrade\r\n"
@@ -131,6 +111,12 @@ bool SerialHandler::Command()
 				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
 				"gateled     -  Show gate status on filter LED\r\n"
 				"save        -  Save calibration\r\n"
+				"\r\nFilter config:\r\n"
+				"f           -  Filter on/off\r\n"
+				"firtaps:x   -  Use x FIR taps used in LP > HP filter (>= 5, <= 93)\r\n"
+				"iirdefault  -  Reset coefficients of IIR filter to default Butterworth\r\n"
+				"dampx:y     -  Set damping value of xth stage of IIR filter to y (> 0.2, < 2.0)\r\n"
+				"poles:x     -  Configure number of IIR poles (>= 1, <= 8)\r\n"
 				"\r\nRun Tests:\r\n"
 				"mem16       -  Start/stop Memory Test of lower 16MB\r\n"
 				"mem32       -  Start/stop Memory Test of all 32MB\r\n"
@@ -159,65 +145,47 @@ bool SerialHandler::Command()
 		uint16_t threshold = ParseInt(ComCmd, ':');
 		delay.gateThreshold = threshold;
 		usb->SendString("Gate threshold set to: " + std::to_string(delay.gateThreshold) + "\r\n");
-		suspendI2S();
-		config.SaveConfig();
-		resumeI2S();
+//		config.SaveConfig();
 
 	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {	// Configure gate activation time
 		uint16_t gate = ParseInt(ComCmd, ':');
 		delay.gateHoldCount = gate;
 		usb->SendString("Gate activate time set to: " + std::to_string(delay.gateHoldCount) + "\r\n");
-		suspendI2S();
-		config.SaveConfig();
-		resumeI2S();
+//		config.SaveConfig();
 
 	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {	// Configure fir taps
 		uint16_t taps = ParseInt(ComCmd, ':');
 		filter.firTaps = taps;
 		filter.Init();		// forces recalculation of coefficients and window
 		usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
-
-//		suspendI2S();
 //		config.SaveConfig();
-//		resumeI2S();
 
-	} else if (ComCmd.compare(0, 6, "zeta0:") == 0) {	// Configure iir zeta (damping factor)
+	} else if (ComCmd.compare("iirdefault\n") == 0) {	// Reset IIR filter to default Butterworth coefficients
+		filter.DefaultIIR();
+		usb->SendString("Filter type reset to Butterworth\r\n");
+		filter.Update(true);		// forces recalculation of coefficients
+
+	} else if (ComCmd.compare(0, 6, "poles:") == 0) {	// Configure number of iir poles
+		uint8_t poles = ParseInt(ComCmd, ':');
+		filter.CustomiseIIR(poles);
+		filter.DefaultIIR();
+		filter.Update(true);		// forces recalculation of coefficients
+		usb->SendString("Poles set to: " + std::to_string(poles) + "\r\n");
+//		config.SaveConfig();
+
+	} else if (ComCmd.compare(0, 6, "damp1:") == 0) {	// Configure iir zeta (damping factor)
 		float zeta = ParseFloat(ComCmd, ':');
-		filter.CustomIIR(0, zeta);
-		//filter.iirLPFilter[0].damping[0] = zeta;
-		//filter.iirLPFilter[1].damping[0] = zeta;
-		filter.Init();		// forces recalculation of coefficients and window
+		filter.CustomiseIIR(0, zeta);
+		filter.Update(true);		// forces recalculation of coefficients
 		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
-
-//		suspendI2S();
 //		config.SaveConfig();
-//		resumeI2S();
 
-	} else if (ComCmd.compare(0, 6, "zeta1:") == 0) {	// Configure iir zeta (damping factor)
+	} else if (ComCmd.compare(0, 6, "damp2:") == 0) {	// Configure iir zeta (damping factor)
 		float zeta = ParseFloat(ComCmd, ':');
-		filter.CustomIIR(1, zeta);
-//		filter.iirLPFilter[0].damping[1] = zeta;
-//		filter.iirLPFilter[1].damping[1] = zeta;
-		filter.Init();		// forces recalculation of coefficients and window
+		filter.CustomiseIIR(1, zeta);
+		filter.Update(true);		// forces recalculation of coefficients
 		usb->SendString("Zeta set to: " + std::to_string(zeta) + "\r\n");
-
-//		suspendI2S();
 //		config.SaveConfig();
-//		resumeI2S();
-
-	} else if (ComCmd.compare("iirtype\n") == 0) {	// Switch between Butterworth and Custom IIR filters
-		if (filter.iirLPFilter[0].iirType == Butterworth) {
-			filter.iirLPFilter[0].iirType = Custom;
-			filter.iirLPFilter[1].iirType = Custom;
-			usb->SendString("Filter type set to custom\r\n");
-
-		} else {
-			filter.iirLPFilter[0].iirType = Butterworth;
-			filter.iirLPFilter[1].iirType = Butterworth;
-			usb->SendString("Filter type set to Butterworth\r\n");
-		}
-		filter.Init();		// forces recalculation of coefficients and window
-
 
 	} else if (ComCmd.compare("loop\n") == 0) {		// Audio loopback test
 		usb->SendString("Starting audio loopback test. Press any key to cancel.\r\n");
@@ -244,9 +212,7 @@ bool SerialHandler::Command()
 		state = serialState::calibConfirm;
 
 	} else if (ComCmd.compare("save\n") == 0) {		// Save calibration information
-		suspendI2S();
 		config.SaveConfig();
-		resumeI2S();
 
 	} else if (ComCmd.compare("resume\n") == 0) {	// Resume I2S after debugging
 		resumeI2S();
@@ -289,7 +255,8 @@ bool SerialHandler::Command()
 		// Output coefficients
 		IIRFilter& activeFilter = (filter.passType == LowPass) ? filter.iirLPFilter[filter.activeFilter] : filter.iirHPFilter[filter.activeFilter];
 		for (int i = 0; i < activeFilter.numSections; ++i) {
-			usb->SendString("Stage " + std::to_string(i+1) + ": Omega: " + std::to_string(activeFilter.cutoffFreq) + "; Zeta: " + std::to_string(activeFilter.damping[i]) + "\r\n");
+			usb->SendString("Stage " + std::to_string(i+1) + ": Cutoff: " + std::to_string(activeFilter.cutoffFreq)
+				+ "; Damping: " + std::to_string(activeFilter.iirProto.Coeff.D1[i] / (activeFilter.iirProto.Coeff.D2[i] == 0.0 ? 1.0 : 2.0)) + "\r\n");
 			usb->SendString("       Y(z)   " + std::to_string(activeFilter.iirCoeff.b2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.b1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.b0[i]) + "\r\n");
 			usb->SendString("H(z) = ---- = -----------------------------------------\r\n");
 			usb->SendString("       X(z)   " + std::to_string(activeFilter.iirCoeff.a2[i]) + " z^-2 + " + std::to_string(activeFilter.iirCoeff.a1[i]) + " z^-1 + " + std::to_string(activeFilter.iirCoeff.a0[i]) + "\r\n\r\n");

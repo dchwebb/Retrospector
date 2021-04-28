@@ -212,10 +212,35 @@ iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 
 }
 
-void Filter::CustomIIR(uint8_t section, iirdouble_t dampAmt)
+// Edit damping of individual sections
+void Filter::CustomiseIIR(uint8_t section, iirdouble_t dampAmt)
 {
 	for (auto& iir : iirLPFilter) {
 		iir.UpdateProto(section, dampAmt);
+	}
+	for (auto& iir : iirHPFilter) {
+		iir.UpdateProto(section, dampAmt);
+	}
+}
+
+// Edit number of sections
+void Filter::CustomiseIIR(uint8_t poleCount)
+{
+	for (auto& iir : iirLPFilter) {
+		iir.UpdateProto(poleCount);
+	}
+	for (auto& iir : iirHPFilter) {
+		iir.UpdateProto(poleCount);
+	}
+}
+
+void Filter::DefaultIIR()
+{
+	for (auto& iir : iirLPFilter) {
+		iir.DefaultProto();
+	}
+	for (auto& iir : iirHPFilter) {
+		iir.DefaultProto();
 	}
 }
 
@@ -285,31 +310,18 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 	else
 		cutoffFreq = omega;
 
-//	if (iirType == Custom) {
-//		return CalcCustomLowPass(omega);
-//	}
-
 	// Set the number of IIR filter sections we will be generating.
 	numSections = (numPoles + 1) / 2;
-
-	// Init the IIR structure.
-	for (j = 0; j < numSections; j++)	{
-		iirCoeff.a0[j] = 0.0;  iirCoeff.b0[j] = 0.0;
-		iirCoeff.a1[j] = 0.0;  iirCoeff.b1[j] = 0.0;
-		iirCoeff.a2[j] = 0.0;  iirCoeff.b2[j] = 0.0;
-	}
 
 	// T sets the IIR filter's corner frequency, or center frequency
 	// The Bilinear transform is defined as:  s = 2/T * tan(Omega/2) = 2/T * (1 - z^-1)/(1 + z^-1)
 	T = 2.0 * tan(omega * M_PI / 2);
 
-	SPlaneCoeff sCoeff = (iirType == Butterworth) ? iirProto.Coeff : iirProtoCustom.Coeff;
-
 	// Calc the IIR coefficients. SPlaneCoeff.NumSections is the number of 1st and 2nd order s plane factors.
 	for (j = 0; j < numSections; j++) {
-		A = sCoeff.D2[j];				// Always one
-		B = sCoeff.D1[j];
-		C = sCoeff.D0[j];				// Always one
+		A = iirProto.Coeff.D2[j];				// Always one
+		B = iirProto.Coeff.D1[j];
+		C = iirProto.Coeff.D0[j];				// Always one
 
 		// b's are the numerator, a's are the denominator
 		if (passType == LowPass) {
@@ -363,62 +375,39 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 }
 
 
-// H(s) = 1 / (s^2 + 2zws + w^2)
-// w = omega (cutoff), z = zeta (damping)
-void IIRFilter::CalcCustomLowPass(iirdouble_t omega)
+void IIRFilter::UpdateProto(uint8_t poleCount)
 {
-	iirdouble_t A = 1.0;
-	iirdouble_t B0 = 2.0 * damping[0];		//  * omega
-	iirdouble_t B1 = 2.0 * damping[1];		// * omega
-	iirdouble_t C = 1.0;		//omega * omega;
-	iirdouble_t D = 0.0;
-	iirdouble_t E = 0.0;
-	iirdouble_t F = 1.0;
-	iirdouble_t T = 2.0 * std::tan(omega * M_PI / 2.0);
-	iirdouble_t arg0 = 4.0 * A + C * T * T + 2.0 * B0 * T;
-	iirdouble_t arg1 = 4.0 * A + C * T * T + 2.0 * B1 * T;
-
-	iirCoeff.b2[0] = (-2.0 * E * T + 4.0 * D + F * T * T) / arg0 * C/F;
-	iirCoeff.b1[0] = (2.0 * F * T * T - 8.0 * D) / arg0 * C/F;
-	iirCoeff.b0[0] = (4.0 * D + F * T * T + 2.0 * E * T) / arg0 * C/F;
-
-	iirCoeff.a2[0] = (-2.0 * B0 * T + 4.0 * A + C * T * T) / arg0;
-	iirCoeff.a1[0] = (2.0 * C * T * T - 8.0 * A) / arg0;
-	iirCoeff.a0[0] = 1.0;
-
-
-	iirCoeff.b2[1] = (-2.0 * E * T + 4.0 * D + F * T * T) / arg1 * C/F;
-	iirCoeff.b1[1] = (2.0 * F * T * T - 8.0 * D) / arg1 * C/F;
-	iirCoeff.b0[1] = (4.0 * D + F * T * T + 2.0 * E * T) / arg1 * C/F;
-
-	iirCoeff.a2[1] = (-2.0 * B1 * T + 4.0 * A + C * T * T) / arg1;
-	iirCoeff.a1[1] = (2.0 * C * T * T - 8.0 * A) / arg1;
-	iirCoeff.a0[1] = 1.0;
-
-	numSections = 2;
+	numPoles = poleCount;
+	iirProto.numPoles = poleCount;
+	if (numPoles == 1) {
+		iirProto.Coeff.D2[0] = 0.0;
+	} else {
+		iirProto.Coeff.D2[0] = 1.0;
+	}
 }
 
 void IIRFilter::UpdateProto(uint8_t section, iirdouble_t dampAmt)
 {
 	damping[section] = dampAmt;
-	iirProtoCustom.Coeff.D1[section] = 2 * dampAmt;
+	iirProto.Coeff.D1[section] = 2 * dampAmt;
 }
 
 
-// Calculate the S Plane Coefficients:  H(s) = (N2*s^2 + N1*s + N0) / (D2*s^2 + D1*s + D0)
-void IIRPrototype::CalcLowPassProtoCoeff()
+void IIRFilter::DefaultProto()
+{
+	iirProto.DefaultProtoCoeff();
+}
+
+// Calculate the default S Plane Coefficients (Butterworth):  H(s) = 1 / (D2*s^2 + D1*s + D0)
+void IIRPrototype::DefaultProtoCoeff()
 {
 	std::array<complex_t, MAX_POLES> Poles;
 
-	for (uint8_t j = 0; j < numPoles; j++) {
-		Coeff.D2[j] = 0.0;
-		Coeff.D1[j] = 0.0;
-		Coeff.D0[j] = 1.0;
-	}
-
 	// A one pole filter is simply 1/(s+1)
 	if (numPoles == 1) {
+		Coeff.D0[0] = 1.0;
 		Coeff.D1[0] = 1.0;
+		Coeff.D2[0] = 0.0;
 	} else {
 		Poles[0] = complex_t(0.0, 0.0);
 		ButterworthPoly(Poles);

@@ -44,6 +44,8 @@ void InitADC1();
 void InitADC2();
 void InitDAC();
 void InitI2S();
+void suspendI2S();
+void resumeI2S();
 void InitTempoClock();
 void InitBootloaderTimer();
 void InitIO();

@@ -14,8 +14,6 @@ public:
 	SerialHandler(USB& usb);
 	bool Command();
 	void Handler(uint8_t* data, uint32_t length);
-	void suspendI2S();
-	void resumeI2S();
 
 private:
 	// State machine for multi-stage commands
