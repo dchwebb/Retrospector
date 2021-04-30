@@ -6,7 +6,7 @@
 #include "SerialHandler.h"
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
-#define CONFIG_VERSION 4
+#define CONFIG_VERSION 5
 
 extern USB usb;
 
@@ -24,6 +24,7 @@ struct configValues {
 	uint16_t delay_gate_activate = 0;
 
 	uint16_t filter_pot_center = 0;
+	uint8_t  filter_fir_taps = 0;
 	uint8_t  filter_num_poles = 0;
 	bool filter_custom_damping = false;
 	float filter_damping[4] = {0.0, 0.0, 0.0, 0.0};
@@ -45,7 +46,7 @@ public:
 	void SetConfig(configValues &cv);	// sets properties of class to match current values
 	void RestoreConfig();				// gets config from Flash, checks and updates settings accordingly
 private:
-	float newOffset[2] = {ADC_OFFET_DEFAULT, ADC_OFFET_DEFAULT};
+	float newOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};
 	uint32_t offsetCounter[2];
 
 	void FlashUnlock(uint8_t bank);

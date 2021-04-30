@@ -101,6 +101,7 @@ void Config::SetConfig(configValues &cv)
 	cv.delay_gate_activate = delay.gateHoldCount;
 
 	cv.filter_pot_center = filter.potCentre;
+	cv.filter_fir_taps = filter.firTaps;
 	cv.filter_num_poles = filter.iirLPFilter[0].numPoles;
 	cv.filter_custom_damping = filter.customDamping;
 	for (uint8_t i = 0; i < 4; ++i) {
@@ -122,6 +123,7 @@ void Config::RestoreConfig()
 		delay.gateThreshold = cv.delay_gate_threshold;
 		delay.gateHoldCount = cv.delay_gate_activate;
 		filter.potCentre = cv.filter_pot_center;
+		filter.firTaps = cv.filter_fir_taps;
 
 		if (cv.filter_num_poles != filter.defaultPoles && cv.filter_num_poles > 0 && cv.filter_num_poles < MAX_POLES) {
 			filter.CustomiseIIR(cv.filter_num_poles);

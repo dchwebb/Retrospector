@@ -31,6 +31,8 @@ public:
 
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool chorusMode = false;
+	bool modChorus = false;					// True if chorus switch activates modulated delay
+	bool modChorusMode = false;				// Modulated delay activated
 	bool linkLR = true;						// Makes tempo of right delay a multiple of left delay
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
 
@@ -62,6 +64,7 @@ private:
 	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	uint16_t chorusWrite = 0;
 	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};		// Need 2 filters as uses IIR filter with feedback
+	float modOffset[2];
 
 	enum class gateStatus {open, closed, closing} gateShut[2];
 	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold
@@ -74,6 +77,7 @@ private:
 	const int16_t crossfade = 6000;
 	const int16_t tempoHysteresis = 100;
 	const std::array<float, 6> tempoMult = {0.5, 1, 2, 4, 8, 16};
+	bool tanhCompression = true;			// Use a fast tanh algorithm for more natural sounding compression that linear compression below
 	const int16_t threshold = 20000;		// compression threshold
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
@@ -83,6 +87,7 @@ private:
 	void ReverseLED(channel c, int32_t remainingDelay);
 	delay_mode Mode();
 	int32_t OutputMix(float drySample, float wetSample);
+	float FastTanh(float x);
 	void RunTest(int32_t s);
 
 	enum class TestMode {loop, saw, none};

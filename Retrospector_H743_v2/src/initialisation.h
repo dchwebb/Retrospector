@@ -12,7 +12,7 @@ extern volatile uint32_t SysTickVal;
 #define SAMPLE_BUFFER_LENGTH 1048576		// Currently 2^20 (4MB of 16MB)
 #define SAMPLE_RATE 48000
 #define SYSTICK 1000						// Set in uS so 1000uS = 1ms
-#define ADC_OFFET_DEFAULT 33800
+#define ADC_OFFSET_DEFAULT 33800
 #define CPUCLOCK 400
 
 

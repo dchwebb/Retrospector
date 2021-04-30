@@ -9,17 +9,18 @@
 #include "Bootloader.h"
 
 /* TODO
- * config to adjust: length multiplier of long delay and reverse
+ * Config to adjust: length multiplier of long delay and reverse
  * USB hangs when sending over CDC and cable removed and reinserted
- * Investigate TANH function for filter
  * Check ADC Boost mode silicon revision
- * exponential closing of gate
+ * Exponential closing of gate
+ * Modulated delay on chorus setting
+ * Look at clicks when switching filter type
  */
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
 
-int32_t adcZeroOffset[2] = {ADC_OFFET_DEFAULT, ADC_OFFET_DEFAULT};					// 0V ADC reading
+int32_t adcZeroOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};					// 0V ADC reading
 
 // Store buffers that need to live in special memory areas
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC1_BUFFER_LENGTH + ADC2_BUFFER_LENGTH];

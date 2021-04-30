@@ -85,12 +85,12 @@ bool SerialHandler::Command()
 
 		if (filter.activateFilter) {
 			if (filter.filterType == IIR)
-				usb->SendString("IIR Filter: ");
+				usb->SendString(std::to_string(filter.iirLPFilter[0].numPoles) + " Pole IIR Filter: ");
 			else
 				usb->SendString("FIR Filter; Taps: " + std::to_string(filter.firTaps) + "; ");
 
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
-			usb->SendString(std::string((filter.passType == LowPass) ? " Low Pass" : " High Pass") + "; Cutoff: " + std::string(buf).append("\r\n"));
+			usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass" : "High Pass") + "; Cutoff: " + std::string(buf).append("\r\n"));
 		} else {
 			usb->SendString("Filter: Off\r\n");
 		}
@@ -117,6 +117,7 @@ bool SerialHandler::Command()
 				"threshold:x -  Configure gate threshold to x (default 200, 0 to deactivate)\r\n"
 				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
 				"gateled     -  Show gate status on filter LED\r\n"
+				"tanh        -  Toggle between fast tanh and linear compression\r\n"
 				"save        -  Save calibration\r\n"
 				"\r\nFilter config:\r\n"
 				"f           -  Filter on/off\r\n"
@@ -239,6 +240,10 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("f\n") == 0) {					// Activate filter
 		filter.activateFilter = !filter.activateFilter;
 		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
+
+	} else if (ComCmd.compare("tanh\n") == 0) {					// tanh compression
+		delay.tanhCompression = !delay.tanhCompression;
+		usb->SendString("Tanh Compression " + std::string(delay.tanhCompression ? "on" : "off") + "\r\n");
 
 	} else if (ComCmd.compare("led\n") == 0) {					// LEDs on/off
 		if (ledState == ledOn) {

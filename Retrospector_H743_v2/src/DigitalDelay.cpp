@@ -4,63 +4,28 @@ uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
 
-int32_t DigitalDelay::GateSample()
-{
-	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
-	if (gateThreshold == 0) {
-		return recordSample;
-	}
 
-	if (std::abs(recordSample) < gateThreshold) {
-		overThreshold[LR] = 0;
-		if (belowThresholdCount[LR] > gateHoldCount) {				// there have been enough samples around zero
-			gateShut[LR] = gateStatus::closed;
-			return 0;
-		} else {
-			if (belowThresholdCount[LR] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
-				fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
-				recordSample = static_cast<float>(recordSample) * fadeout;
-				gateShut[LR] = gateStatus::closing;
-			}
-			belowThresholdCount[LR]++;
-		}
-
-	} else  {
-		//if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {		// Last two samples have exceeded threshold in same direction
-		if (overThreshold[LR] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
-			if (gateShut[LR] != gateStatus::open) {
-				debugOutput = recordSample;
-			}
-			belowThresholdCount[LR] = 0;
-			gateShut[LR] = gateStatus::open;
-		} else {
-			if (std::abs(recordSample) > gateThreshold + 100) {		// Use hysteresis to avoid gate continually opening and closing on continous low level signals
-				overThreshold[LR] = recordSample;
-			}
-			if (belowThresholdCount[LR] > gateHoldCount) {			// there have been enough samples around zero
-				gateShut[LR] = gateStatus::closed;
-				return 0;
-			}
-		}
-	}
-
-//	if (LR == left) {
-//		GPIOB->ODR &= ~GPIO_ODR_OD8;
-//	}
-
-	return recordSample;
-}
 
 void DigitalDelay::CalcSample()
 {
-	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
+	StereoSample readSamples;										// Delayed samples as interleaved stereo
 	float nextSample, oppositeSample;								// nextSample is the delayed sample to be played (oppositeSample form the opposite side)
-	delay_mode delayMode = Mode();									// Long, short or reverse
-
+	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	LR = static_cast<channel>(!static_cast<bool>(LR));
-	int32_t recordSample = GateSample();							// Capture recording sample here to avoid jitter
-	StereoSample readSamples = {samples[readPos[LR]]};				// Get read samples as interleaved stereo
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
+	delay_mode delayMode = Mode();									// Long, short or reverse
+	int32_t recordSample = GateSample();							// Capture recording sample
+
+	if (modChorusMode) {
+		// Using modulated delay - update offset
+		modOffset[LR] += chorusAdd[LR];
+		if (chorusLFO[LR] > CHORUS_MAX || chorusLFO[LR] < CHORUS_MIN) {
+			modOffset[LR] *= -1;
+		}
+		readSamples = {samples[readPos[LR]] + static_cast<int32_t>(modOffset[LR])};
+	} else {
+		readSamples = {samples[readPos[LR]]};
+	}
 
 	// Test modes
 	if (testMode != TestMode::none) {
@@ -97,8 +62,14 @@ void DigitalDelay::CalcSample()
 		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
 		--delayCrossfade[LR];
 	} else {
-		nextSample = static_cast<float>(readSamples.sample[LR]);
-		oppositeSample = static_cast<float>(readSamples.sample[RL]);
+		if (modChorusMode) {
+			StereoSample readSamples2 = {samples[readPos[LR] +  + static_cast<int32_t>(modOffset[LR]) + 1]};	// Get later sample for interpolation
+			float offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
+			nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - offsetFraction) + static_cast<float>(readSamples2.sample[LR]) * offsetFraction;
+		} else {
+			nextSample = static_cast<float>(readSamples.sample[LR]);
+			oppositeSample = static_cast<float>(readSamples.sample[RL]);
+		}
 	}
 
 	// Add in a scaled amount of the sample from the opposite stereo channel
@@ -111,11 +82,15 @@ void DigitalDelay::CalcSample()
 	nextSample = filter.CalcFilter(nextSample, LR);
 
 	// Compression
-	if (nextSample > threshold || nextSample < -threshold) {
+	if (tanhCompression) {
+		//nextSample = std::tanh(nextSample / 40000.0) * 40000.0;
+		nextSample = FastTanh(nextSample / 40000.0) * 40000.0;
+	} else 	if (nextSample > threshold || nextSample < -threshold) {
 		int8_t thresholdSign = (nextSample < -threshold ? -1 : 1);
 		int32_t excess = abs(nextSample - thresholdSign * threshold);
 		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;
 	}
+
 
 	SPI2->TXDR = OutputMix(recordSample, nextSample);
 
@@ -253,14 +228,61 @@ int32_t DigitalDelay::OutputMix(float drySample, float wetSample)
 }
 
 
+int32_t DigitalDelay::GateSample()
+{
+	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
+	if (gateThreshold == 0) {
+		return recordSample;
+	}
+
+	if (std::abs(recordSample) < gateThreshold) {
+		overThreshold[LR] = 0;
+		if (belowThresholdCount[LR] > gateHoldCount) {				// there have been enough samples around zero
+			gateShut[LR] = gateStatus::closed;
+			return 0;
+		} else {
+			if (belowThresholdCount[LR] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
+				fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
+				recordSample = static_cast<float>(recordSample) * fadeout;
+				gateShut[LR] = gateStatus::closing;
+			}
+			belowThresholdCount[LR]++;
+		}
+
+	} else  {
+		//if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {		// Last two samples have exceeded threshold in same direction
+		if (overThreshold[LR] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
+			if (gateShut[LR] != gateStatus::open) {
+				debugOutput = recordSample;
+			}
+			belowThresholdCount[LR] = 0;
+			gateShut[LR] = gateStatus::open;
+		} else {
+			if (std::abs(recordSample) > gateThreshold + 100) {		// Use hysteresis to avoid gate continually opening and closing on continous low level signals
+				overThreshold[LR] = recordSample;
+			}
+			if (belowThresholdCount[LR] > gateHoldCount) {			// there have been enough samples around zero
+				gateShut[LR] = gateStatus::closed;
+				return 0;
+			}
+		}
+	}
+
+	return recordSample;
+}
+
 void DigitalDelay::ChorusMode(bool on)
 {
-	// chorus mixing is handled in software so set VCA to fully wet
-	if (on) {
-		DAC1->DHR12R2 = 4095;								// Wet level
-		DAC1->DHR12R1 = 0;									// Dry level
+	if (modChorus) {
+		modChorusMode = on;
+	} else {
+		// chorus mixing is handled in software so set VCA to fully wet
+		if (on) {
+			DAC1->DHR12R2 = 4095;								// Wet level
+			DAC1->DHR12R1 = 0;									// Dry level
+		}
+		chorusMode = on;
 	}
-	chorusMode = on;
 }
 
 
@@ -411,6 +433,17 @@ void DigitalDelay::CheckSwitches()
 	}
 }
 
+
+// Algorithm source: https://varietyofsound.wordpress.com/2011/02/14/efficient-tanh-computation-using-lamberts-continued-fraction/
+float DigitalDelay::FastTanh(float x)
+{
+	float x2 = x * x;
+	float a = x * (135135.0f + x2 * (17325.0f + x2 * (378.0f + x2)));
+	float b = 135135.0f + x2 * (62370.0f + x2 * (3150.0f + x2 * 28.0f));
+	return a / b;
+}
+
+
 // Runs audio tests (audio loopback and 1kHz saw wave)
 void DigitalDelay::RunTest(int32_t sample)
 {
@@ -435,3 +468,5 @@ void DigitalDelay::RunTest(int32_t sample)
 		break;
 	}
 }
+
+
