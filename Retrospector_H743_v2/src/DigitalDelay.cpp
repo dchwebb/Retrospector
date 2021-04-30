@@ -5,7 +5,6 @@ int16_t debugOutput = 0;
 float fadeout = 0.0f;
 
 
-
 void DigitalDelay::CalcSample()
 {
 	StereoSample readSamples;										// Delayed samples as interleaved stereo
@@ -56,7 +55,7 @@ void DigitalDelay::CalcSample()
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
-		StereoSample oldreadSamples = {samples[oldReadPos[LR]]};
+		StereoSample oldreadSamples = {samples[oldReadPos[LR] + (modChorusMode ? static_cast<int32_t>(modOffset[LR]) : 0)]};
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
 		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[LR]) * (scale);
 		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);

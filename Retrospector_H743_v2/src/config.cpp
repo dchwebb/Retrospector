@@ -47,14 +47,14 @@ void Config::AutoZeroOffset()
 		if (ADC_array[lr] > adcZeroOffset[lr] - 500 && ADC_array[lr] < adcZeroOffset[lr] + 500) {
 			newOffset[lr] = (static_cast<float>(ADC_array[lr]) + (799.0f * newOffset[lr])) / 800.0f;
 			if (offsetCounter[lr] == 200000) {
-				if (newOffset[lr] > adcZeroOffset[lr])
+				if (newOffset[lr] > adcZeroOffset[lr] + 10) {
 					adcZeroOffset[lr]++;
-				else
+				} else if (newOffset[lr] < adcZeroOffset[lr] - 10) {
 					adcZeroOffset[lr]--;
+				}
 				offsetCounter[lr] = 0;
 			}
 			offsetCounter[lr]++;
-
 		} else {
 			offsetCounter[lr] = 0;
 		}

@@ -121,7 +121,7 @@ bool SerialHandler::Command()
 				"save        -  Save calibration\r\n"
 				"\r\nFilter config:\r\n"
 				"f           -  Filter on/off\r\n"
-				"firtaps:x   -  Use x FIR taps used in LP > HP filter (>= 5, <= 93)\r\n"
+				"firtaps:x   -  x FIR taps for LP > HP filter (multiple of 4, >= 4, <= 92)\r\n"
 				"iirdefault  -  Reset coefficients of IIR filter to default Butterworth\r\n"
 				"dampx:y     -  Set damping value of xth stage of IIR filter to y (> 0.2, < 2.0)\r\n"
 				"poles:x     -  Configure number of IIR poles (>= 1, <= 8)\r\n"
@@ -162,9 +162,9 @@ bool SerialHandler::Command()
 //		config.SaveConfig();
 
 	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {			// Configure fir taps
-		uint16_t taps = ParseInt(ComCmd, ':', 5, 93);
+		uint16_t taps = ParseInt(ComCmd, ':', 4, 92);
 		if (taps > 0) {
-			taps = ((taps / 4) * 4) + 1;						// taps must be a multiple of four + 1
+			taps = (taps / 4) * 4;						// taps must be a multiple of four
 			filter.firTaps = taps;
 			filter.Init();										// forces recalculation of coefficients and window
 			usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
@@ -240,6 +240,10 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("f\n") == 0) {					// Activate filter
 		filter.activateFilter = !filter.activateFilter;
 		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
+
+	} else if (ComCmd.compare("ch\n") == 0) {					// change chorus mode
+		delay.modChorus = !delay.modChorus;
+		usb->SendString(std::string(delay.modChorus ? "Modulated delay" : "Chorus") + "\r\n");
 
 	} else if (ComCmd.compare("tanh\n") == 0) {					// tanh compression
 		delay.tanhCompression = !delay.tanhCompression;
