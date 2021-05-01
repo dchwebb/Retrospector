@@ -52,6 +52,12 @@ struct IIRRegisters {
 	iirdouble_t X2[MAX_SECTIONS];
 	iirdouble_t Y1[MAX_SECTIONS];
 	iirdouble_t Y2[MAX_SECTIONS];
+
+	IIRRegisters() {
+		for (uint8_t i = 0; i < MAX_SECTIONS; ++i) {
+			X1[i] = 0.0; X2[i] = 0.0; Y1[i] = 0.0; Y2[i] = 0.0;
+		}
+	}
 };
 
 class IIRPrototype {
@@ -101,7 +107,7 @@ public:
 };
 
 
-// Filter with fixed cut off (eg chorus filter, control smoothing)
+// Filter with fixed cut off (eg control smoothing)
 class FixedFilter {
 private:
 	IIRFilter filter;

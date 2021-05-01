@@ -577,7 +577,7 @@ void InitIO()
 
 	GPIOC->MODER &= ~GPIO_MODER_MODE12;				// PC12: Stereo Wide
 	GPIOC->PUPDR |= GPIO_PUPDR_PUPD12_0;
-	GPIOG->MODER &= ~GPIO_MODER_MODE10;				// PG10: Chorus
+	GPIOG->MODER &= ~GPIO_MODER_MODE10;				// PG10: Modulated delay
 	GPIOG->PUPDR |= GPIO_PUPDR_PUPD10_0;
 
 	GPIOE->MODER &= ~GPIO_MODER_MODE2;				// PE2: Mode 1, low in reverse mode

@@ -45,6 +45,8 @@ SerialHandler::SerialHandler(USB& usbObj)
 // Check if a command has been received from USB, parse and action as required
 bool SerialHandler::Command()
 {
+	char buf[50];
+
 	if (!CmdPending) {
 		return false;
 	}
@@ -77,11 +79,9 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("info\n") == 0) {		// Print diagnostic information
 
-		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n"
-				"Chorus: " + std::string(delay.chorusMode ? "on" : "off") +
-				"  Stereo wide: " + std::string(delay.stereoWide ? "on\r\n" : "off\r\n"));
-
-		char buf[50];
+		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n\r\n" +
+				std::string(delay.modulatedDelay ? "Modulated delay: Max: " + std::to_string(static_cast<uint32_t>(delay.modOffsetMax)) + " Inc: " + std::to_string(delay.modOffsetInc) + "\r\n" : "") +
+				std::string(delay.stereoWide ? "Stereo wide on\r\n" : ""));
 
 		if (filter.activateFilter) {
 			if (filter.filterType == IIR)
@@ -90,7 +90,7 @@ bool SerialHandler::Command()
 				usb->SendString("FIR Filter; Taps: " + std::to_string(filter.firTaps) + "; ");
 
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
-			usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass" : "High Pass") + "; Cutoff: " + std::string(buf).append("\r\n"));
+			usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass" : "High Pass") + ", cutoff: " + std::string(buf).append("\r\n"));
 		} else {
 			usb->SendString("Filter: Off\r\n");
 		}
@@ -114,11 +114,12 @@ bool SerialHandler::Command()
 				"dfu         -  USB firmware upgrade\r\n"
 				"boot        -  Bootloader test\r\n"
 				"calib       -  Calibrate device\r\n"
+				"save        -  Save calibration\r\n"
+				"\r\nDynamics config:\r\n"
 				"threshold:x -  Configure gate threshold to x (default 200, 0 to deactivate)\r\n"
 				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
 				"gateled     -  Show gate status on filter LED\r\n"
 				"tanh        -  Toggle between fast tanh and linear compression\r\n"
-				"save        -  Save calibration\r\n"
 				"\r\nFilter config:\r\n"
 				"f           -  Filter on/off\r\n"
 				"firtaps:x   -  x FIR taps for LP > HP filter (multiple of 4, >= 4, <= 92)\r\n"
@@ -138,7 +139,6 @@ bool SerialHandler::Command()
 				"fdl         -  Left filter buffer\r\n"
 				"wd          -  FIR window coefficients\r\n"
 				"imp         -  IIR impulse response\r\n"
-				"cb          -  Chorus samples\r\n"
 				"\r\n"
 		);
 
@@ -241,10 +241,6 @@ bool SerialHandler::Command()
 		filter.activateFilter = !filter.activateFilter;
 		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
 
-	} else if (ComCmd.compare("ch\n") == 0) {					// change chorus mode
-		delay.modChorus = !delay.modChorus;
-		usb->SendString(std::string(delay.modChorus ? "Modulated delay" : "Chorus") + "\r\n");
-
 	} else if (ComCmd.compare("tanh\n") == 0) {					// tanh compression
 		delay.tanhCompression = !delay.tanhCompression;
 		usb->SendString("Tanh Compression " + std::string(delay.tanhCompression ? "on" : "off") + "\r\n");
@@ -277,30 +273,17 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter Print impulse response
 		suspendI2S();
 
-		IIRRegisters iirImpReg;		// Create a temporary set of shift registers for the filter
+		IIRRegisters iirImpReg;						// Create a temporary set of shift registers for the filter
 		IIRFilter& currentFilter = (filter.passType == LowPass) ? filter.iirLPFilter[0] : filter.iirHPFilter[0];
 
 		float out = currentFilter.FilterSample(500, iirImpReg);		// Impulse
-		usb->SendString(std::to_string(out).append("\r\n").c_str());
+		usb->SendString(std::to_string(out) + "\r\n");
 
 		for (int i = 1; i < 500; ++i) {
 			out = currentFilter.FilterSample(0, iirImpReg);
-			usb->SendString(std::to_string(out).append("\r\n").c_str());
+			usb->SendString(std::to_string(out) + "\r\n");
 		}
 
-		resumeI2S();
-
-
-	} else if (ComCmd.compare("cb\n") == 0) {		// Dump chorus buffer for L or R output
-		suspendI2S();
-		TIM2->CR1 &= ~TIM_CR1_CEN;
-
-		usb->SendString("Write Pos: " + std::to_string(delay.chorusWrite) + "\r\n");
-		for (int s = 0; s < 65536; ++s) {
-			usb->SendString(std::to_string(chorusSamples[0][s]).append("\r\n").c_str());
-		}
-
-		TIM2->CR1 |= TIM_CR1_CEN;
 		resumeI2S();
 
 
@@ -320,7 +303,7 @@ bool SerialHandler::Command()
 
 		for (int s = 0; s < dumpCount; ++s) {
 			StereoSample samp = {samples[wp]};
-			usb->SendString(std::to_string(wp) + ": " + std::to_string(samp.sample[LR]) + "\r\n");
+			usb->SendString(std::to_string(samp.sample[LR]) + "\r\n");
 			if (++wp == SAMPLE_BUFFER_LENGTH)
 				wp = 0;
 		}
@@ -332,36 +315,32 @@ bool SerialHandler::Command()
 
 		// NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		// or add manually "-u _printf_float" in linker flags
-		char buf[50];
 		for (int f = 0; f < filter.firTaps; ++f) {
-			sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);		// 10dp
-			std::string ts = std::string(buf);
-			usb->SendString(ts.append("\r\n").c_str());
+			if (f > filter.firTaps / 2) {				// Using a folded FIR structure so second half of coefficients is a reflection of the first
+				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][filter.firTaps - f]);		// 10dp
+			} else {
+				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);
+			}
+			usb->SendString(std::string(buf) + "\r\n");
 		}
-
 		resumeI2S();
 
 	} else if (ComCmd.compare("wd\n") == 0) {		// Dump filter window
 		suspendI2S();
-
-		char buf[50];
 		for (int f = 0; f < filter.firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
-			std::string ts = std::string(buf);
-			usb->SendString(ts.append("\r\n").c_str());
+			usb->SendString(std::string(buf) + "\r\n");
 		}
-
 		resumeI2S();
 
 	} else if (ComCmd.compare("fdl\n") == 0) {		// Dump left filter buffer
 		suspendI2S();
-
 		uint16_t pos = filter.filterBuffPos[0];
 		for (int f = 0; f < filter.firTaps; ++f) {
-			usb->SendString(std::to_string(filter.filterBuffer[0][pos]).append("\r\n").c_str());
-			if (++pos == filter.firTaps) pos = 0;
+			usb->SendString(std::to_string(filter.filterBuffer[0][pos]) + "\r\n");
+			if (++pos == filter.firTaps)
+				pos = 0;
 		}
-
 		resumeI2S();
 
 	} else {

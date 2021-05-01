@@ -3,25 +3,33 @@
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
-
+int32_t modReadPos, modReadPosNext;
+float offsetFraction;
 
 void DigitalDelay::CalcSample()
 {
 	StereoSample readSamples;										// Delayed samples as interleaved stereo
-	float nextSample, oppositeSample;								// nextSample is the delayed sample to be played (oppositeSample form the opposite side)
+	float nextSample, oppositeSample = 0.0f;								// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	LR = static_cast<channel>(!static_cast<bool>(LR));
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 	delay_mode delayMode = Mode();									// Long, short or reverse
 	int32_t recordSample = GateSample();							// Capture recording sample
 
-	if (modChorusMode) {
+	if (modulatedDelay) {
 		// Using modulated delay - update offset
-		modOffset[LR] += chorusAdd[LR];
-		if (chorusLFO[LR] > CHORUS_MAX || chorusLFO[LR] < CHORUS_MIN) {
-			modOffset[LR] *= -1;
+		modOffset[LR] += modOffsetAdd[LR];
+		if (modOffset[LR] > modOffsetMax || modOffset[LR] < 1.0f) {
+			modOffsetAdd[LR] *= -1;
 		}
-		readSamples = {samples[readPos[LR]] + static_cast<int32_t>(modOffset[LR])};
+		modReadPos = readPos[LR] - static_cast<int32_t>(modOffset[LR]);
+		if (modReadPos < 0)
+			modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
+
+		readSamples = {samples[modReadPos]};
+		modReadPosNext = modReadPos + 1;
+		if (modReadPosNext == SAMPLE_BUFFER_LENGTH)
+			modReadPosNext = 0;
 	} else {
 		readSamples = {samples[readPos[LR]]};
 	}
@@ -32,38 +40,18 @@ void DigitalDelay::CalcSample()
 		return;
 	}
 
-	// If chorussing, 'dry' sample is current sample + LFO delayed chorus sample
-	if (chorusMode) {
-
-		// Capture samples for L and R channels each time to get double speed sampling
-		chorusSamples[left][chorusWrite++] = ADC_array[left];
-		chorusSamples[right][chorusWrite] = ADC_array[right];
-
-		// Get the LFO delayed sample from the chorus buffer
-		chorusLFO[LR] += chorusAdd[LR];
-		if (chorusLFO[LR] > CHORUS_MAX || chorusLFO[LR] < CHORUS_MIN) {
-			chorusAdd[LR] *= -1;
-		}
-		uint16_t chorusRead = chorusWrite - static_cast<uint16_t>(chorusLFO[LR]) - 1;
-
-		// Low pass filter the LFO delayed sample
-		float filteredChorus = chorusFilter[LR].FilterSample(chorusSamples[LR][chorusRead] - adcZeroOffset[LR]);
-
-		recordSample = 0.8f * (recordSample + filteredChorus);		// FIXME - scaling factor needs to be more scientific
-	}
-
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
-		StereoSample oldreadSamples = {samples[oldReadPos[LR] + (modChorusMode ? static_cast<int32_t>(modOffset[LR]) : 0)]};
+		StereoSample oldreadSamples = {samples[oldReadPos[LR] - (modulatedDelay ? static_cast<int32_t>(modOffset[LR]) : 0)]};
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
 		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[LR]) * (scale);
 		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
 		--delayCrossfade[LR];
 	} else {
-		if (modChorusMode) {
-			StereoSample readSamples2 = {samples[readPos[LR] +  + static_cast<int32_t>(modOffset[LR]) + 1]};	// Get later sample for interpolation
-			float offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
+		if (modulatedDelay) {
+			StereoSample readSamples2 = {samples[modReadPosNext]};			// Get next sample for interpolation
+			offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
 			nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - offsetFraction) + static_cast<float>(readSamples2.sample[LR]) * offsetFraction;
 		} else {
 			nextSample = static_cast<float>(readSamples.sample[LR]);
@@ -209,21 +197,11 @@ int32_t DigitalDelay::OutputMix(float drySample, float wetSample)
 {
 	// Output mix level
 	float dryLevel = static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f;		// Convert 16 bit int to float 0 -> 1
-	float outputSample;
 
-	// As mixing is done in software in chorus mode add current chorused sample to delay sample
-	if (chorusMode) {
-		float multWet = 1.0f - std::pow(dryLevel * 1.05, 2.0f);
-		float multDry = 1.0f - std::pow(1 - (dryLevel * 1.05), 2.0f);
+	DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
+	DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
 
-		outputSample = (multWet * wetSample) + (multDry * drySample);
-	} else {
-		DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
-		DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
-
-		outputSample = wetSample;
-	}
-	return std::clamp(static_cast<int32_t>(outputSample), -32767L, 32767L);
+	return std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
 }
 
 
@@ -270,27 +248,11 @@ int32_t DigitalDelay::GateSample()
 	return recordSample;
 }
 
-void DigitalDelay::ChorusMode(bool on)
-{
-	if (modChorus) {
-		modChorusMode = on;
-	} else {
-		// chorus mixing is handled in software so set VCA to fully wet
-		if (on) {
-			DAC1->DHR12R2 = 4095;								// Wet level
-			DAC1->DHR12R1 = 0;									// Dry level
-		}
-		chorusMode = on;
-	}
-}
-
 
 void DigitalDelay::Init()
 {
 	// Clear sample buffers
 	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
-	std::fill_n(chorusSamples[left], 65536, adcZeroOffset[left]);
-	std::fill_n(chorusSamples[right], 65536, adcZeroOffset[right]);
 
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
@@ -412,9 +374,9 @@ void DigitalDelay::CheckSwitches()
 	static uint32_t linkBtnTest;
 	static bool linkButton;
 
-	// Implement chorus (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
-	if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != chorusMode) {
-		ChorusMode(!chorusMode);
+	// Implement modulated delay (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
+	if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != modulatedDelay) {
+		modulatedDelay = !modulatedDelay;
 	}
 	if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != stereoWide) {
 		stereoWide = !stereoWide;

@@ -5,18 +5,12 @@
 #include "Filter.h"
 
 extern int32_t samples[SAMPLE_BUFFER_LENGTH];
-extern uint16_t chorusSamples[2][65536];
 
 // For data locality reasons both L and R samples are stored as a single 32 value - this union provides easy access
 union StereoSample {
 	int32_t bothSamples;
 	int16_t sample[2];
 };
-
-// Chorus settings to match measured Juno 106 timings
-#define CHORUS_MIN 80.0f * 2.0f
-#define CHORUS_MAX 260.0f * 2.0f
-#define CHORUS_INC (CHORUS_MAX - CHORUS_MIN) / 48000
 
 enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
@@ -26,13 +20,10 @@ struct DigitalDelay {
 public:
 	void CalcSample();						// Called by interrupt handler to generate next sample
 	void Init();							// Initialise caches, buffers etc
-	void ChorusMode(bool on);
 	void CheckSwitches();
 
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
-	bool chorusMode = false;
-	bool modChorus = false;					// True if chorus switch activates modulated delay
-	bool modChorusMode = false;				// Modulated delay activated
+	bool modulatedDelay = false;			// Modulated delay activated
 	bool linkLR = true;						// Makes tempo of right delay a multiple of left delay
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
 
@@ -60,11 +51,10 @@ private:
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 	int8_t ledOnTimer = 0;					// Timer to control sending an LED update
 
-	float chorusLFO[2] = {CHORUS_MIN, CHORUS_MAX};
-	float chorusAdd[2] = {CHORUS_INC, -1 * CHORUS_INC};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
-	uint16_t chorusWrite = 0;
-	FixedFilter chorusFilter[2] = {FixedFilter(4, LowPass, 0.1f), FixedFilter(4, LowPass, 0.1f)};		// Need 2 filters as uses IIR filter with feedback
-	float modOffset[2];
+	float modOffsetMax = 180.0f;
+	float modOffsetInc = 0.00375f;
+	float modOffsetAdd[2] = {modOffsetInc, -1 * modOffsetInc};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
+	float modOffset[2] = {1.0f, modOffsetMax};
 
 	enum class gateStatus {open, closed, closing} gateShut[2];
 	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold
