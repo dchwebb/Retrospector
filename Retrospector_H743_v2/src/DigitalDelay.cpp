@@ -3,21 +3,20 @@
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
-int32_t modReadPos, modReadPosNext;
-float offsetFraction;
 
 void DigitalDelay::CalcSample()
 {
 	StereoSample readSamples;										// Delayed samples as interleaved stereo
-	float nextSample, oppositeSample = 0.0f;								// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
+	float nextSample, oppositeSample = 0.0f;						// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	LR = static_cast<channel>(!static_cast<bool>(LR));
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 	delay_mode delayMode = Mode();									// Long, short or reverse
 	int32_t recordSample = GateSample();							// Capture recording sample
+	int32_t modReadPos, modReadPosNext;								// Positions of two samples (for interpolation) when using modulated delay
 
 	if (modulatedDelay) {
-		// Using modulated delay - update offset
+		// Using modulated delay - update offset accounting for circular buffer wrapping
 		modOffset[LR] += modOffsetAdd[LR];
 		if (modOffset[LR] > modOffsetMax || modOffset[LR] < 1.0f) {
 			modOffsetAdd[LR] *= -1;
@@ -51,7 +50,7 @@ void DigitalDelay::CalcSample()
 	} else {
 		if (modulatedDelay) {
 			StereoSample readSamples2 = {samples[modReadPosNext]};			// Get next sample for interpolation
-			offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
+			float offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
 			nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - offsetFraction) + static_cast<float>(readSamples2.sample[LR]) * offsetFraction;
 		} else {
 			nextSample = static_cast<float>(readSamples.sample[LR]);
