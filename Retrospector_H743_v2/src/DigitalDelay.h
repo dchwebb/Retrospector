@@ -38,7 +38,7 @@ private:
 	int32_t calcDelay[2];					// Delay time according to whether clocked and with multipliers applied
 	int16_t delayPotVal[2];					// For hysteresis checking
 	float delayMult[2];						// Multipliers for delay in clocked mode
-
+	uint8_t longDelMult = 8;				// Delay length scaling when long or reverse delay selected
 
 	uint32_t delayCounter;					// Counter used to calculate clock times in sample time
 	uint32_t lastClock;						// Time last clock signal received in sample time

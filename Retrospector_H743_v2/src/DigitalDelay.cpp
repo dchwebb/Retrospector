@@ -3,7 +3,7 @@
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
-volatile 	int32_t modReadPos, modReadPosNext, modReadPosCF;								// Positions of two samples (for interpolation) when using modulated delay
+
 
 void DigitalDelay::CalcSample()
 {
@@ -14,6 +14,7 @@ void DigitalDelay::CalcSample()
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 	delay_mode delayMode = Mode();									// Long, short or reverse
 	int32_t recordSample = GateSample();							// Capture recording sample
+	int32_t modReadPos, modReadPosNext;								// Positions of two samples (for interpolation) when using modulated delay
 
 	if (modulatedDelay) {
 		// Using modulated delay - update offset accounting for circular buffer wrapping
@@ -25,35 +26,20 @@ void DigitalDelay::CalcSample()
 		if (modReadPos < 0) {
 			modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
 		}
-		if (modReadPos >= SAMPLE_BUFFER_LENGTH || modReadPos < 0) {
-			volatile int susp = 1;
-			susp++;
-		}
-		if (readPos[1] == 1048528) {
-			volatile int susp = 1;
-			susp++;
-		}
-		// modReadPos = 1048361,1048434
-		// readPos[1] = 1048528,1048528
 		readSamples = {samples[modReadPos]};
 		modReadPosNext = modReadPos + 1;
 		if (modReadPosNext == SAMPLE_BUFFER_LENGTH) {
 			modReadPosNext = 0;
 		}
-		if (modReadPosNext >= SAMPLE_BUFFER_LENGTH || modReadPosNext < 0) {
-			volatile int susp = 1;
-			susp++;
-		}
-
 	} else {
 		readSamples = {samples[readPos[LR]]};
 	}
 
 	// Test modes
-//	if (testMode != TestMode::none) {
-//		RunTest(recordSample);
-//		return;
-//	}
+	if (testMode != TestMode::none) {
+		RunTest(recordSample);
+		return;
+	}
 
 
 	// Cross fade if moving playback position
@@ -145,21 +131,23 @@ void DigitalDelay::CalcSample()
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
 	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+	int32_t hysteresisDivider = (delayMode != modeShort) ? 8 : 1;					// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
 
 	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
 	if (clockValid) {
 		if (!linkLR && LR == right) {
 			if (delayMode != modeShort) {
-				delayClkCV *= 8;
+				delayClkCV *= longDelMult;
 			}
 			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
 		} else if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
 			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
 			if (delayMode != modeShort) {
-				delayMult[LR] *= 8;
+				delayMult[LR] *= longDelMult;
 			}
 			calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
+			hysteresisDivider = delayMult[LR];
 		}
 
 	} else {
@@ -169,9 +157,10 @@ void DigitalDelay::CalcSample()
 			int32_t leftDelScaled = calcDelay[left] / delayMult[left];				// Normalise the left delay
 			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
 			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
+			hysteresisDivider *= delayMult[right] / delayMult[left];
 		} else {
 			if (delayMode != modeShort) {
-				delayClkCV *= 8;
+				delayClkCV *= longDelMult;
 			}
 			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
 		}
@@ -204,7 +193,7 @@ void DigitalDelay::CalcSample()
 
 	} else {
 		// If delay time has changed trigger crossfade from old to new read position
-		if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) > delayHysteresis) {
+		if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) / hysteresisDivider > delayHysteresis) {
 			oldReadPos[LR] = readPos[LR];
 			readPos[LR] = writePos - calcDelay[LR] - 1;
 			while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
