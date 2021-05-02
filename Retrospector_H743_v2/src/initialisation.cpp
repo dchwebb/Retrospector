@@ -133,7 +133,6 @@ void SystemClock_Config()
 	RCC->D3CFGR |= RCC_D3CFGR_D3PPRE_2;				// Clock divider for APB4 clocks - set to 4 for 100MHz: 100: hclk / 2
 
 
-
 	RCC->CFGR |= RCC_CFGR_SW_PLL1;					// System clock switch: 011: PLL1 selected as system clock
 	while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != (RCC_CFGR_SW_PLL1 << RCC_CFGR_SWS_Pos));		// Wait until PLL has been selected as system clock source
 
@@ -162,7 +161,7 @@ void InitCache()
 
 
 	MPU->RNR = 1;									// Memory region number
-	MPU->RBAR = 0x38000000;							// Store the address of the led DMA buffer into the region base address register
+	MPU->RBAR = reinterpret_cast<uint32_t>(&led); 	// Store the address of the led DMA buffer into the region base address register
 
 	MPU->RASR = (0b11  << MPU_RASR_AP_Pos)   |		// All access permitted
 				(0b001 << MPU_RASR_TEX_Pos)  |		// Type Extension field: See truth table on p228 of Cortex M7 programming manual
@@ -179,9 +178,7 @@ void InitCache()
 
 	// Enable data and instruction caches
 	SCB_EnableDCache();
-
 	SCB_EnableICache();
-
 }
 
 
@@ -320,7 +317,7 @@ void InitADC1()
 	0	PA3 ADC12_INP15		AUDIO_IN_L
 	1	PA2 ADC12_INP14		AUDIO_IN_R
 	2	PA1 ADC1_INP17		DELAY_POT_R
-	3	PA0 ADC1_INP16		DELAY_CV_SCALED_R*
+	3	PA0 ADC1_INP16		DELAY_CV_SCALED_R
 	*/
 	InitAdcPins(ADC1, {15, 14, 17, 16});
 
@@ -394,10 +391,10 @@ void InitADC2()
 	/* Configure ADC Channels to be converted:
 	0	PC5 ADC12_INP8		WET_DRY_MIX
 	1	PB1 ADC12_INP5		DELAY_POT_L
-	2	PA6 ADC12_INP3 		DELAY_CV_SCALED_L*
+	2	PA6 ADC12_INP3 		DELAY_CV_SCALED_L
 	3	PB0 ADC12_INP9		FEEDBACK_POT
-	4	PA7 ADC12_INP7		FEEDBACK_CV_SCALED*
-	5	PC4 ADC12_INP4		FILTER_CV_SCALED*
+	4	PA7 ADC12_INP7		FEEDBACK_CV_SCALED
+	5	PC4 ADC12_INP4		FILTER_CV_SCALED
 	6	PC1 ADC123_INP11 	FILTER_POT
 	*/
 	InitAdcPins(ADC2, {8, 5, 3, 9, 7, 4, 11});

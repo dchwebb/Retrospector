@@ -3,17 +3,17 @@
 uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
+volatile 	int32_t modReadPos, modReadPosNext, modReadPosCF;								// Positions of two samples (for interpolation) when using modulated delay
 
 void DigitalDelay::CalcSample()
 {
-	StereoSample readSamples;										// Delayed samples as interleaved stereo
+	StereoSample readSamples, oldReadSamples;						// Delayed samples as interleaved stereo, second var for crossfading
 	float nextSample, oppositeSample = 0.0f;						// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	LR = static_cast<channel>(!static_cast<bool>(LR));
 	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 	delay_mode delayMode = Mode();									// Long, short or reverse
 	int32_t recordSample = GateSample();							// Capture recording sample
-	int32_t modReadPos, modReadPosNext;								// Positions of two samples (for interpolation) when using modulated delay
 
 	if (modulatedDelay) {
 		// Using modulated delay - update offset accounting for circular buffer wrapping
@@ -22,30 +22,54 @@ void DigitalDelay::CalcSample()
 			modOffsetAdd[LR] *= -1;
 		}
 		modReadPos = readPos[LR] - static_cast<int32_t>(modOffset[LR]);
-		if (modReadPos < 0)
+		if (modReadPos < 0) {
 			modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
-
+		}
+		if (modReadPos >= SAMPLE_BUFFER_LENGTH || modReadPos < 0) {
+			volatile int susp = 1;
+			susp++;
+		}
+		if (readPos[1] == 1048528) {
+			volatile int susp = 1;
+			susp++;
+		}
+		// modReadPos = 1048361,1048434
+		// readPos[1] = 1048528,1048528
 		readSamples = {samples[modReadPos]};
 		modReadPosNext = modReadPos + 1;
-		if (modReadPosNext == SAMPLE_BUFFER_LENGTH)
+		if (modReadPosNext == SAMPLE_BUFFER_LENGTH) {
 			modReadPosNext = 0;
+		}
+		if (modReadPosNext >= SAMPLE_BUFFER_LENGTH || modReadPosNext < 0) {
+			volatile int susp = 1;
+			susp++;
+		}
+
 	} else {
 		readSamples = {samples[readPos[LR]]};
 	}
 
 	// Test modes
-	if (testMode != TestMode::none) {
-		RunTest(recordSample);
-		return;
-	}
+//	if (testMode != TestMode::none) {
+//		RunTest(recordSample);
+//		return;
+//	}
 
 
 	// Cross fade if moving playback position
 	if (delayCrossfade[LR] > 0) {
-		StereoSample oldreadSamples = {samples[oldReadPos[LR] - (modulatedDelay ? static_cast<int32_t>(modOffset[LR]) : 0)]};
+		if (modulatedDelay) {
+			modReadPos = oldReadPos[LR] - static_cast<int32_t>(modOffset[LR]);
+			if (modReadPos < 0) {
+				modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
+			}
+			oldReadSamples = {samples[modReadPos]};
+		} else {
+			oldReadSamples = {samples[oldReadPos[LR]]};
+		}
 		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
-		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[LR]) * (scale);
-		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldreadSamples.sample[RL]) * (scale);
+		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[LR]) * (scale);
+		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[RL]) * (scale);
 		--delayCrossfade[LR];
 	} else {
 		if (modulatedDelay) {
