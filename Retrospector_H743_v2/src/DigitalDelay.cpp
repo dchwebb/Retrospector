@@ -4,6 +4,10 @@ uint32_t debugDuration = 0;
 int16_t debugOutput = 0;
 float fadeout = 0.0f;
 
+float debugBuffer[256];
+uint8_t debugBuffCnt = 0;
+FilterType oldFt;
+float buSample;
 
 void DigitalDelay::CalcSample()
 {
@@ -75,6 +79,15 @@ void DigitalDelay::CalcSample()
 	}
 
 	// Filter output
+	buSample = nextSample;
+	if (filter.filterType != prevFilterType) {
+		softSwitchTime = softSwitchDefault;
+		prevFilterType = filter.filterType;
+	}
+	if (filter.newFilterType != filter.filterType) {
+		volatile int s = 0;
+		s++;
+	}
 	nextSample = filter.CalcFilter(nextSample, LR);
 
 	// Compression
@@ -88,7 +101,7 @@ void DigitalDelay::CalcSample()
 	}
 
 
-	SPI2->TXDR = OutputMix(recordSample, nextSample);
+	SPI2->TXDR = OutputMix(nextSample);
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
@@ -131,7 +144,7 @@ void DigitalDelay::CalcSample()
 
 	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
 	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	int32_t hysteresisDivider = (delayMode != modeShort) ? 8 : 1;					// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
+	float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;					// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
 
 	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
 	if (clockValid) {
@@ -205,7 +218,10 @@ void DigitalDelay::CalcSample()
 }
 
 
-int32_t DigitalDelay::OutputMix(float drySample, float wetSample)
+
+
+
+int32_t DigitalDelay::OutputMix(float wetSample)
 {
 	// Output mix level
 	float dryLevel = static_cast<float>(ADC_array[ADC_Mix]) / 65536.0f;		// Convert 16 bit int to float 0 -> 1
@@ -213,8 +229,41 @@ int32_t DigitalDelay::OutputMix(float drySample, float wetSample)
 	DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
 	DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
 
-	return std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+	// Handle soft switching
+	int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+	if (softSwitchTime > 0) {
+		GPIOB->ODR |= GPIO_ODR_OD8;		// Debug
+
+//		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
+//		if (softSwitchProp > 0.7f) {
+//			softSwitchFilter[LR].FilterSample(outputSample);
+//		} else {
+//			outputSample = static_cast<int32_t>(softSwitchFilter[LR].FilterSample(outputSample));
+//		}
+
+
+		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
+		outputSample = (softSwitchProp * oldSample[LR]) + ((1 - softSwitchProp) * outputSample);
+
+//		outputSample = oldSample[LR];
+		if (--softSwitchTime == 0) {
+			GPIOB->ODR &= ~GPIO_ODR_OD8;		// Debug
+		}
+	} else {
+		oldFt = filter.filterType;
+		oldSample[LR] = outputSample;
+		if (LR == right) {
+			if (outputSample == 0 && std::abs(debugBuffer[debugBuffCnt - 1]) > 1000) {
+				volatile int susp = 0;
+				susp++;
+			}
+			debugBuffer[debugBuffCnt++] = outputSample;
+		}
+	}
+	return outputSample;
 }
+
+
 
 
 int32_t DigitalDelay::GateSample()
@@ -381,6 +430,7 @@ delay_mode DigitalDelay::Mode()
 }
 
 
+
 void DigitalDelay::CheckSwitches()
 {
 	static uint32_t linkBtnTest;
@@ -432,12 +482,12 @@ void DigitalDelay::RunTest(int32_t sample)
 		samples[writePos] = writeSample.bothSamples;
 		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
 
-		SPI2->TXDR = OutputMix(0, sample);
+		SPI2->TXDR = OutputMix(sample);
 		break;
 	}
 	case TestMode::saw:
 		testSample += 683;		// 65536/96000 * 1kHz
-		SPI2->TXDR = OutputMix(0, testSample);
+		SPI2->TXDR = OutputMix(testSample);
 		break;
 	}
 }

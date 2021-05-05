@@ -1,4 +1,7 @@
 #include "Filter.h"
+//#include "DigitalDelay.h"
+
+//extern DigitalDelay delay;
 
 // Debug
 bool calculatingFilter = false;
@@ -11,43 +14,60 @@ void Filter::Init()
 
 void Filter::Update(bool reset)
 {
+	if (newFilterType != filterType)
+		return;
+
 	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
 	if ((GPIOC->IDR & GPIO_IDR_ID10) == 0) {
 		if (filterControl != LP) {
-			filterType = IIR;
-			filterControl = LP;
-			reset = true;
+			newFilterType = IIR;
+			newFilterControl = LP;
 		}
 	} else if ((GPIOC->IDR & GPIO_IDR_ID11) == 0) {
 		if (filterControl != HP) {
-			filterType = IIR;
-			filterControl = HP;
-			reset = true;
+			newFilterType = IIR;
+			newFilterControl = HP;
 		}
 	} else if (filterControl != Both) {
-		filterType = FIR;
-		filterControl = Both;
-		reset = true;
+		newFilterType = FIR;
+		newFilterControl = Both;
 	}
 
 	// get filter values from pot and CV and smooth through fixed IIR filter
 	dampedADC = filterADC.FilterSample(std::min(static_cast<uint32_t>(ADC_array[ADC_Filter_Pot]) + (65535UL - ADC_array[ADC_Filter_CV]), 65535UL));
 
-	if (reset || std::abs(dampedADC - previousADC) > hysteresis) {
+	if (newFilterType != filterType || reset || std::abs(dampedADC - previousADC) > hysteresis) {
 		calculatingFilter = true;
+
 		previousADC = dampedADC;
-		if (filterType == IIR) {
+		if (newFilterType == IIR) {
 			InitIIRFilter(dampedADC);
 		} else {
 			InitFIRFilter(dampedADC);
 		}
 		calculatingFilter = false;
 
+		// If changing filter type reset registers
+		if (newFilterType != filterType) {
+			filterType = newFilterType;
+			filterControl = newFilterControl;
+
+			if (filterControl == HP) {
+				iirHPReg[left].Init();
+				iirHPReg[right].Init();
+			}
+			if (filterControl == LP) {
+				iirLPReg[left].Init();
+				iirLPReg[right].Init();
+			}
+		}
+		activeFilter = !activeFilter;
+
 		// Update filter LED
 		if (filterControl == Both) {
 			float colourMult = dampedADC / 65535.0f;
 			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
-		} else 	if (passType == LowPass) {
+		} else 	if (filterControl == LP) {
 			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
 			led.LEDColour(ledFilter, 0xFF5555, 0xFF0000, colourMult, 1.0f);
 		} else {
@@ -89,7 +109,7 @@ void Filter::InitFIRFilter(float tone)
 	}
 
 	// cycle between two sets of coefficients so one can be changed without affecting the other
-	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
+	bool inactiveFilter = !activeFilter;
 
 	if (passType == LowPass) {
 		for (int8_t j = 0; j < firTaps / 2 + 1; ++j) {
@@ -105,7 +125,6 @@ void Filter::InitFIRFilter(float tone)
 		}
 	}
 
-	activeFilter = inactiveFilter;
 	currentCutoff = omega;
 }
 
@@ -182,21 +201,18 @@ void Filter::InitIIRFilter(iirdouble_t tone)
 	constexpr iirdouble_t LPMax = 0.995;
 	constexpr iirdouble_t HPMin = 0.001;
 
-	uint8_t inactiveFilter = (activeFilter == 0) ? 1 : 0;
+	bool inactiveFilter = !activeFilter;
 
-	if (filterControl == HP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
-		passType = HighPass;
+	if (newFilterControl == HP) {				// Want a sweep from 0.03 to 0.99 with most travel at low end
+		//newPassType = HighPass;
 		cutoff = pow((tone / 100000.0), 3.0) + HPMin;
-		iirLPFilter[inactiveFilter].CalcCoeff(LPMax);
 		iirHPFilter[inactiveFilter].CalcCoeff(cutoff);
 	} else {		// Want a sweep from 0.001 to 0.2-0.3
-		passType = LowPass;
+		//newPassType = LowPass;
 		cutoff = std::min(0.03 + pow(tone / 65536.0, 2.0), LPMax);
-		iirHPFilter[inactiveFilter].CalcCoeff(HPMin);
 		iirLPFilter[inactiveFilter].CalcCoeff(cutoff);
 	}
 
-	activeFilter = inactiveFilter;
 	currentCutoff = cutoff;
 }
 
@@ -204,7 +220,7 @@ void Filter::InitIIRFilter(iirdouble_t tone)
 //	Take a new sample and return filtered value
 iirdouble_t Filter::CalcIIRFilter(iirdouble_t sample, channel c)
 {
-	if (passType == HighPass) {
+	if (filterControl == HP) {
 		return iirHPFilter[activeFilter].FilterSample(sample, iirHPReg[c]);
 	} else {
 		return iirLPFilter[activeFilter].FilterSample(sample, iirLPReg[c]);
@@ -335,8 +351,8 @@ void IIRFilter::CalcCoeff(iirdouble_t omega)
 				iirCoeff.a0[j] = 1.0;
 
 				iirCoeff.b2[j] = 0.0;
-				iirCoeff.b1[j] = (T) / arg * C;
-				iirCoeff.b0[j] = (T) / arg * C;
+				iirCoeff.b1[j] = T / arg * C;
+				iirCoeff.b0[j] = T / arg * C;
 			} else {							// 2 poles
 
 				arg = (4.0 * A + 2.0 * B * T + C * T * T);

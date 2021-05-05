@@ -37,7 +37,7 @@ private:
 	int32_t currentDelay[2];				// Used to trigger crossfade from old to new read position
 	int32_t calcDelay[2];					// Delay time according to whether clocked and with multipliers applied
 	int16_t delayPotVal[2];					// For hysteresis checking
-	float delayMult[2];						// Multipliers for delay in clocked mode
+	float delayMult[2] = {1.0f, 1.0f};						// Multipliers for delay in clocked mode
 	uint8_t longDelMult = 8;				// Delay length scaling when long or reverse delay selected
 
 	uint32_t delayCounter;					// Counter used to calculate clock times in sample time
@@ -51,8 +51,8 @@ private:
 	int16_t ledFraction[2];					// Counter to handle tempo subdivision display locked to incoming clock
 	int8_t ledOnTimer = 0;					// Timer to control sending an LED update
 
-	float modOffsetMax = 180.0f;
-	float modOffsetInc = 0.00375f;
+	float modOffsetMax = 180.0f;			// Modulated delay maximum sample offset
+	float modOffsetInc = 0.00375f;			// Amount by which offset is shifted each sample
 	float modOffsetAdd[2] = {modOffsetInc, -1 * modOffsetInc};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
 	float modOffset[2] = {1.0f, modOffsetMax};
 
@@ -67,16 +67,24 @@ private:
 	const int16_t crossfade = 6000;
 	const int16_t tempoHysteresis = 100;
 	const std::array<float, 6> tempoMult = {0.5, 1, 2, 4, 8, 16};
-	bool tanhCompression = true;			// Use a fast tanh algorithm for more natural sounding compression that linear compression below
-	const int16_t threshold = 20000;		// compression threshold
+	bool tanhCompression = true;			// Use a fast tanh algorithm for more natural sounding compression than linear compression
+	const int16_t threshold = 20000;		// linear compression threshold
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
+
+	uint8_t softSwitchTime = 0;
+	const uint8_t softSwitchDefault = 200;
+	FilterType prevFilterType;
+	int16_t oldSample[2];
+	int16_t oldSample2[2];
+
+	//FixedFilter softSwitchFilter[2] = {FixedFilter(6, LowPass, 0.02f), FixedFilter(6, LowPass, 0.02f)};		// Need 2 filters as uses IIR filter with feedback
 
 	// Private class functions
 	int32_t GateSample();
 	void UpdateLED(channel c, bool reverse, int32_t remainingDelay = 0);
 	void ReverseLED(channel c, int32_t remainingDelay);
 	delay_mode Mode();
-	int32_t OutputMix(float drySample, float wetSample);
+	int32_t OutputMix(float wetSample);
 	float FastTanh(float x);
 	void RunTest(int32_t s);
 

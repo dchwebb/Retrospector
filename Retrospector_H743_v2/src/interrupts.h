@@ -9,9 +9,9 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	GPIOB->ODR |= GPIO_ODR_OD7;		// Toggle red for debugging
+	//GPIOB->ODR |= GPIO_ODR_OD7;		// Toggle red for debugging
 	if (calculatingFilter) {
-		//GPIOB->ODR |= GPIO_ODR_OD7;
+		GPIOB->ODR |= GPIO_ODR_OD7;
 	}
 
 	delay.CalcSample();
@@ -20,7 +20,7 @@ void SPI2_IRQHandler() {
 	TinyDelay();
 
 	GPIOB->ODR &= ~GPIO_ODR_OD7;  	// Clear red to show calc sample has finished
-	GPIOB->ODR |= GPIO_ODR_OD8;		// Activate blue to show audio ADC started
+//	GPIOB->ODR |= GPIO_ODR_OD8;		// Activate blue/yellow to show audio ADC started
 	ADC1->CR |= ADC_CR_ADSTART;
 	DMA1->LIFCR |= DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1;
 	DMA1_Stream1->CR |= DMA_SxCR_EN;
@@ -30,7 +30,7 @@ void SPI2_IRQHandler() {
 void ADC_IRQHandler()
 {
 	ADC1->ISR |= ADC_ISR_EOS;
-	GPIOB->ODR &= ~GPIO_ODR_OD8;
+//	GPIOB->ODR &= ~GPIO_ODR_OD8;
 //
 //	static bool adcDebug = false;
 //	adcDebug = !adcDebug;

@@ -107,7 +107,6 @@ bool SerialHandler::Command()
 
 		usb->SendString("Mountjoy Retrospector\r\n"
 				"\r\nSupported commands:\r\n"
-				"help        -  Shows this information\r\n"
 				"info        -  Show diagnostic information\r\n"
 				"led         -  LEDs on/off\r\n"
 				"resume      -  Resume I2S after debugging\r\n"

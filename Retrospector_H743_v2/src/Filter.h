@@ -11,6 +11,7 @@
 #include <array>
 #include "LEDHandler.h"
 
+
 #define MAX_POLES 8		// For declaring IIR arrays
 #define MAX_SECTIONS (MAX_POLES + 1) / 2
 #define MAX_FIR_TAPS 93
@@ -54,6 +55,11 @@ struct IIRRegisters {
 	iirdouble_t Y2[MAX_SECTIONS];
 
 	IIRRegisters() {
+		for (uint8_t i = 0; i < MAX_SECTIONS; ++i) {
+			X1[i] = 0.0; X2[i] = 0.0; Y1[i] = 0.0; Y2[i] = 0.0;
+		}
+	}
+	void Init() {
 		for (uint8_t i = 0; i < MAX_SECTIONS; ++i) {
 			X1[i] = 0.0; X2[i] = 0.0; Y1[i] = 0.0; Y2[i] = 0.0;
 		}
@@ -126,23 +132,27 @@ struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 	friend class Config;					// Allow access to config to store values
 public:
+	FilterType filterType = FIR;
+	FilterType newFilterType = filterType;
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
 	void CustomiseIIR(uint8_t section, iirdouble_t damping);
 	void CustomiseIIR(uint8_t sectionCount);
 	void DefaultIIR();						// Reset default IIR coefficients for all IIR filters
-
 private:
 	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
 	uint16_t potCentre = 29000;				// Configurable in calibration
 
 	bool activateFilter = true;				// For debug
-	FilterType filterType = FIR;
 	PassType passType;
+	PassType newPassType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
-	uint8_t activeFilter = 0;				// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
+	bool activeFilter = 0;					// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 	float currentCutoff;
+
+	FilterControl newFilterControl = filterControl;
+
 
 	// FIR Settings
 	float firCoeff[2][MAX_FIR_TAPS];
