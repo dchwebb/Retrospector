@@ -71,12 +71,6 @@ private:
 	const int16_t threshold = 20000;		// linear compression threshold
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
-	uint16_t softSwitchTime = 0;				// Amount of time remaining for soft switch cross-fading
-	const uint16_t softSwitchDefault = 300;	// Total amount of time for soft switch cross-fading
-	FilterType prevFilterType;				// Store filter type so can initiate soft-switching when changed
-	int16_t oldSample[2];					// Capture last sample to cross fade from
-
-
 	// Private class functions
 	int32_t GateSample();
 	void UpdateLED(channel c, bool reverse, int32_t remainingDelay = 0);

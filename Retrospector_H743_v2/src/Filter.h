@@ -27,6 +27,7 @@ enum PassType {FilterOff, LowPass, HighPass};
 enum FilterType {FIR, IIR};
 enum IIRType {Butterworth, Custom};
 
+
 typedef double iirdouble_t;			// to allow easy testing with floats or doubles
 typedef std::complex<double> complex_t;
 
@@ -132,7 +133,8 @@ struct Filter {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
 	friend class Config;					// Allow access to config to store values
 public:
-	FilterType filterType = FIR;
+//	enum class FilterSwitching {Changed, Switch, None} filterSwitching;
+
 
 	void Init();
 	void Update(bool reset = false);
@@ -150,6 +152,7 @@ private:
 	FilterControl newFilterControl = filterControl;
 	bool activeFilter = 0;					// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 	float currentCutoff;
+	FilterType filterType = FIR;
 	FilterType newFilterType = filterType;	// Settings to enable filters to be altered without affecting ongoing calculations
 
 
@@ -172,6 +175,9 @@ private:
 	FixedFilter filterADC = FixedFilter(2, LowPass, 0.002f);
 	static constexpr uint16_t hysteresis = 30;
 
+	uint16_t softSwitchTime = 0;			// Amount of time remaining for soft switch cross-fading
+	const uint16_t softSwitchDefault = 500;	// Total amount of time for soft switch cross-fading
+
 	iirdouble_t CalcIIRFilter(iirdouble_t sample, channel c);
 	float CalcFIRFilter(float sample, channel c);
 	void InitFIRFilter(float tone);
@@ -179,6 +185,7 @@ private:
 	float Sinc(float x);
 	void FIRFilterWindow();
 	float Bessel(float x);
+	void SwitchFilter();
 };
 
 

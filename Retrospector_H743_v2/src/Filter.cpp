@@ -1,7 +1,4 @@
 #include "Filter.h"
-//#include "DigitalDelay.h"
-
-//extern DigitalDelay delay;
 
 // Debug
 bool calculatingFilter = false;
@@ -14,6 +11,11 @@ void Filter::Init()
 
 void Filter::Update(bool reset)
 {
+	// In the middle of changing filter type using soft switching
+	if (newFilterType != filterType) {
+		return;
+	}
+
 	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
 	if ((GPIOC->IDR & GPIO_IDR_ID10) == 0) {
 		if (filterControl != LP) {
@@ -44,23 +46,12 @@ void Filter::Update(bool reset)
 		}
 		calculatingFilter = false;
 
-		// If changing filter type reset registers
-		if (newFilterType != filterType) {
-			filterType = newFilterType;
-			filterControl = newFilterControl;
-
-			if (filterControl == HP) {
-				passType = HighPass;
-				iirHPReg[left].Init();
-				iirHPReg[right].Init();
-			}
-			if (filterControl == LP) {
-				passType = LowPass;
-				iirLPReg[left].Init();
-				iirLPReg[right].Init();
-			}
+		// If not changing filter type switch active filter
+		if (newFilterType == filterType) {
+			activeFilter = !activeFilter;
+		} else {
+			softSwitchTime = softSwitchDefault;
 		}
-		activeFilter = !activeFilter;
 
 		// Update filter LED
 		if (filterControl == Both) {
@@ -76,22 +67,66 @@ void Filter::Update(bool reset)
 	}
 }
 
+
+void Filter::SwitchFilter()
+{
+	filterType = newFilterType;
+	filterControl = newFilterControl;
+
+	if (filterControl == HP) {
+		passType = HighPass;
+		iirHPReg[left].Init();
+		iirHPReg[right].Init();
+	}
+	if (filterControl == LP) {
+		passType = LowPass;
+		iirLPReg[left].Init();
+		iirLPReg[right].Init();
+	}
+	activeFilter = !activeFilter;
+}
+
+
 float Filter::CalcFilter(float sample, channel c)
 {
+	float outputSample;
+
 	if (activateFilter) {
 		if (filterType == IIR) {
 			// Store the sample to the filter buffer so that switching is smoother
 			filterBuffer[c][filterBuffPos[c]] = sample;
 			++filterBuffPos[c];
 
-			return static_cast<float>(filter.CalcIIRFilter(sample, c));
+			outputSample = static_cast<float>(filter.CalcIIRFilter(sample, c));
 		} else {
-			return filter.CalcFIRFilter(sample, c);
+			outputSample = filter.CalcFIRFilter(sample, c);
 		}
+
+		// Handle soft-switching to cross fade between old and new filter types to avoid pops and clicks
+		if (softSwitchTime > 0) {
+			GPIOB->ODR |= GPIO_ODR_OD8;		// Debug
+
+			float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
+			if (softSwitchProp > 0.5f) {											// Fade out old filter
+				outputSample = ((softSwitchProp * 2.0f) - 1.0f) * outputSample;
+			} else {
+				if (softSwitchProp == 0.5f) {										// Activate new filter
+					SwitchFilter();
+				}
+				outputSample = (1.0f - (softSwitchProp * 2.0f)) * outputSample;		// Fade in new filter
+			}
+			if (--softSwitchTime == 0) {
+				GPIOB->ODR &= ~GPIO_ODR_OD8;		// Debug
+			}
+		}
+
+
+		return outputSample;
 	} else {
 		return sample;
 	}
 }
+
 
 // Rectangular FIR
 void Filter::InitFIRFilter(float tone)

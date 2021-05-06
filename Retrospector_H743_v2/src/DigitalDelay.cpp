@@ -68,11 +68,7 @@ void DigitalDelay::CalcSample()
 		nextSample = 0.75f * nextSample + 0.4f * oppositeSample;
 	}
 
-	// Filter output
-	if (filter.filterType != prevFilterType) {
-		softSwitchTime = softSwitchDefault;
-		prevFilterType = filter.filterType;
-	}
+
 	nextSample = filter.CalcFilter(nextSample, LR);
 
 	// Compression
@@ -204,8 +200,6 @@ void DigitalDelay::CalcSample()
 
 
 
-
-
 int32_t DigitalDelay::OutputMix(float wetSample)
 {
 	// Output mix level
@@ -216,31 +210,8 @@ int32_t DigitalDelay::OutputMix(float wetSample)
 
 	int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
 
-	// Handle soft switching - eg when changing filter types
-	if (softSwitchTime > 0) {
-		GPIOB->ODR |= GPIO_ODR_OD8;		// Debug
-
-//		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
-//		if (softSwitchProp > 0.5f) {
-//			outputSample = ((softSwitchProp * 2.0f) - 1.0f) * oldSample[LR];
-//		} else {
-//			outputSample = (1.0f - (softSwitchProp * 2.0f)) * outputSample;
-//		}
-
-
-
-		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
-		outputSample = (softSwitchProp * oldSample[LR]) + ((1.0f - softSwitchProp) * outputSample);
-
-		if (--softSwitchTime == 0) {
-			GPIOB->ODR &= ~GPIO_ODR_OD8;		// Debug
-		}
-	} else {
-		oldSample[LR] = outputSample;
-	}
 	return outputSample;
 }
-
 
 
 
@@ -284,10 +255,10 @@ int32_t DigitalDelay::GateSample()
 }
 
 
+
 void DigitalDelay::Init()
 {
-	// Clear sample buffers
-	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);
+	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);					// Clear sample buffers
 
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
@@ -297,6 +268,7 @@ void DigitalDelay::Init()
 	delayCrossfade[left] = 0;
 	delayCrossfade[right] = 0;
 }
+
 
 
 void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
@@ -393,6 +365,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 }
 
 
+
 delay_mode DigitalDelay::Mode()
 {
 	// Return setting of Mode switch
@@ -431,6 +404,7 @@ void DigitalDelay::CheckSwitches()
 }
 
 
+
 // Algorithm source: https://varietyofsound.wordpress.com/2011/02/14/efficient-tanh-computation-using-lamberts-continued-fraction/
 float DigitalDelay::FastTanh(float x)
 {
@@ -439,6 +413,7 @@ float DigitalDelay::FastTanh(float x)
 	float b = 135135.0f + x2 * (62370.0f + x2 * (3150.0f + x2 * 28.0f));
 	return a / b;
 }
+
 
 
 // Runs audio tests (audio loopback and 1kHz saw wave)
