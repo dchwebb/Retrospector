@@ -15,7 +15,6 @@
  * Feedback: allow maximum > 1
  * Filter LED - white when in FIR center position
  * Check delay CV affecting delay time
- * Issue with LED colours on very short reverse delay times
  */
 
 volatile uint32_t SysTickVal;

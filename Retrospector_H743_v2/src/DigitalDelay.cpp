@@ -175,7 +175,7 @@ void DigitalDelay::CalcSample()
 		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
 
 		// Scale the LED so it fades in with the timing of the reverse delay
-		UpdateLED(LR, true, remainingDelay);
+		UpdateLED(LR, true, std::max(remainingDelay, 0L));
 
 		// check if read position is less than write position less delay then reset read position to write position
 		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
@@ -269,20 +269,19 @@ void DigitalDelay::Init()
 	delayCrossfade[right] = 0;
 }
 
-
+float brightness;
 
 void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 {
-	float brightness;
 	ledOnTimer++;
 
-	// FIXME - only carry out calculations when needed before send
+	// Carry out counter calculations each loop even if not sending
 	if (reverse) {
 		brightness = std::pow(1.0f - static_cast<float>(remainingDelay) / (calcDelay[c] * 2), 4.0f);
 	} else {
 		// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
 		++ledCounter[c];
-		if (clockValid) {
+		if (clockValid && (linkLR || LR == left)) {
 			// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
 			if (delayMult[c] < 1.0f) {
 				if (delayCounter - lastClock < 500) {				// Always trigger on the clock, unless LED already on
@@ -326,42 +325,42 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 		ledColourClock2 = 0x0033FF,
 	};
 
-	float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
-	if (clockValid) {
-		if (c == right && !linkLR) {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
-		} else {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, brightness);
-		}
-	} else {
-		if (c == right && !linkLR) {
-			led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, brightness);
-		} else {
-			led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
-		}
-	}
-
-	// Filter LED can be configured to display status of gate
-	if (gateLED) {
-		switch (gateShut[left]) {
-		case gateStatus::open:
-			led.LEDColour(ledFilter, 0x00FF00);
-			break;
-		case gateStatus::closed:
-			led.LEDColour(ledFilter, 0xFF0000);
-			break;
-		case gateStatus::closing:
-			led.LEDColour(ledFilter, 0xFFAA00);
-			break;
-		}
-	}
-
+	// Pause to give LEDs enough time to receive SPI packet
 	if (ledOnTimer > 8) {
+
+		float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
+		if (clockValid) {
+			if (c == right && !linkLR) {
+				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
+			} else {
+				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, brightness);
+			}
+		} else {
+			if (c == right && !linkLR) {
+				led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, brightness);
+			} else {
+				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
+			}
+		}
+
+		// Filter LED can be configured to display status of gate
+		if (gateLED) {
+			switch (gateShut[left]) {
+			case gateStatus::open:
+				led.LEDColour(ledFilter, 0x00FF00);
+				break;
+			case gateStatus::closed:
+				led.LEDColour(ledFilter, 0xFF0000);
+				break;
+			case gateStatus::closing:
+				led.LEDColour(ledFilter, 0xFFAA00);
+				break;
+			}
+		}
+
 		led.LEDSend();
 		ledOnTimer = 0;
 	}
-
-
 }
 
 
