@@ -1,14 +1,5 @@
 #include "DigitalDelay.h"
 
-uint32_t debugDuration = 0;
-int16_t debugOutput = 0;
-float fadeout = 0.0f;
-
-float debugBuffer[256];
-uint8_t debugBuffCnt = 0;
-FilterType oldFt;
-float buSample;
-
 void DigitalDelay::CalcSample()
 {
 	StereoSample readSamples, oldReadSamples;						// Delayed samples as interleaved stereo, second var for crossfading
@@ -72,27 +63,20 @@ void DigitalDelay::CalcSample()
 		}
 	}
 
-	// Add in a scaled amount of the sample from the opposite stereo channel
+	// Add in a scaled amount of the sample from the opposite stereo channel - Levels are somewhat arbitrary
 	if (stereoWide) {
-		// FIXME levels are somewhat arbitrary
 		nextSample = 0.75f * nextSample + 0.4f * oppositeSample;
 	}
 
 	// Filter output
-	buSample = nextSample;
 	if (filter.filterType != prevFilterType) {
 		softSwitchTime = softSwitchDefault;
 		prevFilterType = filter.filterType;
-	}
-	if (filter.newFilterType != filter.filterType) {
-		volatile int s = 0;
-		s++;
 	}
 	nextSample = filter.CalcFilter(nextSample, LR);
 
 	// Compression
 	if (tanhCompression) {
-		//nextSample = std::tanh(nextSample / 40000.0) * 40000.0;
 		nextSample = FastTanh(nextSample / 40000.0) * 40000.0;
 	} else 	if (nextSample > threshold || nextSample < -threshold) {
 		int8_t thresholdSign = (nextSample < -threshold ? -1 : 1);
@@ -102,6 +86,7 @@ void DigitalDelay::CalcSample()
 
 
 	SPI2->TXDR = OutputMix(nextSample);
+
 
 	// Add the current sample and the delayed sample scaled by the feedback control
 	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
@@ -229,36 +214,29 @@ int32_t DigitalDelay::OutputMix(float wetSample)
 	DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
 	DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
 
-	// Handle soft switching
 	int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+
+	// Handle soft switching - eg when changing filter types
 	if (softSwitchTime > 0) {
 		GPIOB->ODR |= GPIO_ODR_OD8;		// Debug
 
 //		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
-//		if (softSwitchProp > 0.7f) {
-//			softSwitchFilter[LR].FilterSample(outputSample);
+//		if (softSwitchProp > 0.5f) {
+//			outputSample = ((softSwitchProp * 2.0f) - 1.0f) * oldSample[LR];
 //		} else {
-//			outputSample = static_cast<int32_t>(softSwitchFilter[LR].FilterSample(outputSample));
+//			outputSample = (1.0f - (softSwitchProp * 2.0f)) * outputSample;
 //		}
 
 
-		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
-		outputSample = (softSwitchProp * oldSample[LR]) + ((1 - softSwitchProp) * outputSample);
 
-//		outputSample = oldSample[LR];
+		float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
+		outputSample = (softSwitchProp * oldSample[LR]) + ((1.0f - softSwitchProp) * outputSample);
+
 		if (--softSwitchTime == 0) {
 			GPIOB->ODR &= ~GPIO_ODR_OD8;		// Debug
 		}
 	} else {
-		oldFt = filter.filterType;
 		oldSample[LR] = outputSample;
-		if (LR == right) {
-			if (outputSample == 0 && std::abs(debugBuffer[debugBuffCnt - 1]) > 1000) {
-				volatile int susp = 0;
-				susp++;
-			}
-			debugBuffer[debugBuffCnt++] = outputSample;
-		}
 	}
 	return outputSample;
 }
@@ -280,7 +258,7 @@ int32_t DigitalDelay::GateSample()
 			return 0;
 		} else {
 			if (belowThresholdCount[LR] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
-				fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
+				float fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
 				recordSample = static_cast<float>(recordSample) * fadeout;
 				gateShut[LR] = gateStatus::closing;
 			}
@@ -288,11 +266,7 @@ int32_t DigitalDelay::GateSample()
 		}
 
 	} else  {
-		//if ((overThreshold[LR] > 0 && recordSample > 0) || (overThreshold[LR] < 0 && recordSample < 0)) {		// Last two samples have exceeded threshold in same direction
 		if (overThreshold[LR] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
-			if (gateShut[LR] != gateStatus::open) {
-				debugOutput = recordSample;
-			}
 			belowThresholdCount[LR] = 0;
 			gateShut[LR] = gateStatus::open;
 		} else {

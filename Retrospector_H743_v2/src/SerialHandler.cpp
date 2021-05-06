@@ -84,13 +84,14 @@ bool SerialHandler::Command()
 				std::string(delay.stereoWide ? "Stereo wide on\r\n" : ""));
 
 		if (filter.activateFilter) {
-			if (filter.filterType == IIR)
-				usb->SendString(std::to_string(filter.iirLPFilter[0].numPoles) + " Pole IIR Filter: ");
-			else
-				usb->SendString("FIR Filter; Taps: " + std::to_string(filter.firTaps) + "; ");
+			if (filter.filterType == IIR) {
+				usb->SendString(std::to_string(filter.iirLPFilter[0].numPoles) + " Pole IIR " + std::string(filter.filterControl == LP ? "Low" : "High") + " Pass Filter: ");
+			} else {
+				usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass " : "High Pass ") + std::to_string(filter.firTaps) + " Tap FIR Filter: ");
+			}
 
 			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
-			usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass" : "High Pass") + ", cutoff: " + std::string(buf).append("\r\n"));
+			usb->SendString("Cutoff: " + std::string(buf).append("\r\n"));
 		} else {
 			usb->SendString("Filter: Off\r\n");
 		}
@@ -152,18 +153,18 @@ bool SerialHandler::Command()
 		uint16_t threshold = ParseInt(ComCmd, ':');
 		delay.gateThreshold = threshold;
 		usb->SendString("Gate threshold set to: " + std::to_string(delay.gateThreshold) + "\r\n");
-//		config.SaveConfig();
+		config.SaveConfig();
 
 	} else if (ComCmd.compare(0, 8, "gateact:") == 0) {			// Configure gate activation time
 		uint16_t gate = ParseInt(ComCmd, ':');
 		delay.gateHoldCount = gate;
 		usb->SendString("Gate activate time set to: " + std::to_string(delay.gateHoldCount) + "\r\n");
-//		config.SaveConfig();
+		config.SaveConfig();
 
 	} else if (ComCmd.compare(0, 8, "firtaps:") == 0) {			// Configure fir taps
 		uint16_t taps = ParseInt(ComCmd, ':', 4, 92);
 		if (taps > 0) {
-			taps = (taps / 4) * 4;						// taps must be a multiple of four
+			taps = (taps / 4) * 4;								// taps must be a multiple of four
 			filter.firTaps = taps;
 			filter.Init();										// forces recalculation of coefficients and window
 			usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
@@ -269,13 +270,13 @@ bool SerialHandler::Command()
 		}
 
 
-	} else if (ComCmd.compare("imp\n") == 0) {		// IIR Filter Print impulse response
+	} else if (ComCmd.compare("imp\n") == 0) {					// IIR Filter Print impulse response
 		suspendI2S();
 
-		IIRRegisters iirImpReg;						// Create a temporary set of shift registers for the filter
+		IIRRegisters iirImpReg;									// Create a temporary set of shift registers for the filter
 		IIRFilter& currentFilter = (filter.passType == LowPass) ? filter.iirLPFilter[0] : filter.iirHPFilter[0];
 
-		float out = currentFilter.FilterSample(500, iirImpReg);		// Impulse
+		float out = currentFilter.FilterSample(500, iirImpReg);	// Impulse
 		usb->SendString(std::to_string(out) + "\r\n");
 
 		for (int i = 1; i < 500; ++i) {
@@ -309,13 +310,13 @@ bool SerialHandler::Command()
 
 		resumeI2S();
 
-	} else if (ComCmd.compare("fir\n") == 0) {		// Dump FIR filter coefficients
+	} else if (ComCmd.compare("fir\n") == 0) {					// Dump FIR filter coefficients
 		suspendI2S();
 
 		// NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		// or add manually "-u _printf_float" in linker flags
 		for (int f = 0; f < filter.firTaps; ++f) {
-			if (f > filter.firTaps / 2) {				// Using a folded FIR structure so second half of coefficients is a reflection of the first
+			if (f > filter.firTaps / 2) {						// Using a folded FIR structure so second half of coefficients is a reflection of the first
 				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][filter.firTaps - f]);		// 10dp
 			} else {
 				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);
@@ -324,15 +325,15 @@ bool SerialHandler::Command()
 		}
 		resumeI2S();
 
-	} else if (ComCmd.compare("wd\n") == 0) {		// Dump filter window
+	} else if (ComCmd.compare("wd\n") == 0) {					// Dump filter window
 		suspendI2S();
 		for (int f = 0; f < filter.firTaps; ++f) {
-			sprintf(buf, "%0.10f", filter.winCoeff[f]);		// 10dp
+			sprintf(buf, "%0.10f", filter.winCoeff[f]);			// 10dp
 			usb->SendString(std::string(buf) + "\r\n");
 		}
 		resumeI2S();
 
-	} else if (ComCmd.compare("fdl\n") == 0) {		// Dump left filter buffer
+	} else if (ComCmd.compare("fdl\n") == 0) {					// Dump left filter buffer
 		suspendI2S();
 		uint16_t pos = filter.filterBuffPos[0];
 		for (int f = 0; f < filter.firTaps; ++f) {

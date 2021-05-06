@@ -133,7 +133,7 @@ struct Filter {
 	friend class Config;					// Allow access to config to store values
 public:
 	FilterType filterType = FIR;
-	FilterType newFilterType = filterType;
+
 	void Init();
 	void Update(bool reset = false);
 	float CalcFilter(float sample, channel c);
@@ -146,12 +146,12 @@ private:
 
 	bool activateFilter = true;				// For debug
 	PassType passType;
-	PassType newPassType;
 	FilterControl filterControl = Both;		// Tone control sweeps from LP to HP ('Both') or 'LP' or 'HP'
+	FilterControl newFilterControl = filterControl;
 	bool activeFilter = 0;					// choose which set of coefficients to use (so coefficients can be calculated without interfering with current filtering)
 	float currentCutoff;
+	FilterType newFilterType = filterType;	// Settings to enable filters to be altered without affecting ongoing calculations
 
-	FilterControl newFilterControl = filterControl;
 
 
 	// FIR Settings

@@ -14,9 +14,6 @@ void Filter::Init()
 
 void Filter::Update(bool reset)
 {
-	if (newFilterType != filterType)
-		return;
-
 	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
 	if ((GPIOC->IDR & GPIO_IDR_ID10) == 0) {
 		if (filterControl != LP) {
@@ -53,10 +50,12 @@ void Filter::Update(bool reset)
 			filterControl = newFilterControl;
 
 			if (filterControl == HP) {
+				passType = HighPass;
 				iirHPReg[left].Init();
 				iirHPReg[right].Init();
 			}
 			if (filterControl == LP) {
+				passType = LowPass;
 				iirLPReg[left].Init();
 				iirLPReg[right].Init();
 			}
@@ -81,6 +80,10 @@ float Filter::CalcFilter(float sample, channel c)
 {
 	if (activateFilter) {
 		if (filterType == IIR) {
+			// Store the sample to the filter buffer so that switching is smoother
+			filterBuffer[c][filterBuffPos[c]] = sample;
+			++filterBuffPos[c];
+
 			return static_cast<float>(filter.CalcIIRFilter(sample, c));
 		} else {
 			return filter.CalcFIRFilter(sample, c);

@@ -71,13 +71,11 @@ private:
 	const int16_t threshold = 20000;		// linear compression threshold
 	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
-	uint8_t softSwitchTime = 0;
-	const uint8_t softSwitchDefault = 200;
-	FilterType prevFilterType;
-	int16_t oldSample[2];
-	int16_t oldSample2[2];
+	uint16_t softSwitchTime = 0;				// Amount of time remaining for soft switch cross-fading
+	const uint16_t softSwitchDefault = 300;	// Total amount of time for soft switch cross-fading
+	FilterType prevFilterType;				// Store filter type so can initiate soft-switching when changed
+	int16_t oldSample[2];					// Capture last sample to cross fade from
 
-	//FixedFilter softSwitchFilter[2] = {FixedFilter(6, LowPass, 0.02f), FixedFilter(6, LowPass, 0.02f)};		// Need 2 filters as uses IIR filter with feedback
 
 	// Private class functions
 	int32_t GateSample();
