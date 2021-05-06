@@ -54,10 +54,10 @@ void Filter::Update(bool reset)
 		}
 
 		// Update filter LED
-		if (filterControl == Both) {
+		if (newFilterControl == Both) {
 			float colourMult = dampedADC / 65535.0f;
 			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
-		} else 	if (filterControl == LP) {
+		} else 	if (newFilterControl == LP) {
 			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
 			led.LEDColour(ledFilter, 0xFF5555, 0xFF0000, colourMult, 1.0f);
 		} else {
@@ -104,7 +104,7 @@ float Filter::CalcFilter(float sample, channel c)
 
 		// Handle soft-switching to cross fade between old and new filter types to avoid pops and clicks
 		if (softSwitchTime > 0) {
-			GPIOB->ODR |= GPIO_ODR_OD8;		// Debug
+			GPIOB->ODR |= GPIO_ODR_OD8;				// Debug
 
 			float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
 			if (softSwitchProp > 0.5f) {											// Fade out old filter

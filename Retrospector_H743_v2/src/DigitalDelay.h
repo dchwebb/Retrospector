@@ -54,7 +54,7 @@ private:
 	float modOffsetMax = 180.0f;			// Modulated delay maximum sample offset
 	float modOffsetInc = 0.00375f;			// Amount by which offset is shifted each sample
 	float modOffsetAdd[2] = {modOffsetInc, -1 * modOffsetInc};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
-	float modOffset[2] = {1.0f, modOffsetMax};
+	float modOffset[2] = {modOffsetMax / 2, modOffsetMax / 2};
 
 	enum class gateStatus {open, closed, closing} gateShut[2];
 	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold

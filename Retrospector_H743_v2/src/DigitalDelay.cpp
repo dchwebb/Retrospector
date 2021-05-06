@@ -386,6 +386,19 @@ void DigitalDelay::CheckSwitches()
 	// Implement modulated delay (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
 	if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != modulatedDelay) {
 		modulatedDelay = !modulatedDelay;
+
+		// Trigger a cross-fade when switching in and out of modulated delay to avoid pops and clicks
+		if (modulatedDelay) {
+			oldReadPos[left] = readPos[left];
+			oldReadPos[right] = readPos[LR];
+		} else {
+			oldReadPos[left] = readPos[left] - static_cast<int32_t>(modOffset[left]);
+			if (oldReadPos[left] < 0) 		oldReadPos[left] = oldReadPos[left] + SAMPLE_BUFFER_LENGTH;
+			oldReadPos[right] = readPos[right] - static_cast<int32_t>(modOffset[right]);
+			if (oldReadPos[right] < 0) 		oldReadPos[right] = oldReadPos[right] + SAMPLE_BUFFER_LENGTH;
+		}
+		delayCrossfade[right] = crossfade;
+		delayCrossfade[left] = crossfade;
 	}
 	if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != stereoWide) {
 		stereoWide = !stereoWide;
