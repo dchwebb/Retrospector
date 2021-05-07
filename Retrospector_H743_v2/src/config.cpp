@@ -99,6 +99,8 @@ void Config::SetConfig(configValues &cv)
 
 	cv.delay_gate_threshold = delay.gateThreshold;
 	cv.delay_gate_activate = delay.gateHoldCount;
+	cv.delay_modOffsetMax = delay.modOffsetMax;
+	cv.delay_modOffsetInc = delay.modOffsetInc;
 
 	cv.filter_pot_center = filter.potCentre;
 	cv.filter_fir_taps = filter.firTaps;
@@ -122,6 +124,8 @@ void Config::RestoreConfig()
 		adcZeroOffset[right] = cv.audio_offset_right;
 		delay.gateThreshold = cv.delay_gate_threshold;
 		delay.gateHoldCount = cv.delay_gate_activate;
+		delay.modOffsetMax = cv.delay_modOffsetMax;
+		delay.modOffsetInc = cv.delay_modOffsetInc;
 		filter.potCentre = cv.filter_pot_center;
 		filter.firTaps = cv.filter_fir_taps;
 

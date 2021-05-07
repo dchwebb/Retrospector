@@ -104,8 +104,6 @@ float Filter::CalcFilter(float sample, channel c)
 
 		// Handle soft-switching to cross fade between old and new filter types to avoid pops and clicks
 		if (softSwitchTime > 0) {
-			GPIOB->ODR |= GPIO_ODR_OD8;				// Debug
-
 			float softSwitchProp = static_cast<float>(softSwitchTime) / softSwitchDefault;
 			if (softSwitchProp > 0.5f) {											// Fade out old filter
 				outputSample = ((softSwitchProp * 2.0f) - 1.0f) * outputSample;
@@ -115,9 +113,7 @@ float Filter::CalcFilter(float sample, channel c)
 				}
 				outputSample = (1.0f - (softSwitchProp * 2.0f)) * outputSample;		// Fade in new filter
 			}
-			if (--softSwitchTime == 0) {
-				GPIOB->ODR &= ~GPIO_ODR_OD8;		// Debug
-			}
+			--softSwitchTime;
 		}
 
 

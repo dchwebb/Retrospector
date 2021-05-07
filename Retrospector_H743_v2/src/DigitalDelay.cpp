@@ -85,7 +85,7 @@ void DigitalDelay::CalcSample()
 
 
 	// Add the current sample and the delayed sample scaled by the feedback control
-	int32_t feedbackSample = recordSample +	(static_cast<float>(ADC_array[ADC_Feedback_Pot]) / 65536.0f * nextSample);
+	int32_t feedbackSample = recordSample +	(static_cast<float>(1.1f * (ADC_array[ADC_Feedback_Pot]) / 65536.0f) * nextSample);
 
 	// Hold the left sample in a temporary variable and write both left and right samples when processing right signal
 	if (LR == left) {
@@ -112,7 +112,6 @@ void DigitalDelay::CalcSample()
 	// Check if clock received
 	if ((GPIOB->IDR & GPIO_IDR_ID2) == GPIO_IDR_ID2) {
 		if (!clockHigh) {
-			clockError = delayCounter - (lastClock + clockInterval);
 			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
 			lastClock = delayCounter;
 			clockHigh = true;
@@ -267,6 +266,10 @@ void DigitalDelay::Init()
 	CalcSample();
 	delayCrossfade[left] = 0;
 	delayCrossfade[right] = 0;
+	modOffsetAdd[left] = modOffsetInc;
+	modOffsetAdd[right] = -1 * modOffsetInc;
+	modOffset[left] = modOffsetMax / 2;
+	modOffset[right] = modOffsetMax / 2;
 }
 
 float brightness;

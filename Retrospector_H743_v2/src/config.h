@@ -6,7 +6,7 @@
 #include "SerialHandler.h"
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
-#define CONFIG_VERSION 5
+#define CONFIG_VERSION 6
 
 extern USB usb;
 
@@ -22,6 +22,9 @@ struct configValues {
 	uint16_t audio_offset_right = 0;
 	uint16_t delay_gate_threshold = 0;
 	uint16_t delay_gate_activate = 0;
+	float delay_modOffsetMax = 0.0f;
+	float delay_modOffsetInc = 0.0f;
+
 
 	uint16_t filter_pot_center = 0;
 	uint8_t  filter_fir_taps = 0;

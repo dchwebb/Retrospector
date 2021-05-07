@@ -6,28 +6,28 @@ extern DigitalDelay delay;
 extern Config config;
 extern Bootloader bootloader;
 
-int16_t SerialHandler::ParseInt(const std::string cmd, const char precedingChar, int low = 0, int high = 0) {
-	uint16_t val = -1;
+int32_t SerialHandler::ParseInt(const std::string cmd, const char precedingChar, int low = 0, int high = 0) {
+	int32_t val = -1;
 	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
-	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789") > 0) {
+	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789-") > 0) {
 		val = stoi(cmd.substr(pos + 1));
 	}
 	if (high > low && (val > high || val < low)) {
-		usb->SendString("Must be a value between " + std::to_string(high) + " and " + std::to_string(low) + "\r\n");
-		return 0;
+		usb->SendString("Must be a value between " + std::to_string(low) + " and " + std::to_string(high) + "\r\n");
+		return low - 1;
 	}
 	return val;
 }
 
 float SerialHandler::ParseFloat(const std::string cmd, const char precedingChar, float low = 0.0, float high = 0.0) {
-	float val = -1;
+	float val = -1.0f;
 	int8_t pos = cmd.find(precedingChar);		// locate position of character preceding
 	if (pos >= 0 && std::strspn(cmd.substr(pos + 1).c_str(), "0123456789.") > 0) {
 		val = stof(cmd.substr(pos + 1));
-		if (high > low && (val > high || val < low)) {
-			usb->SendString("Must be a value between " + std::to_string(high) + " and " + std::to_string(low) + "\r\n");
-			return 0.0;
-		}
+	}
+	if (high > low && (val > high || val < low)) {
+		usb->SendString("Must be a value between " + std::to_string(low) + " and " + std::to_string(high) + "\r\n");
+		return low - 1.0f;
 	}
 	return val;
 }
@@ -126,6 +126,9 @@ bool SerialHandler::Command()
 				"iirdefault  -  Reset coefficients of IIR filter to default Butterworth\r\n"
 				"dampx:y     -  Set damping value of xth stage of IIR filter to y (> 0.2, < 2.0)\r\n"
 				"poles:x     -  Configure number of IIR poles (>= 1, <= 8)\r\n"
+				"\r\nModulated Delay Settings:\r\n"
+				"mdlength:x  -  Configure sweep length in samples (default 180)\r\n"
+				"mdinc:x     -  Configure sweep increment (default 0.00375)\r\n"
 				"\r\nRun Tests:\r\n"
 				"mem16       -  Start/stop Memory Test of lower 16MB\r\n"
 				"mem32       -  Start/stop Memory Test of all 32MB\r\n"
@@ -148,6 +151,27 @@ bool SerialHandler::Command()
 		if (!delay.gateLED) {
 			filter.Update(true);
 		}
+
+	} else if (ComCmd.compare(0, 9, "mdlength:") == 0) {		// Modulated Delay length
+		uint16_t val = ParseInt(ComCmd, ':', 1, 65535);
+		if (val > 0) {
+			delay.modOffsetMax = val;
+			delay.modOffset[left] = delay.modOffsetMax / 2;
+			delay.modOffset[right] = delay.modOffsetMax / 2;
+			config.SaveConfig();
+		}
+		usb->SendString("Modulated delay length set to: " + std::to_string(delay.modOffsetMax) + "\r\n");
+
+	} else if (ComCmd.compare(0, 6, "mdinc:") == 0) {			// Modulated Delay increment
+		float val = ParseFloat(ComCmd, ':', 0.000001, 2.0);
+		if (val > 0.0) {
+			delay.modOffsetInc = val;
+			delay.modOffsetAdd[left] = delay.modOffsetInc;
+			delay.modOffsetAdd[right] = -1 * delay.modOffsetInc;
+			config.SaveConfig();
+		}
+		usb->SendString("Modulated delay increment set to: " + std::to_string(delay.modOffsetInc) + "\r\n");
+
 
 	} else if (ComCmd.compare(0, 10, "threshold:") == 0) {		// Configure gate threshold
 		uint16_t threshold = ParseInt(ComCmd, ':');

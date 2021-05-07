@@ -11,8 +11,6 @@
 /* TODO
  * Config to adjust: length multiplier of long delay and reverse
  * USB hangs when sending over CDC and cable removed and reinserted
- * Check ADC Boost mode silicon revision
- * Feedback: allow maximum > 1
  * Filter LED - white when in FIR center position
  * Check delay CV affecting delay time
  */

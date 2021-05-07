@@ -321,12 +321,6 @@ void InitADC1()
 	*/
 	InitAdcPins(ADC1, {15, 14, 17, 16});
 
-	// Debug - initialise interrupt on end of sequence
-	ADC1->IER |= ADC_IER_EOSIE;
-
-	NVIC_SetPriority(ADC_IRQn, 1);					// Lower is higher priority
-	NVIC_EnableIRQ(ADC_IRQn);
-
 
 	// Enable ADC
 	ADC1->CR |= ADC_CR_ADEN;
