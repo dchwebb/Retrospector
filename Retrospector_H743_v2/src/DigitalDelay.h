@@ -79,6 +79,7 @@ private:
 	int32_t OutputMix(float wetSample);
 	float FastTanh(float x);
 	void RunTest(int32_t s);
+	int32_t DelayCV(channel c);
 
 	enum class TestMode {loop, saw, none};
 	TestMode testMode = TestMode::none;

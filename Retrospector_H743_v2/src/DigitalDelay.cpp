@@ -122,17 +122,19 @@ void DigitalDelay::CalcSample()
 	clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));					// Valid clock interval is within a second
 	++delayCounter;
 
-	// Get delay time from ADC or tempo clock and average over 32 readings to smooth
-	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;					// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
+
 
 	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
+	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+	//int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
+	float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;						// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
 	if (clockValid) {
 		if (!linkLR && LR == right) {
 			if (delayMode != modeShort) {
 				delayClkCV *= longDelMult;
 			}
-			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);	// Average over 32 readings to smooth
+
 		} else if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
 			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
 			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
@@ -429,6 +431,15 @@ float DigitalDelay::FastTanh(float x)
 	return a / b;
 }
 
+
+// Combined calculation for delay potentiometer and CV inputs
+inline int32_t DigitalDelay::DelayCV(channel c) {
+	if (c == left) {
+		return std::min(static_cast<int32_t>(ADC_array[ADC_Delay_Pot_L]) + 65536L - ADC_array[ADC_Delay_CV_L], 65535L);
+	} else {
+		return std::min(static_cast<int32_t>(ADC_array[ADC_Delay_Pot_R]) + 65536L - ADC_array[ADC_Delay_CV_R], 65535L);
+	}
+}
 
 
 // Runs audio tests (audio loopback and 1kHz saw wave)
