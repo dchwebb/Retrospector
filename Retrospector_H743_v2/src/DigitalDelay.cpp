@@ -125,8 +125,8 @@ void DigitalDelay::CalcSample()
 
 
 	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
-	int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	//int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
+	//int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+	int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
 	float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;						// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
 	if (clockValid) {
 		if (!linkLR && LR == right) {
@@ -148,8 +148,9 @@ void DigitalDelay::CalcSample()
 	} else {
 		// If link tempo button active, right delay is multiple of left delay
 		if (linkLR && LR == right) {
-			delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
-			int32_t leftDelScaled = calcDelay[left] / delayMult[left];				// Normalise the left delay
+			//delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
+			delayMult[left] = tempoMult[tempoMult.size() * DelayCV(left) / 65536];		// Get the equivalent multiplier for Left delay
+			int32_t leftDelScaled = currentDelay[left] / delayMult[left];			// Normalise the left delay
 			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
 			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
 			hysteresisDivider *= delayMult[right] / delayMult[left];

@@ -10,7 +10,6 @@
 
 /* TODO
  * Config to adjust: length multiplier of long delay and reverse
- * USB hangs when sending over CDC and cable removed and reinserted
  * Filter LED - white when in FIR center position
  * Check delay CV affecting delay time
  */
@@ -36,7 +35,7 @@ extern "C" {
 #include "interrupts.h"
 }
 
-
+uint32_t lastVal;
 
 int main(void) {
 
@@ -64,11 +63,9 @@ int main(void) {
 		serial.Command();			// Check for incoming CDC commands
 
 #if (USB_DEBUG)
-		if ((GPIOC->IDR & GPIO_IDR_ID13) == GPIO_IDR_ID13 && !USBDebug) {
-			USBDebug = true;
-			usb.OutputDebug();
-		} else {
+		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0 && USBDebug) {
 			USBDebug = false;
+			usb.OutputDebug();
 		}
 #endif
 

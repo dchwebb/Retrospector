@@ -1,6 +1,6 @@
 #include "USB.h"
 
-bool USBDebug;
+bool USBDebug = true;
 
 void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pcd.c
 
@@ -371,10 +371,6 @@ void USB::USBInterruptHandler() {		// In Drivers\STM32F4xx_HAL_Driver\Src\stm32f
 
 void USB::InitUSB()
 {
-#if (USB_DEBUG)
-	InitUART();
-#endif
-
 
 	RCC->CR |= RCC_CR_HSI48ON;							// Enable Internal High Speed oscillator for USB
 	while ((RCC->CR & RCC_CR_HSI48RDY) == 0);			// Wait till internal USB oscillator is ready
@@ -561,7 +557,7 @@ void USB::USBD_GetDescriptor() {
 			outBuff = USBD_StrDesc;
 	      break;
 */
-	    case USBD_IDX_CDC_STR:				// 305
+	    case USBD_IDX_CDC_STR:				// 304
 			outBuffSize = USBD_GetString((uint8_t*)USBD_CDC_STRING, USBD_StrDesc);
 			outBuff = USBD_StrDesc;
 	      break;
@@ -777,9 +773,33 @@ void USB::SendString(std::string s) {
 
 
 #if (USB_DEBUG)
-void USB::OutputDebug() {
 
-	uartSendStr("Event,Interrupt,Desc,Int Data,Desc,Endpoint,mRequest,Request,Value,Index,Length,PacketSize,XferBuff0,XferBuff1,\n");
+//std::string IntToString(const int32_t& v) {
+//	std::stringstream ss;
+//	ss << v;
+//	return ss.str();
+//}
+
+std::string HexToString(const uint32_t& v, const bool& spaces) {
+	std::stringstream ss;
+	ss << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << v;
+	if (spaces) {
+		//std::string s = ss.str();
+		return ss.str().insert(2, " ").insert(5, " ").insert(8, " ");
+	}
+	return ss.str();
+}
+
+std::string HexByte(const uint16_t& v) {
+	std::stringstream ss;
+	ss << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << v;
+	return ss.str();
+}
+
+void USB::OutputDebug() {
+	USBDebug = false;
+
+	SendString("Event,Interrupt,Desc,Int Data,Desc,Endpoint,mRequest,Request,Value,Index,Length,PacketSize,XferBuff0,XferBuff1,\n");
 	uint16_t evNo = usbDebugEvent % USB_DEBUG_COUNT;
 	std::string interrupt, subtype;
 	for (int i = 0; i < USB_DEBUG_COUNT; ++i) {
@@ -828,7 +848,48 @@ void USB::OutputDebug() {
 				subtype = "Transfer completed";
 				break;
 			case USB_OTG_DOEPINT_STUP:
-				subtype = "Setup phase done";
+				if (usbDebug[evNo].Request.Request == 6) {
+					switch (usbDebug[evNo].Request.Value >> 8)	{
+					case USB_DESC_TYPE_DEVICE:
+						subtype = "Get Device Descriptor";
+						break;
+					case USB_DESC_TYPE_CONFIGURATION:
+						subtype = "Get Configuration Descriptor";
+						break;
+					case USB_DESC_TYPE_BOS:
+						subtype = "Get BOS Descriptor";
+						break;
+
+					case USB_DESC_TYPE_STRING:
+
+						switch ((uint8_t)(req.Value)) {
+						case USBD_IDX_LANGID_STR:			// 300
+							subtype = "Get Lang Str Descriptor";
+							break;
+						case USBD_IDX_MFC_STR:				// 301
+							subtype = "Get Manufacturor Str Descriptor";
+							break;
+						case USBD_IDX_PRODUCT_STR:			// 302
+							subtype = "Get Product Str Descriptor";
+							break;
+						case USBD_IDX_SERIAL_STR:			// 303
+							subtype = "Get Serial Str Descriptor";
+							break;
+					    case USBD_IDX_CDC_STR:				// 304
+							subtype = "Get CDC Str Descriptor";
+					      break;
+						}
+
+					default:
+						subtype = "Get Descriptor";
+					}
+				} else if (usbDebug[evNo].Request.Request == 5) {
+					subtype = "Set Address to " + std::to_string(usbDebug[evNo].Request.Value);
+				} else if (usbDebug[evNo].Request.Request == 9) {
+					subtype = "SET_CONFIGURATION";
+				} else {
+					subtype = "Setup phase done";
+				}
 				break;
 			default:
 				subtype = "";
@@ -854,10 +915,10 @@ void USB::OutputDebug() {
 		}
 
 		if (usbDebug[evNo].Interrupt != 0) {
-			uartSendStr(IntToString(usbDebug[evNo].eventNo) + ","
+			SendString(std::to_string(usbDebug[evNo].eventNo) + ","
 					+ HexToString(usbDebug[evNo].Interrupt, false) + "," + interrupt + ","
 					+ HexToString(usbDebug[evNo].IntData, false) + "," + subtype + ","
-					+ IntToString(usbDebug[evNo].endpoint) + ","
+					+ std::to_string(usbDebug[evNo].endpoint) + ","
 					+ HexByte(usbDebug[evNo].Request.mRequest) + ", "
 					+ HexByte(usbDebug[evNo].Request.Request) + ", "
 					+ HexByte(usbDebug[evNo].Request.Value) + ", "
@@ -870,4 +931,102 @@ void USB::OutputDebug() {
 		evNo = (evNo + 1) % USB_DEBUG_COUNT;
 	}
 }
+
+
+/* startup sequence:
+0		40000000 SRQINT 	Session request/new session detected
+1		800		USBSUSP 	USB suspend
+2		80000000 WKUINT 	Resume/remote wakeup detected
+3		1000	USBRST 		USB reset
+4		2000	ENUMDNE 	Enumeration done
+5		10 		RXFLVL
+6  		10
+7		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,100,0,40		Device descriptor USBD_FS_DeviceDesc
+8		40000	IEPINT  	USB_OTG_DIEPINT_TXFE  Transmit FIFO empty
+9		40000	IEPINT  	USB_OTG_DIEPINT_XFRC  Transfer completed
+10 		10
+11 		10
+12		80000				USB_OTG_DOEPINT_XFRC
+13		10					Address setup happens here
+14 		10
+15		80000	OEPINT		USB_OTG_DOEPINT_STUP req 0x0,5,31,0				Address setup - third param is address (0x31 in this case)
+16		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+17		10					STS_SETUP_UPDT
+18		10					STS_SETUP_COMP
+19		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,100,12			Device descriptor again but with device address (rather than 0)
+20		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+21		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+22		10					STS_DATA_UPDT
+23		10					STS_SETUP_UPDT
+24		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+25		10					STS_SETUP_UPDT
+26		10					STS_SETUP_COMP
+27		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,200,0,FF		configuration descriptor usbd_audio_CfgDesc
+28		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+29		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+30		40000	IEPINT		USB_OTG_DIEPINT_TXFE 							second part of configuration descriptor
+31		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+32		10					STS_DATA_UPDT
+33		10					STS_SETUP_UPDT
+34		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+35		10					STS_SETUP_UPDT
+36		10					STS_SETUP_COMP
+37		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,F00,0,FF		USBD_FS_BOSDesc
+38		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+39		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+40		10					STS_DATA_UPDT
+41		10					STS_SETUP_UPDT
+42		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+43		10					STS_SETUP_UPDT
+44		10					STS_SETUP_COMP
+45		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,303,409,FF		USBD_IDX_SERIAL_STR
+46		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+47		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+48		10					STS_DATA_UPDT
+49		10					STS_SETUP_UPDT
+50		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+51		10					STS_SETUP_UPDT
+52		10					STS_SETUP_COMP
+53		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,300,0,FF		USBD_IDX_LANGID_STR
+54		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+55		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+56		10					STS_DATA_UPDT
+57		10					STS_SETUP_UPDT
+58		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+59		10					STS_SETUP_UPDT
+60		10					STS_SETUP_COMP
+61		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,FF		USBD_IDX_PRODUCT_STR
+62		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+63		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+64		10					STS_DATA_UPDT
+65		10					STS_SETUP_UPDT
+66		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+67		10					STS_SETUP_UPDT
+68		10					STS_SETUP_COMP
+69		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,600,A			USB_DESC_TYPE_DEVICE_QUALIFIER > Stall
+70		10					STS_DATA_UPDT
+71		10					STS_SETUP_UPDT
+72		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0,9,1,0,0 				Set configuration to 1
+73		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+74		10					STS_DATA_UPDT
+75		10					STS_SETUP_UPDT
+76		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,4		USBD_IDX_PRODUCT_STR
+77		40000	IEPINT		USB_OTG_DIEPINT_TXFE
+78		40000	IEPINT		USB_OTG_DIEPINT_XFRC
+79		10					STS_DATA_UPDT
+80		10					STS_SETUP_UPDT
+81		80000	OEPINT 		USB_OTG_DOEPINT_XFRC
+82		10					STS_SETUP_UPDT reads
+83		10					STS_SETUP_COMP
+84		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,1C		USBD_IDX_PRODUCT_STR
+92		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,1C		USBD_IDX_PRODUCT_STR
+100		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,1C		USBD_IDX_PRODUCT_STR
+108		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,600,A 			USB_DESC_TYPE_DEVICE_QUALIFIER > Stall
+111		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,300,0,1FE		USBD_IDX_LANGID_STR
+119		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,301,409,1FE		USBD_IDX_MFC_STR
+127		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,302,409,1FE		USBD_IDX_PRODUCT_STR
+135		80000	OEPINT 		USB_OTG_DOEPINT_STUP req 0x80,6,3EE,409,1FE		Custom user string?
+*/
 #endif
+
+

@@ -143,7 +143,17 @@ bool SerialHandler::Command()
 				"wd          -  FIR window coefficients\r\n"
 				"imp         -  IIR impulse response\r\n"
 				"\r\n"
+#if (USB_DEBUG)
+				"usbdebug    -  Start USB debugging\r\n"
+				"\r\n"
+#endif
 		);
+
+#if (USB_DEBUG)
+	} else if (ComCmd.compare("usbdebug\n") == 0) {				// Configure gate LED
+		USBDebug = true;
+		usb->SendString("Press link button to dump output\r\n");
+#endif
 
 	} else if (ComCmd.compare("gateled\n") == 0) {				// Configure gate LED
 		delay.gateLED = !delay.gateLED;
