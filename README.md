@@ -9,9 +9,28 @@ The feedback path can be filtered with settings allowing a sweep from low pass t
 
 The feedback control allows greater than 100% regeneration allowing the delay to increase the volume of the delayed signal.
 
+Three RGB LEDs display the delay times (using different colours to indicate clocking and channel linking) and the filter status (white to red with increasing low pass filtering and white to blue for high pass).
+
 A USB port is available on the rear of the module providing configuration, debug and upgrade options via a serial interface.
 
-Technical
+# Technical
+The module is constructed from a sandwich of three PCBs. The front panel is held to the control PCB using the potentiometers and jack sockets with light guides directing the RGB LEDs from the control PCB. The control PCB also houses the LED driver. All other components are on the component PCB and this is attached to the control PCB with standard 2.54mm headers. The component board is a 4 layer PCB; the others have 2 layers.
+
+Retrospector is built around an STM32H743 microcontroller clocked at 400MHz. The MCU uses a pair of multi-channel 16-bit ADCs to digitise the stereo audio input signal and the various potentiometer and control voltage inputs.
+
+The MCU controls the external DAC with I2S at 16 bits. The MCU's internal 12-bit DACs are used to control the linear VCA that carries out stereo mixing of the digital wet signal and analog dry signal.
+
+Delay samples are held in external 32MB SDRAM controlled by the MCU's FMC peripheral. The MCU's internal memory is mainly used for DMA buffers and FIR filter buffers (better performance than the slower external RAM). The MCU also has both data and instruction caches which are used to greatly improve performance.
+
+The three RGB LEDs are controlled by a Toshiba 9 channel LED driver (TB62781FNG) with the MCU setting colour and brightness over SPI and DMA.
+
+The MCU also supports a USB micro-B port to allow upgrades, configuration and debugging via a serial console:
+
+![Image](https://github.com/dchwebb/Retrospector/raw/master/pictures/serial.png "icon")
+
+
+Annotated component PCB
+-----------------------
 ![Image](https://github.com/dchwebb/Retrospector/raw/master/pictures/components.png "icon")
 
 A) A switched-mode power supply (Texas Instruments LM2675) converts the 12V rail to 5V which is then converted to 3.3V using an LDO. THe 5V rail also powers the RGB LEDs.
