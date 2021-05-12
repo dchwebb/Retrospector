@@ -144,7 +144,7 @@ public:
 	void DefaultIIR();						// Reset default IIR coefficients for all IIR filters
 private:
 	uint8_t firTaps = 93;	// value must be divisble by four + 1 (eg 93 = 4*23 + 1) or will cause phase reversal when switching between LP and HP
-	uint16_t potCentre = 29000;				// Configurable in calibration
+	float potCentre = 29000;				// Configurable in calibration
 
 	bool activateFilter = true;				// For debug
 	PassType passType;

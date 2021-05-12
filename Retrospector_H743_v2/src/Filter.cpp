@@ -55,8 +55,13 @@ void Filter::Update(bool reset)
 
 		// Update filter LED
 		if (newFilterControl == Both) {
-			float colourMult = dampedADC / 65535.0f;
-			led.LEDColour(ledFilter, 0x0000FF, 0xFF0000, colourMult, 1.0f);
+			if (dampedADC < potCentre) {	// LP
+				float colourMult = std::pow(dampedADC / potCentre, 4.0f);
+				led.LEDColour(ledFilter, 0xFFFFFF, 0xFF0000, colourMult, 1.0f);
+			} else {
+				float colourMult = std::pow((dampedADC - potCentre) / potCentre, 0.25f);
+				led.LEDColour(ledFilter, 0x0000FF, 0xFFFFFF, colourMult, 1.0f);
+			}
 		} else 	if (newFilterControl == LP) {
 			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
 			led.LEDColour(ledFilter, 0xFF5555, 0xFF0000, colourMult, 1.0f);
@@ -133,7 +138,7 @@ void Filter::InitFIRFilter(float tone)
 	// Pass in smoothed ADC reading - generate appropriate omega sweeping from Low pass to High Pass
 	if (tone < potCentre - 1000) {		// Low Pass
 		passType = LowPass;
-		omega = 1.0f - std::pow((static_cast<float>(potCentre) - tone) / 34000.0f, 0.2f);
+		omega = 1.0f - std::pow((potCentre - tone) / 33000.0f, 0.2f);
 	} else if (tone > potCentre + 1000) {
 		passType = HighPass;
 		omega = 1.0f - std::pow((tone - potCentre)  / 75000.0f, 3.0f);

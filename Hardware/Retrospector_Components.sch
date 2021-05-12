@@ -5013,52 +5013,78 @@ Wire Wire Line
 	-1800 5100 -1700 5100
 Wire Wire Line
 	-1800 5100 -1800 5200
-Text Label -850 4250 0    50   ~ 0
-OCTOSPIM_P1_IO2
-Text Label -850 4050 0    50   ~ 0
+Text Label -1700 6200 2    50   ~ 0
 OCTOSPIM_P2_IO0
-Text Label -850 4150 0    50   ~ 0
+Text Label -1700 6300 2    50   ~ 0
 OCTOSPIM_P2_IO1
-Text Label -100 4250 0    50   ~ 0
+Text Label -1700 6400 2    50   ~ 0
 OCTOSPIM_P2_IO2
-Text Label -850 4350 0    50   ~ 0
+Text Label -1700 6500 2    50   ~ 0
 OCTOSPIM_P2_IO3
-Text Label -2750 4500 2    50   ~ 0
+Text Label -1700 5850 2    50   ~ 0
 OCTOSPIM_P2_CLK
-Text Label -2750 4400 2    50   ~ 0
+Text Label -1700 5950 2    50   ~ 0
 OCTOSPIM_P2_NCLK
-Text Label -100 4350 0    50   ~ 0
-OCTOSPIM_P1_IO3
-Text Label -100 4050 0    50   ~ 0
-OCTOSPIM_P1_IO0
-Text Label -100 4150 0    50   ~ 0
-OCTOSPIM_P1_IO1
-Text Label -850 4450 0    50   ~ 0
-OCTOSPIM_P1_IO4
-Text Label -2750 6550 0    50   ~ 0
-OCTOSPIM_P1_IO5
-Text Label -2750 6650 0    50   ~ 0
-OCTOSPIM_P1_IO6
-Text Label -2750 4600 2    50   ~ 0
-OCTOSPIM_P1_DQS
-Text Label -3600 4400 2    50   ~ 0
-OCTOSPIM_P1_NCLK
-Text Label -3600 4600 2    50   ~ 0
+Text Label -1700 6050 2    50   ~ 0
 OCTOSPIM_P2_DQS
-Text Label -100 4450 0    50   ~ 0
+Text Label -1700 6600 2    50   ~ 0
 OCTOSPIM_P2_IO4
-Text Label -100 4550 0    50   ~ 0
+Text Label -1700 6700 2    50   ~ 0
 OCTOSPIM_P2_IO5
-Text Label -850 4550 0    50   ~ 0
-OCTOSPIM_P1_IO5
-Text Label -850 4650 0    50   ~ 0
-OCTOSPIM_P1_IO6
-Text Label -850 4750 0    50   ~ 0
-OCTOSPIM_P1_IO7
-Text Label -2750 4200 2    50   ~ 0
-OCTOSPIM_P1_NCS
 Wire Wire Line
 	13150 8850 13600 8850
 Wire Wire Line
 	13150 8850 13150 8900
+Text Notes 5400 10750 0    50   ~ 0
+Tantalum
+Text Notes 3100 10950 0    50   ~ 0
+C54: 47uF 25V MLCC\non Prototype\n
+Text Label -1700 6800 2    50   ~ 0
+OCTOSPIM_P2_IO6
+Text Label -1700 6900 2    50   ~ 0
+OCTOSPIM_P2_IO7
+Text Label -1700 5750 2    50   ~ 0
+OCTOSPIM_P2_NCS
+Text Label -1500 6200 0    50   ~ 0
+FMC_A0
+Text Label -1500 6300 0    50   ~ 0
+FMC_A1
+Text Label -1500 6400 0    50   ~ 0
+FMC_A2
+Text Label -1500 6500 0    50   ~ 0
+FMC_A3
+Text Label -1500 5850 0    50   ~ 0
+FMC_A4
+Text Label -1500 5950 0    50   ~ 0
+FMC_A5
+Text Label -1500 6050 0    50   ~ 0
+FMC_A6
+Text Label -1150 6050 0    50   ~ 0
+FMC_~CAS
+Text Label -1500 6600 0    50   ~ 0
+FMC_A10
+Text Label -1500 6700 0    50   ~ 0
+FMC_A11
+Text Label -1500 6800 0    50   ~ 0
+FMC_A12
+Wire Wire Line
+	-1700 5850 -1500 5850
+Wire Wire Line
+	-1700 5950 -1500 5950
+Wire Wire Line
+	-1700 6200 -1500 6200
+Wire Wire Line
+	-1700 6300 -1500 6300
+Wire Wire Line
+	-1700 6400 -1500 6400
+Wire Wire Line
+	-1700 6500 -1500 6500
+Wire Wire Line
+	-1700 6600 -1500 6600
+Wire Wire Line
+	-1700 6700 -1500 6700
+Wire Wire Line
+	-1700 6800 -1500 6800
+Wire Wire Line
+	-1700 6050 -1150 6050
 $EndSCHEMATC

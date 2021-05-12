@@ -10,8 +10,7 @@
 
 /* TODO
  * Config to adjust: length multiplier of long delay and reverse
- * Filter LED - white when in FIR center position
- * Check delay CV affecting delay time
+ * Finish audio bootloader
  */
 
 volatile uint32_t SysTickVal;
