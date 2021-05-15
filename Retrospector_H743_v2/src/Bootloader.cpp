@@ -7,6 +7,8 @@ extern SerialHandler serial;
 //uint8_t __attribute__((section (".sdramSection"))) bootloaderSamples[BL_SAMPLE_SIZE];
 // FIXME - changed for memory testing
 uint8_t bootloaderSamples[BL_SAMPLE_SIZE];
+uint16_t timeAdjust[2000];
+uint16_t timeAdjustCount = 0;
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 // STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
@@ -35,28 +37,32 @@ void Bootloader::Receive()
 	suspendI2S();
 	usb.SendString("Ready to receive audio ...\r\n");
 //	DebugBootloader();
+	recordState = RecordState::setup;
+	bitState = BitState::setup;
 	InitBootloaderTimer();
-	recordState = RecordState::waiting;
-	fileSize = 0;
 }
 
 void __attribute__((optimize("O0"))) Bootloader::GetSample()
 {
 	static bool potentiallyLate;
-	static bool potentiallyEarly;
 	static int highestSample = 0;
 	static int16_t lastSample = 0;
-	static uint8_t bitStuffCount = 0;
 	recordSample = static_cast<int16_t>(adcZeroOffset[left]) - ADC_array[left];
 
 	// Signal starts with a high low pattern - wait for highest value to get offset
 	switch (recordState) {
 
+	case RecordState::setup:
+		recordSample = 0;
+		recordState = RecordState::waiting;
+		highestSample = 0;
+		bitsCaptured = 0;
+		break;
+
 	case RecordState::waiting:
 		if (recordSample > 1000) {				// Once the incoming audio signal crosses threshold start capture
 			recordState = RecordState::triggered;
 			highestSample = recordSample;
-			bitsCaptured = 0;
 		}
 		break;
 
@@ -67,55 +73,38 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 			sampleCounter = 6;					// sampling point found - begin main sampling
 			bitsCaptured = 1;
 			recordState = RecordState::sampling;
-			//captureByte = 1;
 		}
 		break;
 
 
 	case RecordState::sampling:
-		if (bitsCaptured < BL_SAMPLE_SIZE) {
-			if (sampleCounter == 0) {
+		if (sampleCounter == 0) {
 
-				// FIXME timing correction mechanism not yet implemented for early sampling
-				// Confirm a potential late sample (transitioned from 1 to 0 and previous capture was a sample late)
-				if (recordSample < 0 && potentiallyLate) {
-					GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
-					sampleCounter = 6;			// We could try altering the sampling speed but currently just reducing the interval of the next capture
-				} else if (recordSample > 0 && potentiallyEarly) {
-					GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
-					sampleCounter = 6;
-				} else {
-					sampleCounter = 7;
-				}
-
-				// Check if we are potentially sampling late (ie capturing on a falling edge when transitioning from 1 to 0)
-				potentiallyLate =  (recordSample > 0 && lastSample > recordSample);
-				potentiallyEarly = (recordSample < 0 && lastSample < recordSample);	// FIXME this is NOT early - just another test for late
-
-				if (bitState == BitState::processing) {
-					if (recordSample < 0) {
-						bitStuffCount++;
-					} else {
-						if (bitStuffCount > 8) {		// After 8 bits of zero a one will be bit-stuffed so ignore
-							bitStuffCount = 0;
-							return;
-						} else {
-							bitStuffCount = 0;
-						}
-					}
-				}
-
-				ProcessBit(recordSample > 0);
-
+			// FIXME timing correction mechanism not yet implemented for early sampling
+			// Confirm a potential late sample (transitioned from 1 to 0 and previous capture was a sample late)
+			if (recordSample < 0 && potentiallyLate) {
+				GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
+				sampleCounter = 6;			// We could try altering the sampling speed but currently just reducing the interval of the next capture
+				timeAdjust[timeAdjustCount++] = bytesCaptured;
 			} else {
-				lastSample = recordSample;
-				GPIOB->ODR &= ~GPIO_ODR_OD7;
-				sampleCounter--;
+				sampleCounter = 7;
 			}
+
+			// Check if we are potentially sampling late (ie capturing on a falling edge when transitioning from 1 to 0)
+			potentiallyLate = (recordSample > 0 && lastSample > recordSample);
+
+			ProcessBit(recordSample > 0);
+
 		} else {
-			recordState = RecordState::finished;
-			usb.SendString("Samples Captured ...\r\n");
+			lastSample = recordSample;
+			GPIOB->ODR &= ~GPIO_ODR_OD7;
+			sampleCounter--;
 		}
+		break;
+
+	case RecordState::finished:
+		DisableBootloaderTimer();
+		break;
 
 	default:
 		break;
@@ -128,6 +117,7 @@ void Bootloader::ProcessBit(uint8_t bit)
 	static uint16_t setupCount;
 	static uint8_t lastBit;
 	static bool foundCheckSum = false;
+	static uint32_t checkSum = 0;
 
 	if (bitState == BitState::setup) {		// Setup is a stream of 1010101..
 		if (bit != lastBit) {
@@ -142,8 +132,11 @@ void Bootloader::ProcessBit(uint8_t bit)
 
 	if (bitState == BitState::start) {		// 0x00 0xAA
 		if (setupCount == 16) {
+			bytesCaptured = 0;
 			bitsCaptured = 1;
+			checkSum = 0;
 			captureByte = bit;
+			fileSize = 0;
 			bitState = BitState::header;
 			return;
 		} else if ((bit == 1 && setupCount < 8) || (setupCount >= 8 && bit == lastBit)) {		// Check for error state
@@ -170,11 +163,14 @@ void Bootloader::ProcessBit(uint8_t bit)
 			// Check if byte is checksum
 			if ((bytesCaptured + 1) % 100 == 0 && bytesCaptured > 0 && !foundCheckSum) {
 				foundCheckSum = true;
-				usbResult = "Checksum: " + std::to_string(captureByte) + "\r\n";
+				usbResult = std::to_string(bytesCaptured + 1) + " Bytes received. Checksum: " + std::to_string(captureByte) + ((checkSum & 0xFF) == captureByte ? " OK" : " Error") + "\r\n";
+				captureByte = 0;
+				checkSum = 0;
 				usb.SendString(usbResult.c_str());
 			} else {
 				foundCheckSum = false;
-				bootloaderSamples[bytesCaptured++] = captureByte;	// store the previously captured byte
+				checkSum += captureByte;
+				bootloaderSamples[bytesCaptured++] = captureByte ^ 0xCC;	// store the previously captured byte
 			}
 
 			if (bytesCaptured == fileSize) {

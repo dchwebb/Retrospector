@@ -49,6 +49,7 @@ void suspendI2S();
 void resumeI2S();
 void InitTempoClock();
 void InitBootloaderTimer();
+void DisableBootloaderTimer();
 void InitIO();
 void InitDebugTimer();
 void InitI2C();

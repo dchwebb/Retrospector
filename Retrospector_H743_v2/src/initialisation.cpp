@@ -652,6 +652,13 @@ void InitBootloaderTimer()
 	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
 
+void DisableBootloaderTimer()
+{
+	TIM2->CR1 &= ~TIM_CR1_CEN;
+	TIM2->DIER &= ~TIM_DIER_UIE;					// DMA/interrupt enable register
+}
+
+
 #ifdef UNUSED
 // Unused
 void Init_WS2812_SPI()

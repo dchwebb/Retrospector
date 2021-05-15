@@ -10,7 +10,6 @@ byte_arr = []
 headerArray = []
 binFilePath = "D:\CubeIDE\Boottest_H743\Debug\Boottest_H743.bin"
 checksumFreq = 100                              # Insert checksum every x bytes
-bitStuffCount = 0
 encodingHeader = True
 
 # Encodes byte into sequence of four samples, creating smoothing transitions as required
@@ -39,20 +38,11 @@ def EncodeByte(b):
                 if byte_arr[lastByte] < 0xFF:             # transitioning to 1 from mid point or 0
                     byte_arr[lastByte + 1] = 0xAA
             else:
-                # If more than 8 zeros in a row insert a one
-                bitStuffCount += 1
-                if bitStuffCount > 8 and not encodingHeader:
-                    byte_arr[lastByte] = 0x54
-                    byte_arr += bytearray((0xA9FFFFA9).to_bytes(4, "little"))
-                    byte_arr += bytearray((0x00000054).to_bytes(4, "little"))
-                    bitStuffCount = 0
-                    dataLength += 4
-                else:
-                    byte_arr += bytearray((0x00000000).to_bytes(4, "little"))
-                    if byte_arr[lastByte] == 0xFF:            # transitioning to 0 from 1
-                        byte_arr[lastByte] = 0xAA
-                    if byte_arr[lastByte] > 0x00:             # transitioning to 0 from mid point or 1
-                        byte_arr[lastByte + 1] = 0x55
+                byte_arr += bytearray((0x00000000).to_bytes(4, "little"))
+                if byte_arr[lastByte] == 0xFF:            # transitioning to 0 from 1
+                    byte_arr[lastByte] = 0xAA
+                if byte_arr[lastByte] > 0x00:             # transitioning to 0 from mid point or 1
+                    byte_arr[lastByte + 1] = 0x55
 
             b = b << 1
 
@@ -84,24 +74,27 @@ cs_arr = []
 
 binFile.seek(0, 0)                                  # Go to beginning of binary file
 for x in range(rawDataSize):
-    xnextByte = int.from_bytes(binFile.read(1), "little")
-    rem = x % 8
-    if rem == 0:
-        nextByte = 0xFD
-    elif rem == 1:
-        nextByte = 0x04
-    elif rem == 2:
-        nextByte = 0x10
-    elif rem == 3:
-        nextByte = 0x08
-    elif rem == 4:
-        nextByte = 0x00
-    elif rem == 5:
-        nextByte = 0x00
-    elif rem == 6:
-        nextByte = 0x00
-    elif rem == 7:
-        nextByte = 0x00
+    nextByte = int.from_bytes(binFile.read(1), "little")
+    
+    #rem = x % 8
+    #if rem == 0:
+    #    nextByte = 0xFD
+    #elif rem == 1:
+    #    nextByte = 0x04
+    #elif rem == 2:
+    #    nextByte = 0x10
+    #elif rem == 3:
+    #    nextByte = 0x08
+    #elif rem == 4:
+    #    nextByte = 0x00
+    #elif rem == 5:
+    #    nextByte = 0x00
+    #elif rem == 6:
+    #    nextByte = 0xAA
+    #elif rem == 7:
+    #    nextByte = 0x00
+
+    nextByte = nextByte ^ 0xCC
 
     if binFile.tell() % checksumFreq == 0 and binFile.tell() > 0:
         EncodeByte(checkSum & 0xFF)                 # Insert checksum

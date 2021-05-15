@@ -6,7 +6,7 @@
 
 struct Bootloader {
 public:
-	enum class RecordState {waiting, triggered, sampling, finished} recordState;
+	enum class RecordState {setup, waiting, triggered, sampling, finished} recordState;
 	enum class BitState {setup, start, header, checksum, processing} bitState;
 
 	uint16_t bitsCaptured = 0;
