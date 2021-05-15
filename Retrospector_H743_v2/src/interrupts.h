@@ -19,16 +19,15 @@ void SPI2_IRQHandler() {
 	TinyDelay();
 
 	GPIOB->ODR &= ~GPIO_ODR_OD7;  	// Clear red to show calc sample has finished
-	ADC1->CR |= ADC_CR_ADSTART;
-	DMA1->LIFCR |= DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1;
-	DMA1_Stream1->CR |= DMA_SxCR_EN;
+	TriggerADC1();
 }
 
 
-// Bootloader timer
+// Audio Bootloader timer
 void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;				// clear Update Interrupt Flag
 	bootloader.GetSample();
+	TriggerADC1();
 }
 
 

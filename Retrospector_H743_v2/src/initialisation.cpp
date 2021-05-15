@@ -343,6 +343,15 @@ void InitADC1()
 }
 
 
+
+void TriggerADC1()
+{
+	ADC1->CR |= ADC_CR_ADSTART;
+	DMA1->LIFCR |= DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1;
+	DMA1_Stream1->CR |= DMA_SxCR_EN;
+}
+
+
 void InitADC2()
 {
 	// Initialize ADC peripheral

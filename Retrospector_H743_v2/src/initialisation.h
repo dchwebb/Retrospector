@@ -41,6 +41,7 @@ void uartSendChar(char c);
 void uartSendString(const char* s);
 void InitADC();
 void InitADC1();
+void TriggerADC1();
 void InitADC2();
 void InitDAC();
 void InitI2S();
