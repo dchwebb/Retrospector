@@ -13,16 +13,6 @@
  * Finish audio bootloader
  */
 
-class TestClass {
-	uint32_t value;
-public:
-	uint32_t __attribute__((section(".itcm_text")))  retVal() {
-		return value++;
-	}
-};
-
-TestClass testClass;
-volatile uint32_t valSum;
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
@@ -65,14 +55,13 @@ int main(void) {
 	usb.InitUSB();
 	delay.Init();					// Clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
-	CopyToITCMRAM();
+	CopyToITCMRAM();				// Copy bootloader code to instruction RAM so it can update Flash
 
 	while (1) {
 		config.AutoZeroOffset();	// Automatically adjust ADC zero offset during quiet sections
 		delay.CheckSwitches();		// Check values of switches and detect link button press
 		filter.Update();			// Check if filter coefficients need to be updated
 		serial.Command();			// Check for incoming CDC commands
-		valSum = testClass.retVal();
 
 #if (USB_DEBUG)
 		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0 && USBDebug) {

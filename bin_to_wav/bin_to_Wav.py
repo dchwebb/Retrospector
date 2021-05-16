@@ -5,7 +5,7 @@ SampleArray = []
 headerArray = []
 binFilePath = "D:\Eurorack\Retrospector\Bootloader\Debug\Bootloader.bin"
 #binFilePath = "D:\CubeIDE\Boottest_H743\Debug\Boottest_H743.bin"
-checksumFreq = 100                              # Insert checksum every x bytes
+checksumFreq = 500                              # Insert checksum every x bytes
 encodingHeader = True
 
 # Encodes byte into sequence of four samples, creating smoothing transitions as required

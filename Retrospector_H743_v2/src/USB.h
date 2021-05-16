@@ -110,6 +110,8 @@ public:
 	enum EndPoint {CDC_In = 0x81, CDC_Out = 0x1, CDC_Cmd = 0x82, };
 	enum EndPointType { Control = 0, Isochronous = 1, Bulk = 2, Interrupt = 3 };
 	enum class Direction {in, out};
+	volatile bool transmitting;
+
 private:
 	void USB_ActivateEndpoint(uint8_t endpoint, Direction direction, EndPointType eptype);
 	void USB_ReadPacket(uint32_t* dest, uint16_t len);
@@ -133,7 +135,6 @@ private:
 	uint32_t ep0_state;
 	uint8_t dev_state;
 	uint8_t CmdOpCode;				// stores class specific operation codes (eg CDC set line config)
-	volatile bool transmitting;
 
 	struct usbRequest {
 		uint8_t mRequest;

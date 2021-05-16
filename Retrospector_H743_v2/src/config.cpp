@@ -1,6 +1,5 @@
 #include <config.h>
 
-#define FLASH_ALL_ERRORS (FLASH_SR_WRPERR | FLASH_SR_PGSERR | FLASH_SR_STRBERR | FLASH_SR_INCERR | FLASH_SR_OPERR | FLASH_SR_RDPERR | FLASH_SR_RDSERR | FLASH_SR_SNECCERR | FLASH_SR_DBECCERR | FLASH_SR_CRCRDERR)
 
 extern DigitalDelay delay;
 
@@ -82,7 +81,7 @@ bool Config::SaveConfig()
 	__disable_irq();					// Disable Interrupts
 	FlashUnlock(2);						// Unlock Flash memory for writing
 	FLASH->SR2 = FLASH_ALL_ERRORS;		// Clear error flags in Status Register
-	FlashEraseSector(7, 2);				// Erase sector 7, Bank 2
+	FlashEraseSector(7, 2);				// Erase sector 7, Bank 2 (See p152 of manual)
 	bool result = FlashProgram(ADDR_FLASH_SECTOR_7, reinterpret_cast<uint32_t*>(&cv), sizeof(cv));
 	FlashLock(2);						// Lock Bank 2 Flash
 	__enable_irq(); 					// Enable Interrupts
@@ -147,7 +146,7 @@ void Config::RestoreConfig()
 
 
 // Unlock the FLASH control register access
-void Config::FlashUnlock(uint8_t bank)
+void __attribute__((section(".itcm_text"))) Config::FlashUnlock(uint8_t bank)
 {
 	volatile uint32_t* bankCR  = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
 	volatile uint32_t* bankKEY = &(bank == 1 ? FLASH->KEYR1 : FLASH->KEYR2);
@@ -160,7 +159,7 @@ void Config::FlashUnlock(uint8_t bank)
 
 
 // Lock the FLASH Bank Registers access
-void Config::FlashLock(uint8_t bank)
+void __attribute__((section(".itcm_text"))) Config::FlashLock(uint8_t bank)
 {
 	if (bank == 1) {
 		FLASH->CR1 |= FLASH_CR_LOCK;
@@ -171,7 +170,7 @@ void Config::FlashLock(uint8_t bank)
 
 
 // Erase sector - FLASH_CR_PSIZE_1 means a write size of 32bits (see p163 of manual)
-void Config::FlashEraseSector(uint8_t Sector, uint32_t bank)
+void __attribute__((section(".itcm_text"))) Config::FlashEraseSector(uint8_t Sector, uint32_t bank)
 {
 	volatile uint32_t* bankCR = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
 
@@ -183,7 +182,7 @@ void Config::FlashEraseSector(uint8_t Sector, uint32_t bank)
 }
 
 
-bool Config::FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank)
+bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank)
 {
     // Even if FLASH operation fails, the QW flag will be reset and an error flag will be set
 
@@ -210,10 +209,10 @@ bool Config::FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank)
 }
 
 
-bool Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
+bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 {
 	//uint8_t row_index = FLASH_NB_32BITWORD_IN_FLASHWORD;
-	uint8_t bank = (reinterpret_cast<uintptr_t>(dest_addr) < FLASH_BANK2_BASE) ? 1 : 2;
+	uint8_t bank = (reinterpret_cast<uintptr_t>(dest_addr) < FLASH_BANK2_BASE) ? 1 : 2;		// Get which bank we are programming from destination address
 
 	volatile uint32_t* bankCR = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
 
@@ -224,7 +223,8 @@ bool Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 		__DSB();
 
 		// Each write block is 32 bytes
-		for (uint8_t b = 0; b < std::ceil(static_cast<float>(size) / 32); ++b) {
+
+		for (uint16_t b = 0; b < std::ceil(static_cast<float>(size) / 32); ++b) {
 
 			// Program the flash word (8 * 32 bits)
 			for (uint8_t i = 0; i < FLASH_NB_32BITWORD_IN_FLASHWORD; ++i) {

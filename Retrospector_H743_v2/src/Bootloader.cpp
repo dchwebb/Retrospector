@@ -91,12 +91,25 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 		}
 		break;
 
-	case RecordState::finished:
-		//DisableBootloaderTimer();
-		usb.SendString("Installing ...");
-		__disable_irq();
-		Install();
+	case RecordState::finished: {
+		recordState = RecordState::install;
 		break;
+	}
+
+	case RecordState::install: {
+		DisableBootloaderTimer();
+
+		volatile uint32_t time = SysTickVal;
+		while (SysTickVal  < time + 1000) {};
+
+		Install();
+	}
+
+
+	case RecordState::error: {
+		DisableBootloaderTimer();
+		resumeI2S();
+	}
 
 	default:
 		break;
@@ -106,6 +119,25 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 
 void __attribute__((section(".itcm_text"))) Bootloader::Install()
 {
+	extern Config config;
+
+	// Calculate how many banks we need to erase
+	uint8_t eraseBanks = std::ceil(static_cast<float>(fileSize) / 0x1FFFF);
+	__disable_irq();
+
+	config.FlashUnlock(1);							// Unlock Bank 1
+	FLASH->SR2 = FLASH_ALL_ERRORS;					// Clear error flags in Status Register
+
+	for (uint8_t b = 0; b < eraseBanks; ++b) {
+		config.FlashEraseSector(b, 1);				// Erase sector b, Bank 1 (See p152 of manual)
+		uint32_t* bankAddr = reinterpret_cast<uint32_t*>(0x08000000 + (0x20000 * b));
+		bool result = config.FlashProgram(bankAddr, reinterpret_cast<uint32_t*>(&bootloaderSamples), fileSize);		// FIXME Need to increment bootloaderSamples address
+	}
+
+	config.FlashLock(1);							// Lock Bank 1 Flash
+	__DSB();
+	SCB->AIRCR = (uint32_t)((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) | (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) | SCB_AIRCR_SYSRESETREQ_Msk);
+	__DSB();
 
 }
 
@@ -158,18 +190,21 @@ void Bootloader::ProcessBit(uint8_t bit)
 		}
 
 		if (bitState == BitState::processing) {
-			// Check if byte is checksum (every 100 bytes or at end of file)
-			if (((bytesCaptured + 1) % 100 == 0 && bytesCaptured > 0 && !foundCheckSum) || bytesCaptured == fileSize) {
+			// Check if byte is checksum (every 500 bytes or at end of file)
+			if (((bytesCaptured + 1) % 500 == 0 && bytesCaptured > 0 && !foundCheckSum) || bytesCaptured == fileSize) {
 				usbResult = std::to_string(bytesCaptured + 1) + " Bytes received. Checksum: " + std::to_string(captureByte) + ((checkSum & 0xFF) == captureByte ? " OK" : " Error") + "\r\n";
+				if ((checkSum & 0xFF) != captureByte) {
+					usbResult += "Error receiving file. Cancelling upgrade ...\r\n";
+					recordState = RecordState::error;
+				} else if (bytesCaptured == fileSize) {
+					usbResult += "Installing. Do not switch off ...\r\n";
+					recordState = RecordState::finished;
+				}
 				usb.SendString(usbResult.c_str());
 
 				foundCheckSum = true;
 				captureByte = 0;
 				checkSum = 0;
-
-				if (bytesCaptured == fileSize) {
-					recordState = RecordState::finished;
-				}
 			} else {
 				foundCheckSum = false;
 				checkSum += captureByte;

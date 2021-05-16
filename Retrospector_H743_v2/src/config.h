@@ -7,6 +7,7 @@
 
 #define ADDR_FLASH_SECTOR_7		reinterpret_cast<uint32_t*>(0x081E0000) // Base address of Bank 2 Sector 7, 128 Kbytes
 #define CONFIG_VERSION 6
+#define FLASH_ALL_ERRORS (FLASH_SR_WRPERR | FLASH_SR_PGSERR | FLASH_SR_STRBERR | FLASH_SR_INCERR | FLASH_SR_OPERR | FLASH_SR_RDPERR | FLASH_SR_RDSERR | FLASH_SR_SNECCERR | FLASH_SR_DBECCERR | FLASH_SR_CRCRDERR)
 
 extern USB usb;
 
@@ -48,14 +49,15 @@ public:
 	bool SaveConfig();
 	void SetConfig(configValues &cv);	// sets properties of class to match current values
 	void RestoreConfig();				// gets config from Flash, checks and updates settings accordingly
-private:
-	float newOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};
-	uint32_t offsetCounter[2];
 
 	void FlashUnlock(uint8_t bank);
 	void FlashLock(uint8_t bank);
 	void FlashEraseSector(uint8_t Sector, uint32_t bank);
 	bool FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank);
 	bool FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size);
+private:
+	float newOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};
+	uint32_t offsetCounter[2];
+
 };
 
