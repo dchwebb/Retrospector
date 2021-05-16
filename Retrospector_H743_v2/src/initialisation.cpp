@@ -827,7 +827,7 @@ void InitTempoClock()
 }
 #endif
 
-
+#define ITCMRAM
 #ifdef ITCMRAM
 void CopyToITCMRAM()
 {

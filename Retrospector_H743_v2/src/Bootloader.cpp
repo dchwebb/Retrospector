@@ -3,7 +3,7 @@
 extern USB usb;
 extern SerialHandler serial;
 
-#define BL_SAMPLE_SIZE 20000
+#define BL_SAMPLE_SIZE 100000
 //uint8_t __attribute__((section (".sdramSection"))) bootloaderSamples[BL_SAMPLE_SIZE];
 // FIXME - changed for memory testing
 uint8_t bootloaderSamples[BL_SAMPLE_SIZE];
@@ -21,22 +21,11 @@ void  Bootloader::BootDFU()
 	NVIC_SystemReset();
 }
 
-void __attribute__((optimize("O0"))) Bootloader::DebugBootloader()
-{
-	uint8_t DummyArray[] = {0xAA, 0xAA, 0x00, 0xAA, 0x00, 0x00, 0x06, 0x80, 0x02, 0xDD, 0x00};
-	for (uint8_t i = 0; i < 11; ++i) {
-		for (uint8_t b = 0; b < 8; ++b) {
-			ProcessBit((DummyArray[i] >> (7 - b)) & 0x01);
-		}
-	}
-
-}
 
 void Bootloader::Receive()
 {
 	suspendI2S();
 	usb.SendString("Ready to receive audio ...\r\n");
-//	DebugBootloader();
 	recordState = RecordState::setup;
 	bitState = BitState::setup;
 	InitBootloaderTimer();
@@ -103,12 +92,21 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 		break;
 
 	case RecordState::finished:
-		DisableBootloaderTimer();
+		//DisableBootloaderTimer();
+		usb.SendString("Installing ...");
+		__disable_irq();
+		Install();
 		break;
 
 	default:
 		break;
 	}
+}
+
+
+void __attribute__((section(".itcm_text"))) Bootloader::Install()
+{
+
 }
 
 
@@ -160,26 +158,24 @@ void Bootloader::ProcessBit(uint8_t bit)
 		}
 
 		if (bitState == BitState::processing) {
-			// Check if byte is checksum
-			if ((bytesCaptured + 1) % 100 == 0 && bytesCaptured > 0 && !foundCheckSum) {
-				foundCheckSum = true;
+			// Check if byte is checksum (every 100 bytes or at end of file)
+			if (((bytesCaptured + 1) % 100 == 0 && bytesCaptured > 0 && !foundCheckSum) || bytesCaptured == fileSize) {
 				usbResult = std::to_string(bytesCaptured + 1) + " Bytes received. Checksum: " + std::to_string(captureByte) + ((checkSum & 0xFF) == captureByte ? " OK" : " Error") + "\r\n";
+				usb.SendString(usbResult.c_str());
+
+				foundCheckSum = true;
 				captureByte = 0;
 				checkSum = 0;
-				usb.SendString(usbResult.c_str());
+
+				if (bytesCaptured == fileSize) {
+					recordState = RecordState::finished;
+				}
 			} else {
 				foundCheckSum = false;
 				checkSum += captureByte;
-				bootloaderSamples[bytesCaptured++] = captureByte ^ 0xCC;	// store the previously captured byte
+				bootloaderSamples[bytesCaptured++] = captureByte ^ 0xCC;	// store the captured byte, XORd with check sum (to ensure clock recovery transitions)
 			}
 
-			if (bytesCaptured == fileSize) {
-				recordState = RecordState::finished;
-
-				usbResult = std::to_string(fileSize) + " Samples captured\r\n";
-				usb.SendString(usbResult.c_str());
-
-			}
 		}
 
 		bitsCaptured = 0;

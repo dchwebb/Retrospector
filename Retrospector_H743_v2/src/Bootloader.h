@@ -9,8 +9,8 @@ public:
 	enum class RecordState {setup, waiting, triggered, sampling, finished} recordState;
 	enum class BitState {setup, start, header, checksum, processing} bitState;
 
-	uint16_t bitsCaptured = 0;
-	uint16_t bytesCaptured = 0;
+	uint32_t bitsCaptured = 0;
+	uint32_t bytesCaptured = 0;
 	uint32_t sampleCounter = 0;
 	int16_t recordSample;
 	uint8_t captureByte;
@@ -18,8 +18,7 @@ public:
 	std::string usbResult;
 
 	void Receive();
-	void DebugBootloader();
-
+	void Install();
 	void GetSample();
 	void ProcessBit(uint8_t bit);
 	void CopyToFlash();
