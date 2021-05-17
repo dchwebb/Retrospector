@@ -182,11 +182,9 @@ void __attribute__((section(".itcm_text"))) Config::FlashEraseSector(uint8_t Sec
 }
 
 
-bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank)
+bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(uint32_t bank)
 {
     // Even if FLASH operation fails, the QW flag will be reset and an error flag will be set
-
-	uint32_t tickstart = SysTickVal;
 	volatile uint32_t* bankSR  = &(bank == 1 ? FLASH->SR1 : FLASH->SR2);
 	volatile uint32_t* bankCCR = &(bank == 1 ? FLASH->CCR1 : FLASH->CCR2);
 
@@ -196,9 +194,7 @@ bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(ui
 	}
 
 	while ((*bankSR & FLASH_SR_QW) == FLASH_SR_QW) {	// QW flag set when write or erase operation is pending in the command queue buffer
-//		if ((SysTickVal - tickstart) > Timeout) {
-//			return false;
-//		}
+
 	}
 
 	if ((*bankSR & FLASH_SR_EOP) == FLASH_SR_EOP) {		// Check End of Operation flag
@@ -212,10 +208,9 @@ bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(ui
 bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 {
 	uint8_t bank = (reinterpret_cast<uintptr_t>(dest_addr) < FLASH_BANK2_BASE) ? 1 : 2;		// Get which bank we are programming from destination address
-
 	volatile uint32_t* bankCR = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
 
-	if (Config::FlashWaitForLastOperation(10, bank)) {			// FIXME guess a timeout of 10
+	if (Config::FlashWaitForLastOperation(bank)) {
 		*bankCR |= FLASH_CR_PG;
 
 		__ISB();
@@ -223,15 +218,13 @@ bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_
 
 		// Each write block is 32 bytes
 		for (uint16_t b = 0; b < std::ceil(static_cast<float>(size) / 32); ++b) {
-
-			// Program the flash word (8 * 32 bits)
 			for (uint8_t i = 0; i < FLASH_NB_32BITWORD_IN_FLASHWORD; ++i) {
 				*dest_addr = *src_addr;
 				dest_addr++;
 				src_addr++;
 			}
 
-			if (!Config::FlashWaitForLastOperation(10, bank)) {
+			if (!Config::FlashWaitForLastOperation(bank)) {
 				*bankCR &= ~FLASH_CR_PG;				// Clear programming flag
 				return false;
 			}
@@ -245,30 +238,4 @@ bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_
 	return true;
 }
 
-#ifdef UNUSED
-void Config::AutoOffset()
-{
-	// When silence is detected for a long enough time recalculate ADC offset
-	static int32_t newOffset[2] = {33791, 33791};
-	static uint32_t offsetCounter[2];
 
-
-	for (channel lr : {left, right}) {
-		if (ADC_array[lr] > 33000 && ADC_array[lr] < 34500) {
-			newOffset[lr] = (ADC_array[lr] + (127 * newOffset[lr])) >> 7;
-			if (offsetCounter[lr] == 1000000) {
-				if (adcZeroOffset[lr] > newOffset[lr])
-					adcZeroOffset[lr]--;
-				else
-					adcZeroOffset[lr]++;
-				//adcZeroOffset[lr] = newOffset[lr];
-				offsetCounter[lr] = 0;
-			}
-			offsetCounter[lr]++;
-
-		} else {
-			offsetCounter[lr] = 0;
-		}
-	}
-}
-#endif

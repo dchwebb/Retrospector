@@ -15,6 +15,8 @@ public:
 	int16_t recordSample;
 	uint8_t captureByte;
 	uint32_t fileSize = 0;
+	uint8_t versionMajor;
+	uint8_t versionMinor;
 	std::string usbResult;
 
 	void Receive();

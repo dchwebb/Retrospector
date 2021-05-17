@@ -1,41 +1,42 @@
 # See http://soundfile.sapp.org/doc/WaveFormat/ for info on wav format
 
-samplerate = 48000
-SampleArray = []
+sampleRate = 48000
+sampleArray = []
 headerArray = []
 binFilePath = "D:\Eurorack\Retrospector\Bootloader\Debug\Bootloader.bin"
-#binFilePath = "D:\CubeIDE\Boottest_H743\Debug\Boottest_H743.bin"
+#binFilePath = "D:\Eurorack\Retrospector\Retrospector_H743_v2\Release\Retrospector_H743_v2.bin"
 checksumFreq = 500                              # Insert checksum every x bytes
-encodingHeader = True
+versionMajor = 2
+versionMinor = 1
 
 # Encodes byte into sequence of four samples, creating smoothing transitions as required
 # pass -1 to output 8 bits at the mid-value for padding
 def EncodeByte(b):
-    global SampleArray
+    global sampleArray
 
     for x in range(8):
-        lastByte = len(SampleArray) - 1
+        lastByte = len(sampleArray) - 1
         if b == -1:
-            SampleArray += bytearray((0x80808080).to_bytes(4, "little"))
+            sampleArray += bytearray((0x80808080).to_bytes(4, "little"))
             # Create transitions if necessary
             if lastByte > 44:
-                if SampleArray[lastByte] == 0x00:
-                    SampleArray[lastByte] = 0x55
-                if SampleArray[lastByte] == 0xFF:
-                    SampleArray[lastByte] = 0xAA
+                if sampleArray[lastByte] == 0x00:
+                    sampleArray[lastByte] = 0x55
+                if sampleArray[lastByte] == 0xFF:
+                    sampleArray[lastByte] = 0xAA
         else:
             if b & 0x80:
-                SampleArray += bytearray((0xFFFFFFFF).to_bytes(4, "little"))
-                if SampleArray[lastByte] == 0x00:            # transitioning to 1 from 0
-                    SampleArray[lastByte] = 0x55
-                if SampleArray[lastByte] < 0xFF:             # transitioning to 1 from mid point or 0
-                    SampleArray[lastByte + 1] = 0xAA
+                sampleArray += bytearray((0xFFFFFFFF).to_bytes(4, "little"))
+                if sampleArray[lastByte] == 0x00:            # transitioning to 1 from 0
+                    sampleArray[lastByte] = 0x55
+                if sampleArray[lastByte] < 0xFF:             # transitioning to 1 from mid point or 0
+                    sampleArray[lastByte + 1] = 0xAA
             else:
-                SampleArray += bytearray((0x00000000).to_bytes(4, "little"))
-                if SampleArray[lastByte] == 0xFF:            # transitioning to 0 from 1
-                    SampleArray[lastByte] = 0xAA
-                if SampleArray[lastByte] > 0x00:             # transitioning to 0 from mid point or 1
-                    SampleArray[lastByte + 1] = 0x55
+                sampleArray += bytearray((0x00000000).to_bytes(4, "little"))
+                if sampleArray[lastByte] == 0xFF:            # transitioning to 0 from 1
+                    sampleArray[lastByte] = 0xAA
+                if sampleArray[lastByte] > 0x00:             # transitioning to 0 from mid point or 1
+                    sampleArray[lastByte + 1] = 0x55
 
             b = b << 1
 
@@ -58,7 +59,9 @@ EncodeByte((rawDataSize >> 24) & 0xFF)                 # Next 4 bytes are the fi
 EncodeByte((rawDataSize >> 16) & 0xFF)
 EncodeByte((rawDataSize >>  8) & 0xFF)
 EncodeByte((rawDataSize >>  0) & 0xFF)
-encodingHeader = False                                 # Allow bit stuffing from this point on
+EncodeByte(versionMajor)
+EncodeByte(versionMinor)
+
 checkSum = 0
 cs_arr = []
 
@@ -82,22 +85,22 @@ EncodeByte(-1)                                         # Add padding to end
 # Generate wav header
 headerArray += [0x52, 0x49, 0x46, 0x46]                # 'RIFF'
 
-# ChunkSize: 36 + SubChunk2Size, or more precisely  4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) This is the size of the entire file in bytes minus 8 bytes
-headerArray += (36 + len(SampleArray)).to_bytes(4, "little")
+# ChunkSize: This is the size of the entire file in bytes minus 8 bytes
+headerArray += (36 + len(sampleArray)).to_bytes(4, "little")
 
 headerArray += [0x57, 0x41, 0x56, 0x45]                # 'WAVE'
 headerArray += [0x66, 0x6d, 0x74, 0x20]                # 'fmt '
 headerArray += [0x10, 0x00, 0x00, 0x00]                # Sub chunk 1 size (ie 16) -effectively  header size
 headerArray += [0x01, 0x00]                            # 1 = PCM format
 headerArray += [0x01, 0x00]                            # Number of channels = 1
-headerArray += (samplerate).to_bytes(4, "little")      # sample rate
-headerArray += (samplerate).to_bytes(4, "little")      # byte rate (ie 1 channels, 8 bit = 1 bytes per sample)
+headerArray += (sampleRate).to_bytes(4, "little")      # sample rate
+headerArray += (sampleRate).to_bytes(4, "little")      # byte rate (ie 1 channels, 8 bit = 1 bytes per sample)
 headerArray += [0x04, 0x00]                            # Block align = 4
 headerArray += [0x08, 0x00]                            # Bits per sample = 8
 headerArray += [0x64, 0x61, 0x74, 0x61]                # 'data'
-headerArray += (len(SampleArray)).to_bytes(4, "little")# subchunk 2 = number of bytes in the data. NumSamples * NumChannels * BitsPerSample/8
+headerArray += (len(sampleArray)).to_bytes(4, "little")# subchunk 2 = number of bytes in the data. NumSamples * NumChannels * BitsPerSample/8
 
-binary_format = bytearray(headerArray + SampleArray)
+binary_format = bytearray(headerArray + sampleArray)
 wavFile.write(binary_format)
 wavFile.close()
 binFile.close()

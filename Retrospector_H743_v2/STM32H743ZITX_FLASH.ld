@@ -186,11 +186,11 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
-  /* RAM for chorus buffer */
+  /* RAM D1 area */
   . = ALIGN(4);
-  .chorus_data (NOLOAD) :
+  .ram_d1_data (NOLOAD) :
   {
-     KEEP(*(.chorus_data))
+     KEEP(*(.ram_d1_data))
   } >RAM_D1
   
 

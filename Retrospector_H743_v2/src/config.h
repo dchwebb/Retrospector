@@ -53,7 +53,7 @@ public:
 	void FlashUnlock(uint8_t bank);
 	void FlashLock(uint8_t bank);
 	void FlashEraseSector(uint8_t Sector, uint32_t bank);
-	bool FlashWaitForLastOperation(uint32_t Timeout, uint32_t bank);
+	bool FlashWaitForLastOperation(uint32_t bank);
 	bool FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size);
 private:
 	float newOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};

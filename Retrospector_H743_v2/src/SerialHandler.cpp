@@ -79,7 +79,7 @@ bool SerialHandler::Command()
 
 	} else if (ComCmd.compare("info\n") == 0) {		// Print diagnostic information
 
-		usb->SendString("Mountjoy Retrospector - Current Settings:\r\n\r\n" +
+		usb->SendString("Mountjoy Retrospector v2.0 - Current Settings:\r\n\r\n" +
 				std::string(delay.modulatedDelay ? "Modulated delay: Max: " + std::to_string(static_cast<uint32_t>(delay.modOffsetMax)) + " Inc: " + std::to_string(delay.modOffsetInc) + "\r\n" : "") +
 				std::string(delay.stereoWide ? "Stereo wide on\r\n" : ""));
 

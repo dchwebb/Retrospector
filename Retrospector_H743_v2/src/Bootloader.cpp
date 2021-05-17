@@ -3,11 +3,9 @@
 extern USB usb;
 extern SerialHandler serial;
 
-#define BL_SAMPLE_SIZE 100000
-//uint8_t __attribute__((section (".sdramSection"))) bootloaderSamples[BL_SAMPLE_SIZE];
-// FIXME - changed for memory testing
-uint8_t bootloaderSamples[BL_SAMPLE_SIZE];
-
+// Store bootloader data in D1 RAM which is currently unused
+#define BL_SAMPLE_SIZE 0x80000		// 512KB
+uint8_t __attribute__((section (".ram_d1_data"))) bootloaderSamples[BL_SAMPLE_SIZE];
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 // STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
@@ -40,12 +38,13 @@ void Bootloader::Receive()
 	recordState = RecordState::setup;
 	bitState = BitState::setup;
 
+	// Pause and then update LED colours
 	volatile uint32_t time = SysTickVal;
 	while (time > SysTickVal - 2) {};
 
 	led.LEDColour(ledDelL, 0);
 	led.LEDColour(ledDelR, 0);
-	led.LEDColour(ledFilter, 0xFFAA00);
+	led.LEDColour(ledFilter, 0xFF8800);
 	led.LEDSend();
 
 	InitBootloaderTimer();
@@ -185,8 +184,14 @@ void Bootloader::ProcessBit(uint8_t bit)
 			if (bytesCaptured < 4) {
 				fileSize |= (captureByte << ((3 - bytesCaptured) * 8));
 				bytesCaptured++;
+			} else if (bytesCaptured == 4) {
+				versionMajor = captureByte;
+				bytesCaptured++;
+			} else if (bytesCaptured == 5) {
+				versionMinor = captureByte;
+				bytesCaptured++;
 			} else {
-				usbResult = "Bootloader Size: " + std::to_string(fileSize) + "\r\n";
+				usbResult = "Version: " + std::to_string(versionMajor) + "." + std::to_string(versionMinor) + " Size: " + std::to_string(fileSize) + "\r\n";
 				usb.SendString(usbResult.c_str());
 				bytesCaptured = 0;
 				bitState = BitState::processing;
@@ -214,7 +219,6 @@ void Bootloader::ProcessBit(uint8_t bit)
 				checkSum += captureByte;
 				bootloaderSamples[bytesCaptured++] = captureByte ^ 0xCC;	// store the captured byte, XORd with check sum (to ensure clock recovery transitions)
 			}
-
 		}
 
 		bitsCaptured = 0;
