@@ -7,8 +7,7 @@ extern SerialHandler serial;
 //uint8_t __attribute__((section (".sdramSection"))) bootloaderSamples[BL_SAMPLE_SIZE];
 // FIXME - changed for memory testing
 uint8_t bootloaderSamples[BL_SAMPLE_SIZE];
-uint16_t timeAdjust[2000];
-uint16_t timeAdjustCount = 0;
+
 
 // Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
 // STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
@@ -22,15 +21,38 @@ void  Bootloader::BootDFU()
 }
 
 
+// Executes a bootloader at 0x08100000
+void Bootloader::LaunchBootloader()
+{
+	SCB_DisableDCache();
+	__disable_irq();
+	*reinterpret_cast<unsigned long *>(0x20000000) = 0xABBACAFE; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
+	__DSB();
+	NVIC_SystemReset();
+}
+
+
+// Start audio bootloader
 void Bootloader::Receive()
 {
 	suspendI2S();
 	usb.SendString("Ready to receive audio ...\r\n");
 	recordState = RecordState::setup;
 	bitState = BitState::setup;
+
+	volatile uint32_t time = SysTickVal;
+	while (time > SysTickVal - 2) {};
+
+	led.LEDColour(ledDelL, 0);
+	led.LEDColour(ledDelR, 0);
+	led.LEDColour(ledFilter, 0xFFAA00);
+	led.LEDSend();
+
 	InitBootloaderTimer();
 }
 
+
+// Audio bootloader - handles timing of sampling and clock recovery
 void __attribute__((optimize("O0"))) Bootloader::GetSample()
 {
 	static bool potentiallyLate;
@@ -50,15 +72,19 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 
 	case RecordState::waiting:
 		if (recordSample > 1000) {				// Once the incoming audio signal crosses threshold start capture
-			recordState = RecordState::triggered;
+			led.LEDColour(ledFilter, 0xFFFF00);
+			led.LEDSend();			recordState = RecordState::triggered;
 			highestSample = recordSample;
 		}
 		break;
 
 	case RecordState::triggered:
+
 		if (recordSample > highestSample) {		// each bit will be 8 audio samples; locate the position of the highest signal as the sampling point
 			highestSample = recordSample;
 		} else {
+			led.LEDColour(ledFilter, 0x00FF00);
+			led.LEDSend();
 			sampleCounter = 6;					// sampling point found - begin main sampling
 			bitsCaptured = 1;
 			recordState = RecordState::sampling;
@@ -68,13 +94,12 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 
 	case RecordState::sampling:
 		if (sampleCounter == 0) {
+			GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
 
 			// FIXME timing correction mechanism not yet implemented for early sampling
 			// Confirm a potential late sample (transitioned from 1 to 0 and previous capture was a sample late)
 			if (recordSample < 0 && potentiallyLate) {
-				GPIOB->ODR |= GPIO_ODR_OD7;			// Debug
 				sampleCounter = 6;			// We could try altering the sampling speed but currently just reducing the interval of the next capture
-				timeAdjust[timeAdjustCount++] = bytesCaptured;
 			} else {
 				sampleCounter = 7;
 			}
@@ -92,6 +117,9 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 		break;
 
 	case RecordState::finished: {
+		led.LEDColour(ledFilter, 0x0000FF);
+		led.LEDSend();
+
 		recordState = RecordState::install;
 		break;
 	}
@@ -117,31 +145,7 @@ void __attribute__((optimize("O0"))) Bootloader::GetSample()
 }
 
 
-void __attribute__((section(".itcm_text"))) Bootloader::Install()
-{
-	extern Config config;
-
-	// Calculate how many banks we need to erase
-	uint8_t eraseBanks = std::ceil(static_cast<float>(fileSize) / 0x1FFFF);
-	__disable_irq();
-
-	config.FlashUnlock(1);							// Unlock Bank 1
-	FLASH->SR2 = FLASH_ALL_ERRORS;					// Clear error flags in Status Register
-
-	for (uint8_t b = 0; b < eraseBanks; ++b) {
-		config.FlashEraseSector(b, 1);				// Erase sector b, Bank 1 (See p152 of manual)
-		uint32_t* bankAddr = reinterpret_cast<uint32_t*>(0x08000000 + (0x20000 * b));
-		bool result = config.FlashProgram(bankAddr, reinterpret_cast<uint32_t*>(&bootloaderSamples), fileSize);		// FIXME Need to increment bootloaderSamples address
-	}
-
-	config.FlashLock(1);							// Lock Bank 1 Flash
-	__DSB();
-	SCB->AIRCR = (uint32_t)((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) | (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) | SCB_AIRCR_SYSRESETREQ_Msk);
-	__DSB();
-
-}
-
-
+// Processes each bit received from the audio sampler, headers, checksums etc
 void Bootloader::ProcessBit(uint8_t bit)
 {
 	static uint16_t setupCount;
@@ -225,10 +229,41 @@ void Bootloader::ProcessBit(uint8_t bit)
 }
 
 
-void Bootloader::CopyToFlash() {
-	SCB_DisableDCache();
+// Writes the captured firmware held in RAM to Flash
+void __attribute__((section(".itcm_text"))) Bootloader::Install()
+{
+	extern Config config;
+	uint32_t transfer;
+
+	// Calculate how many banks we need to erase
+	uint8_t eraseBanks = std::ceil(static_cast<float>(fileSize) / 0x1FFFF);
 	__disable_irq();
-	*reinterpret_cast<unsigned long *>(0x20000000) = 0xABBACAFE; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
+
+	config.FlashUnlock(1);							// Unlock Bank 1
+	FLASH->SR2 = FLASH_ALL_ERRORS;					// Clear error flags in Status Register
+
+	uint32_t remainingFileSize = fileSize;
+
+	for (uint8_t b = 0; b < eraseBanks; ++b) {
+		config.FlashEraseSector(b, 1);				// Erase sector b, Bank 1 (See p152 of manual)
+		uint32_t* dstAddr = reinterpret_cast<uint32_t*>(0x08000000 + (0x20000 * b));
+		uint32_t* srcAddr = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(&bootloaderSamples) + (0x20000 * b));
+
+		if (remainingFileSize <= 0x20000) {
+			transfer = remainingFileSize;
+		} else {
+			transfer = 0x20000;
+		}
+		remainingFileSize -= transfer;
+
+		config.FlashProgram(dstAddr, srcAddr, transfer);
+	}
+
+	config.FlashLock(1);							// Lock Bank 1 Flash
 	__DSB();
-	NVIC_SystemReset();
+	SCB->AIRCR = (uint32_t)((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) | (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) | SCB_AIRCR_SYSRESETREQ_Msk);	// Reboot
+	__DSB();
 }
+
+
+

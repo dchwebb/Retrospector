@@ -21,7 +21,7 @@ public:
 	void Install();
 	void GetSample();
 	void ProcessBit(uint8_t bit);
-	void CopyToFlash();
+	void LaunchBootloader();
 	void BootDFU();
 
 };

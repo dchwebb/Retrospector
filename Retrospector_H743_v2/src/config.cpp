@@ -196,9 +196,9 @@ bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(ui
 	}
 
 	while ((*bankSR & FLASH_SR_QW) == FLASH_SR_QW) {	// QW flag set when write or erase operation is pending in the command queue buffer
-		if ((SysTickVal - tickstart) > Timeout) {
-			return false;
-		}
+//		if ((SysTickVal - tickstart) > Timeout) {
+//			return false;
+//		}
 	}
 
 	if ((*bankSR & FLASH_SR_EOP) == FLASH_SR_EOP) {		// Check End of Operation flag
@@ -211,7 +211,6 @@ bool __attribute__((section(".itcm_text"))) Config::FlashWaitForLastOperation(ui
 
 bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_addr, uint32_t* src_addr, size_t size)
 {
-	//uint8_t row_index = FLASH_NB_32BITWORD_IN_FLASHWORD;
 	uint8_t bank = (reinterpret_cast<uintptr_t>(dest_addr) < FLASH_BANK2_BASE) ? 1 : 2;		// Get which bank we are programming from destination address
 
 	volatile uint32_t* bankCR = &(bank == 1 ? FLASH->CR1 : FLASH->CR2);
@@ -223,7 +222,6 @@ bool __attribute__((section(".itcm_text"))) Config::FlashProgram(uint32_t* dest_
 		__DSB();
 
 		// Each write block is 32 bytes
-
 		for (uint16_t b = 0; b < std::ceil(static_cast<float>(size) / 32); ++b) {
 
 			// Program the flash word (8 * 32 bits)

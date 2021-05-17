@@ -112,7 +112,7 @@ bool SerialHandler::Command()
 				"led         -  LEDs on/off\r\n"
 				"resume      -  Resume I2S after debugging\r\n"
 				"dfu         -  USB firmware upgrade\r\n"
-				"boot        -  Bootloader test\r\n"
+				"boot        -  Audio Bootloader\r\n"
 				"calib       -  Calibrate device\r\n"
 				"save        -  Save calibration\r\n"
 				"\r\nDynamics config:\r\n"
