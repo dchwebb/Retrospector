@@ -10,7 +10,6 @@
 
 /* TODO
  * Config to adjust: length multiplier of long delay and reverse
- * Finish audio bootloader
  */
 
 

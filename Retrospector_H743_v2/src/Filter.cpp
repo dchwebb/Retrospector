@@ -56,11 +56,11 @@ void Filter::Update(bool reset)
 		// Update filter LED
 		if (newFilterControl == Both) {
 			if (dampedADC < potCentre) {	// LP
-				float colourMult = std::pow(dampedADC / potCentre, 4.0f);
-				led.LEDColour(ledFilter, 0xFFFFFF, 0xFF0000, colourMult, 1.0f);
+				float colourMult = std::pow(dampedADC / potCentre, 2.0f);
+				led.LEDColour(ledFilter, 0xFF99BB, 0xFF0000, colourMult, 1.0f);
 			} else {
-				float colourMult = std::pow((dampedADC - potCentre) / potCentre, 0.25f);
-				led.LEDColour(ledFilter, 0x0000FF, 0xFFFFFF, colourMult, 1.0f);
+				float colourMult = std::pow((dampedADC - potCentre) / potCentre, 0.5f);
+				led.LEDColour(ledFilter, 0x0000FF, 0xBB99FF, colourMult, 1.0f);
 			}
 		} else 	if (newFilterControl == LP) {
 			float colourMult = std::pow(dampedADC / 65535.0f, 4.0f);
