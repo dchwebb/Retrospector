@@ -334,3 +334,4 @@ public:
 	void OutputDebug();
 #endif
 };
+
