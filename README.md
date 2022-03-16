@@ -53,3 +53,4 @@ There were two errors on v2 hardware:
 
 1. OpAmp U3 pin 2 and 3 incorrectly swapped. Bodge is to ground pin 3 of U3, remove capacitor C34, lift U3 pin 2 and connect it with a bodge wire to pad 2 of R24.
 2. DRAM address line 12 was not connected. Bodge is to connect DRAM Pin 36 to MCU Pin 87.
+3. Swapped C54 (tantalum 22uF) for ceramic 47uF (1206 25V X5R).
