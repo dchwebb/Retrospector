@@ -46,3 +46,10 @@ E) The analog input signals (audio and control voltage) are scaled and mixed usi
 F) The microcontroller is an STM32H743 running at 400MHz.
 
 G) The delay beffers are stored in an external 32MB RAM module (ISSI IS42S16160J) allowing for over 5 minutes of stereo delay.
+
+Errata
+------
+There were two errors on v2 hardware:
+
+1. OpAmp U3 pin 2 and 3 incorrectly swapped. Bodge is to ground pin 3 of U3, remove capacitor C34, lift U3 pin 2 and connect it with a bodge wire to pad 2 of R24.
+2. DRAM address line 12 was not connected. Bodge is to connect DRAM Pin 36 to MCU Pin 87.
