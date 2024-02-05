@@ -278,7 +278,7 @@ private:
 			USB_DESC_TYPE_ENDPOINT,				// bDescriptorType: Endpoint
 			CDC_In,								// bEndpointAddress
 			Bulk,								// bmAttributes: Bulk
-			LOBYTE(ep_maxPacket),				// wMaxPacketSize:
+			LOBYTE(ep_maxPacket),				// wMaxPacketSize
 			HIBYTE(ep_maxPacket),
 			0x00								// bInterval: ignore for Bulk transfer
 	};

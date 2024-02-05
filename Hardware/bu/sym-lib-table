@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Retrospector_Components-rescue")(type "KiCad")(uri "${KIPRJMOD}/Retrospector_Components-rescue.kicad_sym")(options "")(descr ""))
+)
