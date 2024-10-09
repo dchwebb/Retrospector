@@ -34,3 +34,6 @@ bin_to_wav/encoded - Copy.wav
 Hardware/_autosave-Retrospector_Components.kicad_pcb
 Hardware/_autosave-Retrospector_Components.sch
 jlc_bom_v2.xls
+Hardware/\#auto_saved_files\#
+*.lck
+Hardware/_autosave*

@@ -633,7 +633,7 @@ void InitLEDSPI()
 
 	BDMA_Channel0->CPAR = (uint32_t)(&(SPI6->TXDR));// Configure the peripheral data register address
 
-	DMAMUX2_Channel0->CCR |= 12; 					// DMA request MUX input 86 = spi6_tx_dma (See p.697)
+	DMAMUX2_Channel0->CCR |= 12; 					// DMA request MUX input 12 = spi6_tx_dma (See p.697)
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 5 Clear synchronization overrun event flag
 }
 
