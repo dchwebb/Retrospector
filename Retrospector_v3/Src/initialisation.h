@@ -4,6 +4,7 @@
 #include "mpu_armv7.h"		// Memory protection unit for selectively disabling cache for DMA transfers
 #include <algorithm>
 #include <cstdlib>
+#include "GpioPin.h"
 
 extern volatile uint32_t SysTickVal;
 
