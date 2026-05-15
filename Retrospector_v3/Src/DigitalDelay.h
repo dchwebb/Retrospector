@@ -12,7 +12,6 @@ union StereoSample {
 	int16_t sample[2];
 };
 
-enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2};
 
 struct DigitalDelay {
 	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
@@ -28,7 +27,7 @@ public:
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
 
 private:
-	delay_mode delayMode;					// Long/short/reverse
+	enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2} delayMode;					// Long/short/reverse
 
 	int32_t writePos = 1;					// Write position in sample buffer (same for both channels)
 	int32_t readPos[2];
@@ -83,4 +82,13 @@ private:
 
 	enum class TestMode {loop, saw, none};
 	TestMode testMode = TestMode::none;
+
+	Btn linkBtn					{{GPIOB, 4, GpioPin::Type::InputPullup}};	// PB4: link button
+
+	GpioPin clockInput			{GPIOB, 2, GpioPin::Type::Input};			// PB2: tempo clock
+	GpioPin stereoWideSwitch	{GPIOC, 12, GpioPin::Type::Input};			// PC12: Stereo Wide
+	GpioPin modDelaySwitch		{GPIOG, 10, GpioPin::Type::Input};			// PG10: Modulated delay
+	GpioPin reverseSwitch		{GPIOE, 2, GpioPin::Type::InputPullup};		// PE2: Mode 1, low in reverse mode
+	GpioPin shortSwitch			{GPIOE, 3, GpioPin::Type::InputPullup};		// PE3: Mode 2, low in short mode
+
 };

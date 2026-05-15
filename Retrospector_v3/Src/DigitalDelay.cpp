@@ -110,7 +110,7 @@ void DigitalDelay::CalcSample()
 	}
 
 	// Check if clock received
-	if ((GPIOB->IDR & GPIO_IDR_ID2) == GPIO_IDR_ID2) {
+	if (clockInput.IsHigh()) {
 		if (!clockHigh) {
 			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
 			lastClock = delayCounter;
@@ -304,15 +304,6 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 			ledCounter[c] = 0;
 		}
 
-		/* Debug - outputs pulse for checking synch to external clock input
-		if (c == left) {
-			if (ledCounter[c] < 50) {
-				GPIOB->ODR |= GPIO_ODR_OD8;			// Toggle LED for debugging
-			} else if (ledCounter[c] > 200) {
-				GPIOB->ODR &= ~GPIO_ODR_OD8;		// Toggle LED for debugging
-			}
-		}*/
-
 		// For very short delays just display a continuous colour
 		if (calcDelay[c] < 1000) {
 			brightness = 0.06f;
@@ -371,13 +362,14 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 
 
 
-delay_mode DigitalDelay::Mode()
+DigitalDelay::delay_mode DigitalDelay::Mode()
 {
 	// Return setting of Mode switch
-	if ((GPIOE->IDR & GPIO_IDR_ID2) == 0)
+	if (reverseSwitch.IsLow()) {
 		return modeReverse;
-	if ((GPIOE->IDR & GPIO_IDR_ID3) == 0)
+	} else if (shortSwitch.IsLow()) {
 		return modeShort;
+	}
 	return modeLong;
 }
 
@@ -385,11 +377,8 @@ delay_mode DigitalDelay::Mode()
 
 void DigitalDelay::CheckSwitches()
 {
-	static uint32_t linkBtnTest;
-	static bool linkButton;
-
 	// Implement modulated delay (PG10)/stereo wide (PC12) switch, and link button (PB4) for delay LR timing
-	if (((GPIOG->IDR & GPIO_IDR_ID10) == 0) != modulatedDelay) {
+	if (modDelaySwitch.IsLow() != modulatedDelay) {
 		modulatedDelay = !modulatedDelay;
 
 		// Trigger a cross-fade when switching in and out of modulated delay to avoid pops and clicks
@@ -405,19 +394,12 @@ void DigitalDelay::CheckSwitches()
 		delayCrossfade[right] = crossfade;
 		delayCrossfade[left] = crossfade;
 	}
-	if (((GPIOC->IDR & GPIO_IDR_ID12) == 0) != stereoWide) {
+	if (stereoWideSwitch.IsLow() != stereoWide) {
 		stereoWide = !stereoWide;
 	}
-	if (SysTickVal > linkBtnTest + 1) {			// Test if link button pressed with some debouncing
-		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0) {
-			if (!linkButton) {
-				linkLR = !linkLR;
-				linkButton = true;
-			}
-		} else {
-			linkButton = false;
-		}
-		linkBtnTest = SysTickVal;
+
+	if (linkBtn.Pressed()) {
+		linkLR = !linkLR;
 	}
 }
 

@@ -8,85 +8,21 @@
 // I2S: Peripheral Clock (AKA per_ck) set to HSI = 64MHz
 // ADC: Peripheral Clock (AKA per_ck) set to HSI = 64MHz
 
-#if CPUCLOCK == 400
 // 8MHz (HSE) / 2 (M) * 200 (N) / 2 (P) = 400MHz
 #define PLL_M1 2
 #define PLL_N1 200
 #define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
 #define PLL_Q1 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 200 (N) / 4 (Q) = 200MHz
 #define PLL_R1 2
-#elif CPUCLOCK == 320
-// 8MHz (HSE) / 2 (M) * 160 (N) / 2 (P) = 320MHz
-#define PLL_M1 2
-#define PLL_N1 160
-#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 160 (N) / 2 (Q) = 320MHz
-#define PLL_R1 2
 
-#elif CPUCLOCK == 280
-// 8MHz (HSE) / 2 (M) * 140 (N) / 2 (P) = 280MHz
-#define PLL_M1 2
-#define PLL_N1 140
-#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 140 (N) / 2 (Q) = 280MHz
-#define PLL_R1 2
-#elif CPUCLOCK == 240
-// 8MHz (HSE) / 2 (M) * 120 (N) / 2 (P) = 240MHz
-#define PLL_M1 2
-#define PLL_N1 120
-#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 120 (N) / 2 (Q) = 240MHz
-#define PLL_R1 2
-#elif CPUCLOCK == 200
-// 8MHz (HSE) / 2 (M) * 100 (N) / 2 (P) = 200MHz
-#define PLL_M1 2
-#define PLL_N1 100
-#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 2			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 100 (N) / 2 (Q) = 200MHz FIXME - problems using this PLL divider and FMC
-#define PLL_R1 2
-#else
-// 8MHz (HSE) / 2 (M) * 240 (N) / 2 (P) = 480MHz
-#define PLL_M1 2
-#define PLL_N1 240
-#define PLL_P1 1			// 0000001: pll1_p_ck = vco1_ck / 2
-#define PLL_Q1 4			// This is used for I2S clock: 8MHz (HSE) / 2 (M) * 240 (N) / 4 (Q) = 240MHz
-#define PLL_R1 2
-#endif
-
-#ifdef PLL2ON
-// PLL2R used for SDRAM clock - not currently used as was interfering with timing on I2S
-// 8MHz (HSE) / 4 (M) * 200 (N) / 2 (R) = 200MHz (Maximum speed successfully tested 230MHz)
-// PPL2P used for ADC: 8MHz / 4 (M) * 200 (N) / 5 (P) = 80MHz
-#define PLL_M2 4
-#define PLL_N2 200
-#define PLL_R2 1			// 0000001: pll2_r_ck = vco2_ck / 2
-#define PLL_P2 4			// 0000100: pll2_p_ck = vco2_ck / 5
-#endif
-
-void SystemClock_Config()
+void InitClocks()
 {
-
 	RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;			// Enable System configuration controller clock
 
 	// Voltage scaling - see Datasheet page 113. VOS1 > 300MHz; VOS2 > 200MHz; VOS3 < 200MHz
 	PWR->CR3 &= ~PWR_CR3_SCUEN;						// Supply configuration update enable - this must be deactivated or VOS ready does not come on
-#if CPUCLOCK <= 200
-	PWR->D3CR |= PWR_D3CR_VOS_0;					// Configure voltage scaling level 2 (0b10 = VOS2)
-	PWR->D3CR &= ~PWR_D3CR_VOS_1;
-#elif CPUCLOCK <= 280
-	PWR->D3CR |= PWR_D3CR_VOS_1;					// Configure voltage scaling level 2 (0b10 = VOS2)
-	PWR->D3CR &= ~PWR_D3CR_VOS_0;
-#else
 	PWR->D3CR |= PWR_D3CR_VOS;						// Configure voltage scaling level 1 before engaging overdrive (0b11 = VOS1)
-#endif
 	while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0);	// Check Voltage ready 1= Ready, voltage level at or above VOS selected level
-
-#if CPUCLOCK > 400
-	// Activate the LDO regulator overdrive mode. Must be written only in VOS1 voltage scaling mode.
-	// This activates VSO0 mode for use in clock speeds from 400MHz to 480MHz
-	SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
-	while ((SYSCFG->PWRCR & SYSCFG_PWRCR_ODEN) == 0);
-#endif
 
 	RCC->CR |= RCC_CR_HSEON;						// Turn on external oscillator
 	while ((RCC->CR & RCC_CR_HSERDY) == 0);			// Wait till HSE is ready
@@ -108,30 +44,12 @@ void SystemClock_Config()
 	RCC->CR |= RCC_CR_PLL1ON;						// Turn on main PLL
 	while ((RCC->CR & RCC_CR_PLL1RDY) == 0);		// Wait till PLL is ready
 
-#ifdef PLL2ON
-	RCC->PLLCKSELR |= PLL_M2 << RCC_PLLCKSELR_DIVM2_Pos;
-
-	// PLL 2 dividers
-	RCC->PLL2DIVR = (PLL_N2 - 1) << RCC_PLL2DIVR_N2_Pos |
-			        PLL_R2 << RCC_PLL2DIVR_R2_Pos |
-					PLL_P2 << RCC_PLL2DIVR_P2_Pos;
-
-	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2RGE_1;			// 01: The PLL2 input (ref1_ck) clock range frequency is between 2 and 4 MHz (Will be 2MHz for 8MHz clock divided by 4)
-	RCC->PLLCFGR |= RCC_PLLCFGR_PLL2VCOSEL;			// 1: Medium VCO range:150 to 420 MHz
-	RCC->PLLCFGR |= RCC_PLLCFGR_DIVR2EN;			// Enable R divider output for SDRAM clock
-	RCC->PLLCFGR |= RCC_PLLCFGR_DIVP2EN;			// Enable P divider output for ADC clock
-
-	RCC->CR |= RCC_CR_PLL2ON;						// Turn on PLL 2
-	while ((RCC->CR & RCC_CR_PLL2RDY) == 0);		// Wait till PLL is ready
-#endif
-
 	// Peripheral scalers
 	RCC->D1CFGR |= RCC_D1CFGR_HPRE_3;				// D1 domain AHB prescaler - divide 400MHz by 2 for 200MHz - this is then divided for all APB clocks below
 	RCC->D1CFGR |= RCC_D1CFGR_D1PPRE_2; 			// Clock divider for APB3 clocks - set to 4 for 100MHz: 100: hclk / 2
 	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE1_2;			// Clock divider for APB1 clocks - set to 4 for 100MHz: 100: hclk / 2
 	RCC->D2CFGR |= RCC_D2CFGR_D2PPRE2_2;			// Clock divider for APB2 clocks - set to 4 for 100MHz: 100: hclk / 2
 	RCC->D3CFGR |= RCC_D3CFGR_D3PPRE_2;				// Clock divider for APB4 clocks - set to 4 for 100MHz: 100: hclk / 2
-
 
 	RCC->CFGR |= RCC_CFGR_SW_PLL1;					// System clock switch: 011: PLL1 selected as system clock
 	while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != (RCC_CFGR_SW_PLL1 << RCC_CFGR_SWS_Pos));		// Wait until PLL has been selected as system clock source
@@ -140,8 +58,7 @@ void SystemClock_Config()
 	FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | FLASH_ACR_LATENCY_4WS;
 	while ((FLASH->ACR & FLASH_ACR_LATENCY_Msk) != FLASH_ACR_LATENCY_4WS);
 
-	// Note that the peripherals can use different clock sources - eg for UART configured thus:
-	// RCC->D2CCIP2R |= RCC_D2CCIP2R_USART28SEL;
+	SystemCoreClockUpdate();						// Update SystemCoreClock (system clock frequency) derived from settings of oscillators, prescalers and PLL
 }
 
 
@@ -430,83 +347,26 @@ void InitI2S() {
 	GpioPin::Init(GPIOD, 3, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PD3 I2S2_CK  AF5
 	GpioPin::Init(GPIOC, 3, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PC3 I2S2_SDO AF5
 
-	//	Enable GPIO and SPI clocks
-//	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port clock
-//	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port clock
-//	RCC->AHB4ENR |= RCC_AHB4ENR_GPIODEN;			// GPIO port clock
-	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;
-
-//	// PB9: I2S2_WS [alternate function AF5]
-//	GPIOB->MODER &= ~GPIO_MODER_MODE9_0;			// 10: Alternate function mode
-//	GPIOB->AFR[1] |= 5 << GPIO_AFRH_AFSEL9_Pos;		// Alternate Function 5 (I2S2)
-//
-//	// PD3 I2S2_CK [alternate function AF5]
-//	GPIOD->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
-//	GPIOD->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
-//
-//	// PC3 I2S2_SDO [alternate function AF5]
-//	GPIOC->MODER &= ~GPIO_MODER_MODE3_0;			// 00: Input (reset state)	01: General purpose output mode	10: Alternate function mode	11: Analog mode
-//	GPIOC->AFR[0] |= 5 << GPIO_AFRL_AFSEL3_Pos;		// Alternate Function 5 (I2S2)
-
+	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;			// Enable SPI clock
 
 	// Configure SPI (Shown as SPI2->CGFR in SFR)
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit*; 11=Master receive
 
-	// Use a 16bit data length but pack into the upper 16 bits of a 32 bit word
+	SPI2->CFG1 |= SPI_CFG1_UDRCFG_1;				// In the event of underrun resend last transmitted data frame
+
+	// Use a 16 bit data length but pack into the upper 16 bits of a 32 bit word
 	SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
 	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
 
-	/* I2S Clock
-	000: pll1_q_ck clock selected as SPI/I2S1,2 and 3 kernel clock (default after reset)
-	001: pll2_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
-	010: pll3_p_ck clock selected as SPI/I2S1,2 and 3 kernel clock
-	011: I2S_CKIN clock selected as SPI/I2S1,2 and 3 kernel clock
-	100: per_ck clock selected as SPI/I2S1,2 and 3 kernel clock
-	//RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL;
-
-	I2S Prescaler Clock calculations:
-	FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]
-
-	I2S Clock = 200MHz:			200000000 / (32*2  * ((2 * 32) + 1)) = 48076.92
-	I2S Clock = 240MHz:			240000000 / (32*2  * ((2 * 39) + 0)) = 48076.92
-	I2S Clock = 300MHz:			280000000 / (32*2  * ((2 * 45) + 1)) = 48076.92
-	I2S Clock = 320MHz: 		320000000 / (32*2  * ((2 * 52) + 0)) = 48076.92
-	PER_CLK = 64MHz				64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
-
-	Note timing problems experienced using both pll1_q_ck and pll2_p_ck when FMC controller is using PLL2
-	*/
-#define I2S_PER_CLK
-#ifdef I2S_PLL2P_CLK
-	// Use PLL2 clock - configured to 200MHz
-	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_0;
-	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
-	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
-#endif
-
-#ifdef I2S_PER_CLK
-	// Use peripheral clock - configured to internal HSI at 64MHz
-	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_2;
+	// 	I2S Prescaler Clock calculations:
+	// FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]
+	// PER_CLK = 64MHz	(HSI)			64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
+	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_2;		// 000: pll1_q_ck (default); 001: pll2_p_ck; 010: pll3_p_ck; 011: I2S_CKIN; 100: per_ck
 	SPI2->I2SCFGR |= (10 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
-#endif
 
-#ifdef I2S_DEFAULT
-#if CPUCLOCK == 200 | CPUCLOCK == 400
-	SPI2->I2SCFGR |= (32 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 32 with Odd factor prescaler
-	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
-#elif CPUCLOCK == 280
-	SPI2->I2SCFGR |= (45 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
-	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
-#elif CPUCLOCK == 320
-	SPI2->I2SCFGR |= (52 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 52 with no Odd factor prescaler
-#else
-	SPI2->I2SCFGR |= (39 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 39 with no Odd factor prescaler
-#endif
-#endif
-
-	// Enable interrupt when TxFIFO threshold reached
-	SPI2->IER |= SPI_IER_TXPIE;
+	SPI2->IER |= SPI_IER_TXPIE;						// Enable interrupt when TxFIFO threshold reached
 	NVIC_SetPriority(SPI2_IRQn, 2);					// Lower is higher priority
 	NVIC_EnableIRQ(SPI2_IRQn);
 
@@ -550,31 +410,9 @@ void InitDebugTimer()
 void InitIO()
 {
 	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port B clock
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOCEN;			// GPIO port C clock
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOEEN;			// GPIO port E clock
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;			// GPIO port G clock
 
 	// MODER: 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
 	// PUPDR: 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
-	GPIOB->MODER &= ~GPIO_MODER_MODE2;				// PB2: tempo clock
-	GPIOB->MODER &= ~GPIO_MODER_MODE4;				// PB4: lock button
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPD4_0;
-
-	GPIOC->MODER &= ~GPIO_MODER_MODE10;				// PC10: LP switch, low when in LP mode
-	GPIOC->PUPDR |= GPIO_PUPDR_PUPD10_0;
-	GPIOC->MODER &= ~GPIO_MODER_MODE11;				// PC11: HP switch
-	GPIOC->PUPDR |= GPIO_PUPDR_PUPD11_0;
-
-	GPIOC->MODER &= ~GPIO_MODER_MODE12;				// PC12: Stereo Wide
-	GPIOC->PUPDR |= GPIO_PUPDR_PUPD12_0;
-	GPIOG->MODER &= ~GPIO_MODER_MODE10;				// PG10: Modulated delay
-	GPIOG->PUPDR |= GPIO_PUPDR_PUPD10_0;
-
-	GPIOE->MODER &= ~GPIO_MODER_MODE2;				// PE2: Mode 1, low in reverse mode
-	GPIOE->PUPDR |= GPIO_PUPDR_PUPD2_0;
-	GPIOE->MODER &= ~GPIO_MODER_MODE3;				// PE3: Mode 2, low in short mode
-	GPIOE->PUPDR |= GPIO_PUPDR_PUPD3_0;
-
 
 	// PB7 (D), PB8 (C) - I2C/debug
 	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
@@ -587,30 +425,19 @@ void InitIO()
 void InitLEDSPI()
 {
 	// Initialises SPI and DMA for controlling 3 RGB LEDs with Toshiba TB62781 9-way LED control (with 3k3 ohm resistors draws aroung 17mA from 5V)
-	// SPI Pins:
-	// PG14 (129) SPI6_MOSI
-	// PG13 (128) SPI6_SCK
 
 	// By default clock is from APB2 peripheral clock at 100MHz (RCC_D2CFGR_D2PPRE2)
 	RCC->APB4ENR |= RCC_APB4ENR_SPI6EN;
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;			// GPIO port clock
 
-	// PG13 (128) SPI6_SCK
-	GPIOG->MODER  &= ~GPIO_MODER_MODE13_0;			// 10: Alternate function mode
-	GPIOG->AFR[1] |= 5 << GPIO_AFRH_AFSEL13_Pos;	// Alternate Function 5 (SPI6)
+	GpioPin::Init(GPIOG, 13, GpioPin::Type::AlternateFunction, 5);		//  PG13 (128) SPI6_SCK AF5
+	GpioPin::Init(GPIOG, 14, GpioPin::Type::AlternateFunction, 5);		//  PG14 (219) SPI6_MOSI  AF5
 
-	// PG14 (219) SPI6_MOSI
-	GPIOG->MODER  &= ~GPIO_MODER_MODE14_0;			// 10: Alternate function mode
-	GPIOG->AFR[1] |= 5 << GPIO_AFRH_AFSEL14_Pos;	// Alternate Function 5 (SPI6)
-
-	// Configure SPI
 	SPI6->CR1 |= SPI_CR1_SSI;						// Internal slave select
-	SPI6->CFG1 |= SPI_CFG1_MBR_2 | SPI_CFG1_MBR_0;					// Master Baud rate p2238: 100: SPI clock/32; 101: SPI clock/64
+	SPI6->CFG1 |= SPI_CFG1_MBR_2 | SPI_CFG1_MBR_0;	// Master Baud rate p2238: 100: SPI clock/32; 101: SPI clock/64
 	SPI6->CFG2 |= SPI_CFG2_COMM_0;					// 00: full-duplex, *01: simplex transmitter, 10: simplex receiver, 11: half-duplex
 	SPI6->CFG2 |= SPI_CFG2_SSM;						// Software slave management (ie do not use external pin)
 	SPI6->CFG2 |= SPI_CFG2_SSOM;					// SS output management in master mode
 	SPI6->CFG2 |= SPI_CFG2_MASTER;					// Master mode
-//	SPI6->CFG2 |= SPI_CFG2_CPHA;					// Clock phase - this setting potentially reduces risk of MOSI line idling high (See p9 of dm00725181)
 
 	// Configure DMA
 	RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN;
@@ -627,6 +454,7 @@ void InitLEDSPI()
 	DMAMUX2_ChannelStatus->CFR |= DMAMUX_CFR_CSOF0; // Channel 5 Clear synchronization overrun event flag
 }
 
+
 void InitBootloaderTimer()
 {
 	// Timer clock operates at SysClk / 2  [specifically  ((hclk / HPRE) / D2PPRE1) * 2] = 200MHz
@@ -641,6 +469,7 @@ void InitBootloaderTimer()
 	TIM2->CR1 |= TIM_CR1_CEN;
 	TIM2->EGR |= TIM_EGR_UG;						//  Re-initializes counter and generates update of registers
 }
+
 
 void DisableBootloaderTimer()
 {

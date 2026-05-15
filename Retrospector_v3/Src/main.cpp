@@ -42,8 +42,7 @@ uint32_t lastVal;
 
 int main(void) {
 
-	SystemClock_Config();			// Configure the clock and PLL
-	SystemCoreClockUpdate();		// Update SystemCoreClock (system clock frequency)
+	InitClocks();			// Configure the clock and PLL
 	InitSysTick();
 
 	InitADC();
@@ -51,7 +50,7 @@ int main(void) {
 #ifndef NOEXTRAM
 	InitSDRAM_16160();				// Initialise 32MB SDRAM
 #endif
-	InitCache();					// Configure MPU to not cache memory regions where DMA beffers reside
+	InitCache();					// Configure MPU to not cache memory regions where DMA buffers reside
 	InitLEDSPI();					// Initialise SPI/DAM for LED controller
 	led.Init();						// Initialise LED SPI packet
 	InitIO();						// Initialise switches and LEDs

@@ -3,6 +3,9 @@
 // Debug
 bool calculatingFilter = false;
 
+GpioPin switchLP	{GPIOC, 10, GpioPin::Type::Input};			// PC10: LP switch, low when in LP mode
+GpioPin switchHP	{GPIOC, 11, GpioPin::Type::Input};			// PC11: HP switch
+
 void Filter::Init()
 {
 	filter.FIRFilterWindow();
@@ -17,12 +20,12 @@ void Filter::Update(bool reset)
 	}
 
 	// Check if filter mode has been changed [PC10 = 0: LP; PC11 = 0: HP; PC10 and PC11 = 1: FIR Sweep]
-	if ((GPIOC->IDR & GPIO_IDR_ID10) == 0) {
+	if (switchLP.IsLow()) {
 		if (filterControl != LP) {
 			newFilterType = IIR;
 			newFilterControl = LP;
 		}
-	} else if ((GPIOC->IDR & GPIO_IDR_ID11) == 0) {
+	} else if (switchHP.IsLow()) {
 		if (filterControl != HP) {
 			newFilterType = IIR;
 			newFilterControl = HP;
