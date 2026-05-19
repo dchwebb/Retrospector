@@ -2,9 +2,11 @@ void OTG_FS_IRQHandler(void) {
 	usb.USBInterruptHandler();
 }
 
-void __attribute__((optimize("O0"))) TinyDelay() {
-	for (int x = 0; x < 2; ++x);
-}
+//void __attribute__((optimize("O0"))) TinyDelay() {
+//	for (int x = 0; x < 2; ++x);
+//}
+
+uint32_t underrun = 0;
 
 // I2S Interrupt
 void SPI2_IRQHandler() {
@@ -13,10 +15,14 @@ void SPI2_IRQHandler() {
 		GPIOB->ODR |= GPIO_ODR_OD7;
 	}
 
+	if ((SPI2->SR & SPI_SR_UDR) == SPI_SR_UDR) {		// Check for Underrun condition
+		SPI2->IFCR |= SPI_IFCR_UDRC;					// Clear underrun condition
+		++underrun;
+	}
 	delay.CalcSample();
 
 	// NB It appears we need something here to add a slight delay or the interrupt sometimes fires twice
-	TinyDelay();
+	//TinyDelay();
 
 	GPIOB->ODR &= ~GPIO_ODR_OD7;  	// Clear red to show calc sample has finished
 	TriggerADC1();
@@ -26,7 +32,7 @@ void SPI2_IRQHandler() {
 // Audio Bootloader timer
 void TIM2_IRQHandler() {
 	TIM2->SR &= ~TIM_SR_UIF;				// clear Update Interrupt Flag
-	bootloader.GetSample();
+	//bootloader.GetSample();
 	TriggerADC1();
 }
 

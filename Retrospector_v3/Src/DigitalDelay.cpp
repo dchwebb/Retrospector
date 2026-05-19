@@ -2,6 +2,10 @@
 
 void DigitalDelay::CalcSample()
 {
+	// Previously calculated samples output at beginning of interrupt to keep timing independent of calculation time
+	SPI2->TXDR = outputSamples[0];
+	SPI2->TXDR = outputSamples[1];
+
 	StereoSample readSamples, oldReadSamples;						// Delayed samples as interleaved stereo, second var for crossfading
 	float nextSample, oppositeSample = 0.0f;						// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
@@ -210,9 +214,9 @@ int32_t DigitalDelay::OutputMix(float wetSample)
 	DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
 	DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
 
-	int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+	//int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
 
-	return outputSample;
+	return (int32_t)wetSample;
 }
 
 
@@ -261,6 +265,7 @@ int32_t DigitalDelay::GateSample()
 void DigitalDelay::Init()
 {
 	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);					// Clear sample buffers
+	//memset(samples, 0, (SAMPLE_BUFFER_LENGTH2 * 4));					// Clear sample buffers
 
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
@@ -428,7 +433,7 @@ inline int32_t DigitalDelay::DelayCV(channel c) {
 // Runs audio tests (audio loopback and 1kHz saw wave)
 void DigitalDelay::RunTest(int32_t sample)
 {
-	static int16_t testSample;
+	static int32_t testSample;
 	switch (testMode) {
 	case TestMode::none:
 		break;
@@ -444,8 +449,9 @@ void DigitalDelay::RunTest(int32_t sample)
 		break;
 	}
 	case TestMode::saw:
-		testSample += 683;		// 65536/96000 * 1kHz
-		SPI2->TXDR = OutputMix(testSample);
+		testSample += 4739242;		// 65536/96000 * 1kHz
+		//SPI2->TXDR = OutputMix(testSample);
+		outputSamples[right] = outputSamples[left] = OutputMix(testSample);
 		break;
 	}
 }

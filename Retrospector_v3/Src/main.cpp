@@ -27,12 +27,15 @@ int32_t __attribute__((section (".ram_d1_data"))) samples[SAMPLE_BUFFER_LENGTH];
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];	// Place delay sample buffers in external SDRAM
 #endif
 
+//int32_t __attribute__((section (".ram_d1_data"))) samples2[SAMPLE_BUFFER_LENGTH2];	// Place delay sample buffers in external SDRAM
+
+
 USB usb;
 SerialHandler serial(usb);
 DigitalDelay delay;
 Filter filter;
 Config config;
-Bootloader bootloader;
+//Bootloader bootloader;
 
 extern "C" {
 #include "interrupts.h"

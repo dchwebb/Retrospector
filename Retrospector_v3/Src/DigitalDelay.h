@@ -28,6 +28,7 @@ public:
 
 private:
 	enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2} delayMode;					// Long/short/reverse
+	int32_t outputSamples[2] = {0, 0};							// Preprepared samples sent to DAC on interrupt
 
 	int32_t writePos = 1;					// Write position in sample buffer (same for both channels)
 	int32_t readPos[2];
@@ -80,8 +81,7 @@ private:
 	void RunTest(int32_t s);
 	int32_t DelayCV(channel c);
 
-	enum class TestMode {loop, saw, none};
-	TestMode testMode = TestMode::none;
+	enum class TestMode {loop, saw, none} testMode = TestMode::saw;
 
 	Btn linkBtn					{{GPIOB, 4, GpioPin::Type::InputPullup}};	// PB4: link button
 

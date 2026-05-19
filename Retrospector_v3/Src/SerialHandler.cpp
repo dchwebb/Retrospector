@@ -57,7 +57,7 @@ bool SerialHandler::Command()
 			usb->SendString("Switching to DFU Mode ...\r\n");
 			uint32_t old = SysTickVal;
 			while (SysTickVal < old + 100) {};		// Give enough time to send the message
-			bootloader.BootDFU();
+//			bootloader.BootDFU();
 		} else {
 			state = serialState::pending;
 			usb->SendString("Upgrade cancelled\r\n");
@@ -243,9 +243,7 @@ bool SerialHandler::Command()
 		state = serialState::dfuConfirm;
 
 	} else if (ComCmd.compare("boot\n") == 0) {					// Test bootloader code
-		bootloader.Receive();
-		//void Bootloader();
-		//Bootloader();
+//		bootloader.Receive();
 
 	} else if (ComCmd.compare("calib\n") == 0) {				// Calibrate filter pot center and audio offsets
 		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");

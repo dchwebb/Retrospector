@@ -55,8 +55,8 @@ void InitClocks()
 	while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != (RCC_CFGR_SW_PLL1 << RCC_CFGR_SWS_Pos));		// Wait until PLL has been selected as system clock source
 
 	// By default Flash latency is set to 7 wait states - set to 4 for now but may need to increase
-	FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | FLASH_ACR_LATENCY_4WS;
-	while ((FLASH->ACR & FLASH_ACR_LATENCY_Msk) != FLASH_ACR_LATENCY_4WS);
+	FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | FLASH_ACR_LATENCY_5WS;
+	while ((FLASH->ACR & FLASH_ACR_LATENCY_Msk) != FLASH_ACR_LATENCY_5WS);
 
 	SystemCoreClockUpdate();						// Update SystemCoreClock (system clock frequency) derived from settings of oscillators, prescalers and PLL
 }
@@ -341,36 +341,48 @@ void InitADC2()
 
 
 
+void InitI2S()
+{
+	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;			// Enable SPI clock
 
-void InitI2S() {
-	GpioPin::Init(GPIOB, 9, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PB9: I2S2_WS AF5
+	GpioPin::Init(GPIOB, 9, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PB9 I2S2_WS AF5
 	GpioPin::Init(GPIOD, 3, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PD3 I2S2_CK  AF5
 	GpioPin::Init(GPIOC, 3, GpioPin::Type::AlternateFunction, 5, GpioPin::DriveStrength::High);		//  PC3 I2S2_SDO AF5
-
-	RCC->APB1LENR |= RCC_APB1LENR_SPI2EN;			// Enable SPI clock
 
 	// Configure SPI (Shown as SPI2->CGFR in SFR)
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;			// I2S Mode
 	SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG_1;			// I2S configuration mode: 00=Slave transmit; 01=Slave receive; 10=Master transmit*; 11=Master receive
 
-	SPI2->CFG1 |= SPI_CFG1_UDRCFG_1;				// In the event of underrun resend last transmitted data frame
-
 	// Use a 16 bit data length but pack into the upper 16 bits of a 32 bit word
-	SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
+	//SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;			// Data Length 00=16-bit; 01=24-bit; 10=32-bit
+	SPI2->I2SCFGR |= SPI_I2SCFGR_DATLEN_1;			// Data Length 00=16-bit; 01=24-bit; *10=32-bit
 	SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;				// Channel Length = 32bits
 
-	// 	I2S Prescaler Clock calculations:
-	// FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]
-	// PER_CLK = 64MHz	(HSI)			64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
+	SPI2->CFG1 |= SPI_CFG1_UDRCFG_1;				// In the event of underrun resend last transmitted data frame
+	SPI2->CFG1 |= 0x1f << SPI_CFG1_DSIZE_Pos;		// Data size to 32 bits (FIFO holds 16 bytes = 4 x 32 bit words)
+	SPI2->CFG1 |= 1 << SPI_CFG1_FTHLV_Pos;			// FIFO threshold level. 0001: 2-data; 0010: 3 data; 0011: 4 data
+
+	/* I2S Clock
+		FS = I2SxCLK / [(32*2)*((2*I2SDIV)+ODD))]
+		PER_CLK = 64MHz	(HSI)			64000000  / (32*2  * ((2 * 10) + 1)) = 47619.05
+	*/
 	RCC->D2CCIP1R |= RCC_D2CCIP1R_SPI123SEL_2;		// 000: pll1_q_ck (default); 001: pll2_p_ck; 010: pll3_p_ck; 011: I2S_CKIN; 100: per_ck
 	SPI2->I2SCFGR |= (10 << SPI_I2SCFGR_I2SDIV_Pos);// Set I2SDIV to 45 with Odd factor prescaler
 	SPI2->I2SCFGR |= SPI_I2SCFGR_ODD;
 
-	SPI2->IER |= SPI_IER_TXPIE;						// Enable interrupt when TxFIFO threshold reached
+	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
+
+	SPI2->TXDR = (int32_t)0;						// Preload the FIFO
+	SPI2->TXDR = (int32_t)0;
+	SPI2->TXDR = (int32_t)0;
+	SPI2->TXDR = (int32_t)0;
+
+	//SPI2->IER |= SPI_IER_TXPIE;						// Enable interrupt when TxFIFO threshold reached
+	SPI2->IER |= (SPI_IER_TXPIE | SPI_IER_UDRIE);	// Enable interrupt when FIFO has free slot or underrun occurs
 	NVIC_SetPriority(SPI2_IRQn, 2);					// Lower is higher priority
 	NVIC_EnableIRQ(SPI2_IRQn);
 
-	SPI2->CR1 |= SPI_CR1_SPE;						// Enable I2S
+
 	SPI2->CR1 |= SPI_CR1_CSTART;					// Start I2S
 }
 

@@ -8,10 +8,12 @@
 
 extern volatile uint32_t SysTickVal;
 
+#define NOEXTRAM
+
 #define ADC1_BUFFER_LENGTH 4
 #define ADC2_BUFFER_LENGTH 7
 #ifdef NOEXTRAM
-#define SAMPLE_BUFFER_LENGTH 131072		// Currently 2^20 (4MB of 16MB)
+#define SAMPLE_BUFFER_LENGTH 131072		// Currently 2^17 (512KB)
 #else
 #define SAMPLE_BUFFER_LENGTH 1048576		// Currently 2^20 (4MB of 16MB)
 #endif
