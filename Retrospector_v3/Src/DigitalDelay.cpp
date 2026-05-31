@@ -3,208 +3,202 @@
 void DigitalDelay::CalcSample()
 {
 	// Previously calculated samples output at beginning of interrupt to keep timing independent of calculation time
-	SPI2->TXDR = outputSamples[0];
-	SPI2->TXDR = outputSamples[1];
+	SPI2->TXDR = outputSamples[left] << 16;
+	SPI2->TXDR = outputSamples[right] << 16;
 
 	StereoSample readSamples, oldReadSamples;						// Delayed samples as interleaved stereo, second var for crossfading
-	float nextSample, oppositeSample = 0.0f;						// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
-	LR = static_cast<channel>(!static_cast<bool>(LR));
-	channel RL = (LR == left) ? right : left;						// Get other channel for use in stereo widening calculations
 	delay_mode delayMode = Mode();									// Long, short or reverse
-	int32_t recordSample = GateSample();							// Capture recording sample
-	int32_t modReadPos, modReadPosNext;								// Positions of two samples (for interpolation) when using modulated delay
+	int32_t recordSample[2] = {GateSample(left), GateSample(right)};// Capture recording sample
 
-	if (modulatedDelay) {
-		// Using modulated delay - update offset accounting for circular buffer wrapping
-		modOffset[LR] += modOffsetAdd[LR];
-		if (modOffset[LR] > modOffsetMax || modOffset[LR] < 1.0f) {
-			modOffsetAdd[LR] *= -1;
-		}
-		modReadPos = readPos[LR] - static_cast<int32_t>(modOffset[LR]);
-		if (modReadPos < 0) {
-			modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
-		}
-		readSamples = {samples[modReadPos]};
-		modReadPosNext = modReadPos + 1;
-		if (modReadPosNext == SAMPLE_BUFFER_LENGTH) {
-			modReadPosNext = 0;
-		}
-	} else {
-		readSamples = {samples[readPos[LR]]};
-	}
+	for (auto LR: {left, right}) {
 
-	// Test modes
-	if (testMode != TestMode::none) {
-		RunTest(recordSample);
-		return;
-	}
+		int32_t modReadPos;								// Positions of two samples (for interpolation) when using modulated delay
+		float nextSample, oppositeSample = 0.0f;		// nextSample is the delayed sample to be played (oppositeSample from the opposite side)
+		channel RL = (channel)!LR;						// Get other channel for use in stereo widening calculations
 
 
-	// Cross fade if moving playback position
-	if (delayCrossfade[LR] > 0) {
 		if (modulatedDelay) {
-			modReadPos = oldReadPos[LR] - static_cast<int32_t>(modOffset[LR]);
-			if (modReadPos < 0) {
-				modReadPos = modReadPos + SAMPLE_BUFFER_LENGTH;
+			// Using modulated delay - update offset accounting for circular buffer wrapping
+			modOffset += modOffsetInc;
+			if (modOffset > modOffsetMax || modOffset < 1.0f) {
+				modOffsetInc *= -1;
 			}
-			oldReadSamples = {samples[modReadPos]};
+			modReadPos = WrapSamplePos(readPos[LR] - static_cast<int32_t>(modOffset));
+
+			readSamples = {samples[modReadPos]};
 		} else {
-			oldReadSamples = {samples[oldReadPos[LR]]};
+			readSamples = {samples[readPos[LR]]};
 		}
-		float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
-		nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[LR]) * (scale);
-		oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[RL]) * (scale);
-		--delayCrossfade[LR];
-	} else {
-		if (modulatedDelay) {
-			StereoSample readSamples2 = {samples[modReadPosNext]};			// Get next sample for interpolation
-			float offsetFraction = modOffset[LR] - std::round(modOffset[LR]);
-			nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - offsetFraction) + static_cast<float>(readSamples2.sample[LR]) * offsetFraction;
+
+		// Test modes
+		if (testMode != TestMode::none) {
+			RunTest(recordSample[LR]);
+			return;
+		}
+
+
+		// Cross fade if moving playback position
+		if (delayCrossfade[LR] > 0) {
+			if (modulatedDelay) {
+				modReadPos = WrapSamplePos(oldReadPos[LR] - static_cast<int32_t>(modOffset));
+				oldReadSamples = {samples[modReadPos]};
+			} else {
+				oldReadSamples = {samples[oldReadPos[LR]]};
+			}
+			float scale = static_cast<float>(delayCrossfade[LR]) / static_cast<float>(crossfade);
+			nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[LR]) * (scale);
+			oppositeSample = static_cast<float>(readSamples.sample[RL]) * (1.0f - scale) + static_cast<float>(oldReadSamples.sample[RL]) * (scale);
+			--delayCrossfade[LR];
 		} else {
-			nextSample = static_cast<float>(readSamples.sample[LR]);
-			oppositeSample = static_cast<float>(readSamples.sample[RL]);
-		}
-	}
-
-	// Add in a scaled amount of the sample from the opposite stereo channel - Levels are somewhat arbitrary
-	if (stereoWide) {
-		nextSample = 0.75f * nextSample + 0.4f * oppositeSample;
-	}
-
-
-	nextSample = filter.CalcFilter(nextSample, LR);
-
-	// Compression
-	if (tanhCompression) {
-		nextSample = FastTanh(nextSample / 40000.0) * 40000.0;
-	} else 	if (nextSample > threshold || nextSample < -threshold) {
-		int8_t thresholdSign = (nextSample < -threshold ? -1 : 1);
-		int32_t excess = abs(nextSample - thresholdSign * threshold);
-		nextSample = (threshold + (ratio * excess) / (ratio + excess)) * thresholdSign;
-	}
-
-
-	SPI2->TXDR = OutputMix(nextSample);
-
-
-	// Add the current sample and the delayed sample scaled by the feedback control
-	int32_t feedbackSample = recordSample +	(static_cast<float>(1.1f * (ADC_array[ADC_Feedback_Pot]) / 65536.0f) * nextSample);
-
-	// Hold the left sample in a temporary variable and write both left and right samples when processing right signal
-	if (LR == left) {
-		leftWriteSample = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
-	} else {
-		StereoSample writeSample;
-		writeSample.sample[left] = leftWriteSample;
-		writeSample.sample[right] = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
-		samples[writePos] = writeSample.bothSamples;
-
-		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
-	}
-
-
-	// Move write and read heads one sample forwards
-	if (delayMode == modeReverse) {
-		if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-		if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-	} else {
-		if (++readPos[LR] == SAMPLE_BUFFER_LENGTH)		readPos[LR] = 0;
-		if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
-	}
-
-	// Check if clock received
-	if (clockInput.IsHigh()) {
-		if (!clockHigh) {
-			clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
-			lastClock = delayCounter;
-			clockHigh = true;
-		}
-	} else {
-		clockHigh = false;
-	}
-	clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));					// Valid clock interval is within a second
-	++delayCounter;
-
-
-
-	// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
-	//int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
-	int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
-	float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;						// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
-	if (clockValid) {
-		if (!linkLR && LR == right) {
-			if (delayMode != modeShort) {
-				delayClkCV *= longDelMult;
+			if (modulatedDelay) {
+				StereoSample readSamples2 = {samples[WrapSamplePos(modReadPos + 1)]};			// Get next sample for interpolation
+				float offsetFraction = modOffset - std::round(modOffset);
+				nextSample = static_cast<float>(readSamples.sample[LR]) * (1.0f - offsetFraction) + static_cast<float>(readSamples2.sample[LR]) * offsetFraction;
+			} else {
+				nextSample = static_cast<float>(readSamples.sample[LR]);
+				oppositeSample = static_cast<float>(readSamples.sample[RL]);
 			}
-			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);	// Average over 32 readings to smooth
-
-		} else if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
-			delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
-			delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
-			if (delayMode != modeShort) {
-				delayMult[LR] *= longDelMult;
-			}
-			calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
-			hysteresisDivider = delayMult[LR];
 		}
 
-	} else {
-		// If link tempo button active, right delay is multiple of left delay
-		if (linkLR && LR == right) {
-			//delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
-			delayMult[left] = tempoMult[tempoMult.size() * DelayCV(left) / 65536];		// Get the equivalent multiplier for Left delay
-			int32_t leftDelScaled = currentDelay[left] / delayMult[left];			// Normalise the left delay
-			delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
-			calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
-			hysteresisDivider *= delayMult[right] / delayMult[left];
+		// Add in a scaled amount of the sample from the opposite stereo channel - Levels are somewhat arbitrary
+		if (stereoWide) {
+			nextSample = 0.75f * nextSample + 0.4f * oppositeSample;
+		}
+
+
+		nextSample = filter.CalcFilter(nextSample, LR);
+		nextSample = FastTanh(nextSample / 40000.0) * 40000.0;		// Compression
+
+		outputSamples[LR] = OutputMix(nextSample);
+
+
+		// Add the current sample and the delayed sample scaled by the feedback control
+		int32_t feedbackSample = recordSample[LR] +	(static_cast<float>(1.1f * (ADC_array[ADC_Feedback_Pot]) / 65536.0f) * nextSample);
+
+		// Hold the LR sample in a temporary variable and write both left and right samples when processing right signal
+		if (LR == left) {
+			leftWriteSample = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
 		} else {
-			if (delayMode != modeShort) {
-				delayClkCV *= longDelMult;
+			StereoSample writeSample;
+			writeSample.sample[left] = leftWriteSample;
+			writeSample.sample[right] = static_cast<uint16_t>(std::clamp(feedbackSample, -32767L, 32767L));
+			samples[writePos] = writeSample.bothSamples;
+
+			if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
+		}
+
+
+		// Move write and read heads one sample forwards
+		if (delayMode == modeReverse) {
+			if (--readPos[LR] < 0)							readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+			if (--oldReadPos[LR] < 0)						oldReadPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+		} else {
+			if (++readPos[LR] == SAMPLE_BUFFER_LENGTH)		readPos[LR] = 0;
+			if (++oldReadPos[LR] == SAMPLE_BUFFER_LENGTH)	oldReadPos[LR] = 0;
+		}
+
+		// Check if clock received
+		if (clockInput.IsHigh()) {
+			if (!clockHigh) {
+				clockInterval = delayCounter - lastClock - 85;			// FIXME constant found by trial and error - probably relates to filtering group delay
+				lastClock = delayCounter;
+				clockHigh = true;
 			}
-			calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+		} else {
+			clockHigh = false;
 		}
-	}
+		clockValid = (delayCounter - lastClock < (SAMPLE_RATE * 2));					// Valid clock interval is within a second
+		++delayCounter;
 
 
-	// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
-	if (delayMode == modeReverse) {
-		// Create temporary read and write positions that handle circular buffer complications
-		int32_t wp = writePos;
-		int32_t rp = readPos[LR];
-		if (rp > wp) {
-			if (wp - (calcDelay[LR] * 2) < 0)
-				wp += (SAMPLE_BUFFER_LENGTH - 1);
-			else
-				rp -= (SAMPLE_BUFFER_LENGTH - 1);
+
+		// Calculate delay times - either clocked or not, with link button making right delay a multiple of left delay/clock
+		//int32_t delayClkCV = static_cast<int32_t>(ADC_array[(LR == left) ? ADC_Delay_Pot_L : ADC_Delay_Pot_R]);
+		int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
+		float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;						// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
+		if (clockValid) {
+			if (!linkLR && LR == right) {
+				if (delayMode != modeShort) {
+					delayClkCV *= longDelMult;
+				}
+				calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);	// Average over 32 readings to smooth
+
+			} else if (abs(delayPotVal[LR] - delayClkCV) > tempoHysteresis) {
+				delayPotVal[LR] = delayClkCV;											// Store value for hysteresis checking
+				delayMult[LR] = tempoMult[tempoMult.size() * delayClkCV / 65536];		// get tempo multiplier from lookup
+				if (delayMode != modeShort) {
+					delayMult[LR] *= longDelMult;
+				}
+				calcDelay[LR] = delayMult[LR] * (clockInterval / 2);
+				hysteresisDivider = delayMult[LR];
+			}
+
+		} else {
+			// If link tempo button active, right delay is multiple of left delay
+			if (linkLR && LR == right) {
+				//delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
+				delayMult[left] = tempoMult[tempoMult.size() * DelayCV(left) / 65536];		// Get the equivalent multiplier for Left delay
+				int32_t leftDelScaled = currentDelay[left] / delayMult[left];			// Normalise the left delay
+				delayMult[right] = tempoMult[tempoMult.size() * delayClkCV / 65536];	// Get the multiplier for the right delay
+				calcDelay[right] = delayMult[right] * leftDelScaled;					// Apply the right delay multiplier to the normalised left delay
+				hysteresisDivider *= delayMult[right] / delayMult[left];
+			} else {
+				if (delayMode != modeShort) {
+					delayClkCV *= longDelMult;
+				}
+				calcDelay[LR] = std::max((31 * calcDelay[LR] + delayClkCV) >> 5, 0L);
+			}
 		}
-		int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
 
-		// Scale the LED so it fades in with the timing of the reverse delay
-		UpdateLED(LR, true, std::max(remainingDelay, 0L));
 
-		// check if read position is less than write position less delay then reset read position to write position
-		if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
-			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos - 1;
-			if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
-			delayCrossfade[LR] = crossfade;
+		// If reversing delay samples read head works backwards from write position until delay time is reached and then jumps back to write position (with crossfade)
+		if (delayMode == modeReverse) {
+			// Create temporary read and write positions that handle circular buffer complications
+			int32_t wp = writePos;
+			int32_t rp = readPos[LR];
+			if (rp > wp) {
+				if (wp - (calcDelay[LR] * 2) < 0)
+					wp += (SAMPLE_BUFFER_LENGTH - 1);
+				else
+					rp -= (SAMPLE_BUFFER_LENGTH - 1);
+			}
+			int32_t remainingDelay = rp + (calcDelay[LR] * 2) - wp;
+
+			// Scale the LED so it fades in with the timing of the reverse delay
+			UpdateLED(LR, true, std::max(remainingDelay, 0L));
+
+			// check if read position is less than write position less delay then reset read position to write position
+			if (remainingDelay < 0 && delayCrossfade[LR] == 0) {
+				oldReadPos[LR] = readPos[LR];
+				readPos[LR] = writePos - 1;
+				if (readPos[LR] < 0)	readPos[LR] = SAMPLE_BUFFER_LENGTH - 1;
+				delayCrossfade[LR] = crossfade;
+			}
+
+		} else {
+			// If delay time has changed trigger crossfade from old to new read position
+			if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) / hysteresisDivider > delayHysteresis) {
+				oldReadPos[LR] = readPos[LR];
+				readPos[LR] = writePos - calcDelay[LR] - 1;
+				while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
+				delayCrossfade[LR] = crossfade;
+				currentDelay[LR] = calcDelay[LR];
+			}
+			UpdateLED(LR, false);
 		}
 
-	} else {
-		// If delay time has changed trigger crossfade from old to new read position
-		if (delayCrossfade[LR] == 0 && std::abs(calcDelay[LR] - currentDelay[LR]) / hysteresisDivider > delayHysteresis) {
-			oldReadPos[LR] = readPos[LR];
-			readPos[LR] = writePos - calcDelay[LR] - 1;
-			while (readPos[LR] < 0) 		readPos[LR] += SAMPLE_BUFFER_LENGTH;
-			delayCrossfade[LR] = crossfade;
-			currentDelay[LR] = calcDelay[LR];
-		}
-		UpdateLED(LR, false);
 	}
 }
 
-
+int32_t DigitalDelay::WrapSamplePos(int pos) {
+	if (pos < 0) {
+		return pos + SAMPLE_BUFFER_LENGTH;
+	} else if (pos >= SAMPLE_BUFFER_LENGTH) {
+		return pos - SAMPLE_BUFFER_LENGTH;
+	}
+	return pos;
+}
 
 int32_t DigitalDelay::OutputMix(float wetSample)
 {
@@ -214,44 +208,45 @@ int32_t DigitalDelay::OutputMix(float wetSample)
 	DAC1->DHR12R2 = (1.0f - dryLevel) * 4095.0f;		// Wet level
 	DAC1->DHR12R1 = dryLevel * 4095.0f;					// Dry level
 
-	//int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+	int16_t outputSample = std::clamp(static_cast<int32_t>(wetSample), -32767L, 32767L);
+//	int16_t outputSample = wetSample;
 
-	return (int32_t)wetSample;
+	return (int32_t)outputSample;
 }
 
 
 
-int32_t DigitalDelay::GateSample()
+int32_t DigitalDelay::GateSample(channel lr)
 {
-	int32_t recordSample = static_cast<int32_t>(ADC_array[LR]) - adcZeroOffset[LR];
+	int32_t recordSample = static_cast<int32_t>(ADC_array[lr]) - adcZeroOffset[lr];
 	if (gateThreshold == 0) {
 		return recordSample;
 	}
 
 	if (std::abs(recordSample) < gateThreshold) {
-		overThreshold[LR] = 0;
-		if (belowThresholdCount[LR] > gateHoldCount) {				// there have been enough samples around zero
-			gateShut[LR] = gateStatus::closed;
+		overThreshold[lr] = 0;
+		if (belowThresholdCount[lr] > gateHoldCount) {				// there have been enough samples around zero
+			gateShut[lr] = gateStatus::closed;
 			return 0;
 		} else {
-			if (belowThresholdCount[LR] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
-				float fadeout = 2.0f - (2.0f * belowThresholdCount[LR]) / gateHoldCount;
+			if (belowThresholdCount[lr] > gateHoldCount / 2) {		// Halfway through the fade out count start closing the gate
+				float fadeout = 2.0f - (2.0f * belowThresholdCount[lr]) / gateHoldCount;
 				recordSample = static_cast<float>(recordSample) * fadeout;
-				gateShut[LR] = gateStatus::closing;
+				gateShut[lr] = gateStatus::closing;
 			}
-			belowThresholdCount[LR]++;
+			belowThresholdCount[lr]++;
 		}
 
 	} else  {
-		if (overThreshold[LR] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
-			belowThresholdCount[LR] = 0;
-			gateShut[LR] = gateStatus::open;
+		if (overThreshold[lr] > 0 && std::abs(recordSample) > gateThreshold + 100) {		// Last two samples have exceeded threshold in same direction
+			belowThresholdCount[lr] = 0;
+			gateShut[lr] = gateStatus::open;
 		} else {
 			if (std::abs(recordSample) > gateThreshold + 100) {		// Use hysteresis to avoid gate continually opening and closing on continous low level signals
-				overThreshold[LR] = recordSample;
+				overThreshold[lr] = recordSample;
 			}
-			if (belowThresholdCount[LR] > gateHoldCount) {			// there have been enough samples around zero
-				gateShut[LR] = gateStatus::closed;
+			if (belowThresholdCount[lr] > gateHoldCount) {			// there have been enough samples around zero
+				gateShut[lr] = gateStatus::closed;
 				return 0;
 			}
 		}
@@ -265,7 +260,6 @@ int32_t DigitalDelay::GateSample()
 void DigitalDelay::Init()
 {
 	std::fill_n(samples, SAMPLE_BUFFER_LENGTH, 0);					// Clear sample buffers
-	//memset(samples, 0, (SAMPLE_BUFFER_LENGTH2 * 4));					// Clear sample buffers
 
 	// Calculate delays once to avoid delays when starting I2S interrupts
 	calcDelay[left] = ADC_array[ADC_Delay_Pot_L];
@@ -274,10 +268,7 @@ void DigitalDelay::Init()
 	CalcSample();
 	delayCrossfade[left] = 0;
 	delayCrossfade[right] = 0;
-	modOffsetAdd[left] = modOffsetInc;
-	modOffsetAdd[right] = -1 * modOffsetInc;
-	modOffset[left] = modOffsetMax / 2;
-	modOffset[right] = modOffsetMax / 2;
+	modOffset = modOffsetMax / 2;
 }
 
 float brightness;
@@ -391,10 +382,8 @@ void DigitalDelay::CheckSwitches()
 			oldReadPos[left] = readPos[left];
 			oldReadPos[right] = readPos[LR];
 		} else {
-			oldReadPos[left] = readPos[left] - static_cast<int32_t>(modOffset[left]);
-			if (oldReadPos[left] < 0) 		oldReadPos[left] = oldReadPos[left] + SAMPLE_BUFFER_LENGTH;
-			oldReadPos[right] = readPos[right] - static_cast<int32_t>(modOffset[right]);
-			if (oldReadPos[right] < 0) 		oldReadPos[right] = oldReadPos[right] + SAMPLE_BUFFER_LENGTH;
+			oldReadPos[left] = WrapSamplePos(readPos[left] - static_cast<int32_t>(modOffset));
+			oldReadPos[right] = WrapSamplePos(readPos[right] - (static_cast<int32_t>(modOffsetMax - modOffset)));
 		}
 		delayCrossfade[right] = crossfade;
 		delayCrossfade[left] = crossfade;
@@ -433,7 +422,7 @@ inline int32_t DigitalDelay::DelayCV(channel c) {
 // Runs audio tests (audio loopback and 1kHz saw wave)
 void DigitalDelay::RunTest(int32_t sample)
 {
-	static int32_t testSample;
+
 	switch (testMode) {
 	case TestMode::none:
 		break;
@@ -445,13 +434,15 @@ void DigitalDelay::RunTest(int32_t sample)
 		samples[writePos] = writeSample.bothSamples;
 		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
 
-		SPI2->TXDR = OutputMix(sample);
+		outputSamples[LR] = OutputMix(sample);
 		break;
 	}
 	case TestMode::saw:
-		testSample += 4739242;		// 65536/96000 * 1kHz
+		static int16_t testSample;
+		testSample += 682;		// 65536/96000 * 1kHz
 		//SPI2->TXDR = OutputMix(testSample);
-		outputSamples[right] = outputSamples[left] = OutputMix(testSample);
+		outputSamples[left] = OutputMix(testSample);
+		outputSamples[right] = -outputSamples[left];
 		break;
 	}
 }

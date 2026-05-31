@@ -56,9 +56,8 @@ private:
 	int8_t ledOnTimer = 0;					// Timer to control sending an LED update
 
 	float modOffsetMax = 180.0f;			// Modulated delay maximum sample offset
-	float modOffsetInc = 0.00375f;			// Amount by which offset is shifted each sample
-	float modOffsetAdd[2] = {modOffsetInc, -1 * modOffsetInc};		// Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
-	float modOffset[2] = {modOffsetMax / 2, modOffsetMax / 2};
+	float modOffsetInc = 0.00375f;			// Amount by which offset is shifted each sample: Calculated to give a variable delay between 1.7mS and 3.87mS with a 2 second LFO (Mode I = 0.5Hz, Mode II = 0.8Hz)
+	float modOffset = modOffsetMax / 2.0f;
 
 	enum class gateStatus {open, closed, closing} gateShut[2];
 	uint16_t belowThresholdCount[2];		// Count of samples lower than gate threshold
@@ -67,12 +66,12 @@ private:
 	uint32_t gateHoldCount = 20000;			// Number of samples beneath threshold before applying gate
 	bool gateLED = false;					// Filter LED displays gate open/closing/closed status as green/red/yellow
 	bool tanhCompression = true;			// Use a fast tanh algorithm for more natural sounding compression than linear compression
-	const int16_t threshold = 20000;		// linear compression threshold
-	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
+//	const int16_t threshold = 20000;		// linear compression threshold
+//	const int16_t ratio = 10000;			// Increase for less compression: Level at which the amount over the threshold is reduced by 50%. ie at 30k input (threshold + ratio) output will be 25k (threshold + 50% of ratio)
 
 
 	// Private class functions
-	int32_t GateSample();
+	int32_t GateSample(channel lr);
 	void UpdateLED(channel c, bool reverse, int32_t remainingDelay = 0);
 	void ReverseLED(channel c, int32_t remainingDelay);
 	delay_mode Mode();
@@ -80,6 +79,7 @@ private:
 	float FastTanh(float x);
 	void RunTest(int32_t s);
 	int32_t DelayCV(channel c);
+	inline int32_t WrapSamplePos(int pos);
 
 	enum class TestMode {loop, saw, none} testMode = TestMode::saw;
 

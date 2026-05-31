@@ -45,7 +45,7 @@ uint32_t lastVal;
 
 int main(void) {
 
-	InitClocks();			// Configure the clock and PLL
+	InitClocks();					// Configure the clock and PLL
 	InitSysTick();
 
 	InitADC();

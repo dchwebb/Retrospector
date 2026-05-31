@@ -166,8 +166,7 @@ bool SerialHandler::Command()
 		uint16_t val = ParseInt(ComCmd, ':', 1, 65535);
 		if (val > 0) {
 			delay.modOffsetMax = val;
-			delay.modOffset[left] = delay.modOffsetMax / 2;
-			delay.modOffset[right] = delay.modOffsetMax / 2;
+			delay.modOffset = delay.modOffsetMax / 2;
 			config.SaveConfig();
 		}
 		usb->SendString("Modulated delay length set to: " + std::to_string(delay.modOffsetMax) + "\r\n");
@@ -176,8 +175,6 @@ bool SerialHandler::Command()
 		float val = ParseFloat(ComCmd, ':', 0.000001, 2.0);
 		if (val > 0.0) {
 			delay.modOffsetInc = val;
-			delay.modOffsetAdd[left] = delay.modOffsetInc;
-			delay.modOffsetAdd[right] = -1 * delay.modOffsetInc;
 			config.SaveConfig();
 		}
 		usb->SendString("Modulated delay increment set to: " + std::to_string(delay.modOffsetInc) + "\r\n");
@@ -272,10 +269,6 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("f\n") == 0) {					// Activate filter
 		filter.activateFilter = !filter.activateFilter;
 		usb->SendString("Filter " + std::string(filter.activateFilter ? "on" : "off") + "\r\n");
-
-	} else if (ComCmd.compare("tanh\n") == 0) {					// tanh compression
-		delay.tanhCompression = !delay.tanhCompression;
-		usb->SendString("Tanh Compression " + std::string(delay.tanhCompression ? "on" : "off") + "\r\n");
 
 	} else if (ComCmd.compare("led\n") == 0) {					// LEDs on/off
 		if (ledState == ledOn) {

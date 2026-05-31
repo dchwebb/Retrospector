@@ -11,9 +11,7 @@ uint32_t underrun = 0;
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	if (calculatingFilter) {
-		GPIOB->ODR |= GPIO_ODR_OD7;
-	}
+	GPIOB->ODR |= GPIO_ODR_OD7;
 
 	if ((SPI2->SR & SPI_SR_UDR) == SPI_SR_UDR) {		// Check for Underrun condition
 		SPI2->IFCR |= SPI_IFCR_UDRC;					// Clear underrun condition
