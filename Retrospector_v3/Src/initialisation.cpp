@@ -61,6 +61,32 @@ void InitClocks()
 	SystemCoreClockUpdate();						// Update SystemCoreClock (system clock frequency) derived from settings of oscillators, prescalers and PLL
 }
 
+GpioPin debugPinA			{GPIOB, 7, GpioPin::Type::Output};			// PB7
+GpioPin debugPinB			{GPIOB, 8, GpioPin::Type::Output};			// PB8
+
+void InitHardware()
+{
+	InitClocks();									// Configure the clock and PLL
+	InitSysTick();
+
+	InitADC();
+	InitDAC();										// DAC used to output Wet/Dry mix levels
+#ifndef NOEXTRAM
+	InitSDRAM_16160();								// Initialise 32MB SDRAM
+#endif
+	InitCache();									// Configure MPU to not cache memory regions where DMA buffers reside
+	InitLEDSPI();									// Initialise SPI/DAM for LED controller
+
+	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port B clock
+
+	// MODER: 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
+	// PUPDR: 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
+
+	// PB7 (D), PB8 (C) - I2C/debug
+	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB8: debug pin
+
+}
 
 void InitCache()
 {
@@ -419,20 +445,6 @@ void InitDebugTimer()
 }
 
 
-void InitIO()
-{
-	RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;			// GPIO port B clock
-
-	// MODER: 00: Input, 01: General purpose output mode, 10: Alternate function mode, 11: Analog mode (reset state)
-	// PUPDR: 00: No pull-up, pull-down, 01: Pull-up, 10: Pull-down
-
-	// PB7 (D), PB8 (C) - I2C/debug
-	GPIOB->MODER &= ~GPIO_MODER_MODE7_1;			// PB7: debug pin
-	GPIOB->MODER &= ~GPIO_MODER_MODE8_1;			// PB8: debug pin
-
-}
-
-
 
 void InitLEDSPI()
 {
@@ -689,3 +701,13 @@ void CopyToITCMRAM()
 #endif
 
 
+// Enter DFU bootloader - store a custom word at a known RAM address. The startup file checks for this word and jumps to bootloader in RAM if found
+// STM32CubeProgrammer can be used to upload an .elf in this mode (v2.6.0 tested)
+void BootDFU()
+{
+	SCB_DisableDCache();
+	__disable_irq();
+	*reinterpret_cast<unsigned long *>(0x20000000) = 0xDEADBEEF; 	// Use DTCM RAM for DFU flag as this is not cleared at restart
+	__DSB();
+	NVIC_SystemReset();
+}

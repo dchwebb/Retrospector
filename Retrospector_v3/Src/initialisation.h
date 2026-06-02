@@ -8,7 +8,7 @@
 
 extern volatile uint32_t SysTickVal;
 
-#define NOEXTRAM
+//#define NOEXTRAM
 
 #define ADC1_BUFFER_LENGTH 4
 #define ADC2_BUFFER_LENGTH 7
@@ -21,6 +21,8 @@ extern volatile uint32_t SysTickVal;
 #define SYSTICK 1000						// Set in uS so 1000uS = 1ms
 #define ADC_OFFSET_DEFAULT 33800
 
+extern GpioPin debugPinA;
+extern GpioPin debugPinB;
 
 extern volatile uint16_t ADC_array[ADC1_BUFFER_LENGTH + ADC2_BUFFER_LENGTH];
 extern int32_t adcZeroOffset[2];
@@ -41,6 +43,7 @@ enum channel {left = 0, right = 1};
 
 
 void InitClocks();
+void InitHardware();
 void InitCache();
 void InitSysTick();
 void uartSendChar(char c);
@@ -62,3 +65,4 @@ void InitI2C();
 void InitLEDSPI();
 void Init_WS2812_SPI();
 void CopyToITCMRAM();
+void BootDFU();

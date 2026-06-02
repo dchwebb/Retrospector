@@ -4,7 +4,7 @@
 
 extern DigitalDelay delay;
 extern Config config;
-extern Bootloader bootloader;
+
 
 int32_t SerialHandler::ParseInt(const std::string cmd, const char precedingChar, int low = 0, int high = 0) {
 	int32_t val = -1;
@@ -57,7 +57,7 @@ bool SerialHandler::Command()
 			usb->SendString("Switching to DFU Mode ...\r\n");
 			uint32_t old = SysTickVal;
 			while (SysTickVal < old + 100) {};		// Give enough time to send the message
-//			bootloader.BootDFU();
+			BootDFU();
 		} else {
 			state = serialState::pending;
 			usb->SendString("Upgrade cancelled\r\n");
@@ -112,14 +112,12 @@ bool SerialHandler::Command()
 				"led         -  LEDs on/off\r\n"
 				"resume      -  Resume I2S after debugging\r\n"
 				"dfu         -  USB firmware upgrade\r\n"
-				"boot        -  Audio Bootloader\r\n"
 				"calib       -  Calibrate device\r\n"
 				"save        -  Save calibration\r\n"
 				"\r\nDynamics config:\r\n"
 				"threshold:x -  Configure gate threshold to x (default 200, 0 to deactivate)\r\n"
 				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
 				"gateled     -  Show gate status on filter LED\r\n"
-				"tanh        -  Toggle between fast tanh and linear compression\r\n"
 				"\r\nFilter config:\r\n"
 				"f           -  Filter on/off\r\n"
 				"firtaps:x   -  x FIR taps for LP > HP filter (multiple of 4, >= 4, <= 92)\r\n"
@@ -238,9 +236,6 @@ bool SerialHandler::Command()
 	} else if (ComCmd.compare("dfu\n") == 0) {					// USB DFU firmware upgrade
 		usb->SendString("Start DFU upgrade mode? Press 'y' to confirm.\r\n");
 		state = serialState::dfuConfirm;
-
-	} else if (ComCmd.compare("boot\n") == 0) {					// Test bootloader code
-//		bootloader.Receive();
 
 	} else if (ComCmd.compare("calib\n") == 0) {				// Calibrate filter pot center and audio offsets
 		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");

@@ -81,7 +81,7 @@ private:
 	int32_t DelayCV(channel c);
 	inline int32_t WrapSamplePos(int pos);
 
-	enum class TestMode {loop, saw, none} testMode = TestMode::saw;
+	enum class TestMode {loop, saw, none} testMode = TestMode::none;
 
 	Btn linkBtn					{{GPIOB, 4, GpioPin::Type::InputPullup}};	// PB4: link button
 

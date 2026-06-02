@@ -9,9 +9,7 @@ void __attribute__((optimize("O0"))) TinyDelay() {
 // I2S Interrupt
 void SPI2_IRQHandler() {
 
-	if (calculatingFilter) {
-		GPIOB->ODR |= GPIO_ODR_OD7;
-	}
+	GPIOB->ODR |= GPIO_ODR_OD7;
 
 	delay.CalcSample();
 

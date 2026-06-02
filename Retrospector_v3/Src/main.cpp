@@ -6,7 +6,6 @@
 #include "LEDHandler.h"
 #include "SerialHandler.h"
 #include "config.h"
-#include "Bootloader.h"
 
 /* TODO
  * Config to adjust: length multiplier of long delay and reverse
@@ -27,15 +26,12 @@ int32_t __attribute__((section (".ram_d1_data"))) samples[SAMPLE_BUFFER_LENGTH];
 int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH];	// Place delay sample buffers in external SDRAM
 #endif
 
-//int32_t __attribute__((section (".ram_d1_data"))) samples2[SAMPLE_BUFFER_LENGTH2];	// Place delay sample buffers in external SDRAM
-
 
 USB usb;
 SerialHandler serial(usb);
 DigitalDelay delay;
 Filter filter;
 Config config;
-//Bootloader bootloader;
 
 extern "C" {
 #include "interrupts.h"
@@ -43,20 +39,11 @@ extern "C" {
 
 uint32_t lastVal;
 
-int main(void) {
+int main()
+{
 
-	InitClocks();					// Configure the clock and PLL
-	InitSysTick();
-
-	InitADC();
-	InitDAC();						// DAC used to output Wet/Dry mix levels
-#ifndef NOEXTRAM
-	InitSDRAM_16160();				// Initialise 32MB SDRAM
-#endif
-	InitCache();					// Configure MPU to not cache memory regions where DMA buffers reside
-	InitLEDSPI();					// Initialise SPI/DAM for LED controller
+	InitHardware();
 	led.Init();						// Initialise LED SPI packet
-	InitIO();						// Initialise switches and LEDs
 	config.RestoreConfig();			// Restore configuration settings (ADC offsets etc)
 	filter.Init();					// Initialise filter coefficients, windows etc
 	usb.InitUSB();

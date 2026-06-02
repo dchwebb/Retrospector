@@ -93,6 +93,7 @@ void LEDHandler::Init()
 	BDMA_Channel0->CM0AR = reinterpret_cast<uint32_t>(this);		// Configure the memory data register address
 }
 
+
 void LEDHandler::TimedSend()
 {
 	static uint32_t lastSend = 0;
