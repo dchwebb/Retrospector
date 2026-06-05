@@ -1,5 +1,5 @@
 void OTG_FS_IRQHandler(void) {
-	usb.USBInterruptHandler();
+	usb.InterruptHandler();
 }
 
 

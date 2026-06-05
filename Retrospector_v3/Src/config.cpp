@@ -1,7 +1,6 @@
 #include <config.h>
 
-
-extern DigitalDelay delay;
+Config config;
 
 void Config::Calibrate()
 {

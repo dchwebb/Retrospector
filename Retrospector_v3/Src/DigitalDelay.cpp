@@ -1,5 +1,7 @@
 #include "DigitalDelay.h"
 
+DigitalDelay delay;
+
 void DigitalDelay::CalcSample()
 {
 	// Previously calculated samples output at beginning of interrupt to keep timing independent of calculation time

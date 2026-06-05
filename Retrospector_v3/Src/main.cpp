@@ -2,14 +2,9 @@
 #include "USB.h"
 #include "DigitalDelay.h"
 #include "Filter.h"
-#include "sdram.h"
+//#include "sdram.h"
 #include "LEDHandler.h"
-#include "SerialHandler.h"
 #include "config.h"
-
-/* TODO
- * Config to adjust: length multiplier of long delay and reverse
- */
 
 
 volatile uint32_t SysTickVal;
@@ -27,12 +22,6 @@ int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH]
 #endif
 
 
-USB usb;
-SerialHandler serial(usb);
-DigitalDelay delay;
-Filter filter;
-Config config;
-
 extern "C" {
 #include "interrupts.h"
 }
@@ -46,7 +35,7 @@ int main()
 	led.Init();						// Initialise LED SPI packet
 	config.RestoreConfig();			// Restore configuration settings (ADC offsets etc)
 	filter.Init();					// Initialise filter coefficients, windows etc
-	usb.InitUSB();
+	usb.Init(false);
 	delay.Init();					// Clear sample buffers and preset delay timings
 	InitI2S();						// Initialise I2S which will start main sample interrupts
 	CopyToITCMRAM();				// Copy bootloader code to instruction RAM so it can update Flash
@@ -55,7 +44,7 @@ int main()
 		config.AutoZeroOffset();	// Automatically adjust ADC zero offset during quiet sections
 		delay.CheckSwitches();		// Check values of switches and detect link button press
 		filter.Update();			// Check if filter coefficients need to be updated
-		serial.Command();			// Check for incoming CDC commands
+		usb.cdc.ProcessCommand();	// Check for incoming USB serial commands
 
 #if (USB_DEBUG)
 		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0 && USBDebug) {

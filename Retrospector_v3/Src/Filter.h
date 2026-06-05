@@ -86,7 +86,7 @@ private:
 
 
 class IIRFilter {
-	friend class SerialHandler;									// Allow the serial handler access to private data for debug printing
+	friend class CDCHandler;									// Allow the serial handler access to private data for debug printing
 	friend class Config;										// Allow access to config to store values
 private:
 	uint8_t numPoles = 1;
@@ -130,7 +130,7 @@ public:
 
 
 struct Filter {
-	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+	friend class CDCHandler;				// Allow the serial handler access to private data for debug printing
 	friend class Config;					// Allow access to config to store values
 public:
 //	enum class FilterSwitching {Changed, Switch, None} filterSwitching;

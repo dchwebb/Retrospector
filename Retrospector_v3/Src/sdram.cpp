@@ -240,7 +240,7 @@ bool runMemTest = false;
 uint32_t* SDRAMBuffer = reinterpret_cast<memSize*>(startAddr);
 
 extern USB usb;
-extern SerialHandler serial;
+
 
 // Test SDRAM
 void MemoryTest(bool test16MB) {
@@ -284,7 +284,7 @@ void MemoryTest(bool test16MB) {
 		}
 
 		++memTestCount;
-		serial.Command();			// Check for incoming CDC commands
+		usb.cdc.ProcessCommand();	// Check for incoming USB serial commands
 	}
 
 }

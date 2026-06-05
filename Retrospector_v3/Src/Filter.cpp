@@ -1,5 +1,7 @@
 #include "Filter.h"
 
+Filter filter;
+
 // Debug
 bool calculatingFilter = false;
 

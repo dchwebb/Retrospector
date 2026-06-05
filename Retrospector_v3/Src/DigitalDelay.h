@@ -1,7 +1,6 @@
 #pragma once
 
 #include "initialisation.h"
-#include "SerialHandler.h"
 #include "Filter.h"
 
 extern int32_t samples[SAMPLE_BUFFER_LENGTH];
@@ -14,7 +13,7 @@ union StereoSample {
 
 
 struct DigitalDelay {
-	friend class SerialHandler;				// Allow the serial handler access to private data for debug printing
+	friend class CDCHandler;				// Allow the serial handler access to private data for debug printing
 	friend class Config;					// Allow the config access to private data to save settings
 public:
 	void CalcSample();						// Called by interrupt handler to generate next sample
@@ -92,3 +91,5 @@ private:
 	GpioPin shortSwitch			{GPIOE, 3, GpioPin::Type::InputPullup};		// PE3: Mode 2, low in short mode
 
 };
+
+extern DigitalDelay delay;
