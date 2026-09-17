@@ -1,16 +1,12 @@
 #include "initialisation.h"
 #include "USB.h"
 #include "DigitalDelay.h"
-#include "Filter.h"
-//#include "sdram.h"
 #include "LEDHandler.h"
-#include "config.h"
-
+#include "configManager.h"
+#include "Calib.h"
 
 volatile uint32_t SysTickVal;
 extern uint32_t SystemCoreClock;
-
-int32_t adcZeroOffset[2] = {ADC_OFFSET_DEFAULT, ADC_OFFSET_DEFAULT};				// 0V ADC reading
 
 // Store buffers that need to live in special memory areas
 volatile uint16_t __attribute__((section (".dma_buffer"))) ADC_array[ADC1_BUFFER_LENGTH + ADC2_BUFFER_LENGTH];
@@ -25,6 +21,12 @@ int32_t __attribute__((section (".sdramSection"))) samples[SAMPLE_BUFFER_LENGTH]
 extern "C" {
 #include "interrupts.h"
 }
+
+Calib calib;
+Filter filter;
+DigitalDelay delay;
+
+Config config{&calib.configSaver, &filter.configSaver, &delay.configSaver};			// Construct config handler with list of configSavers
 
 uint32_t lastVal;
 
@@ -41,10 +43,11 @@ int main()
 	CopyToITCMRAM();				// Copy bootloader code to instruction RAM so it can update Flash
 
 	while (1) {
-		config.AutoZeroOffset();	// Automatically adjust ADC zero offset during quiet sections
+		calib.AutoZeroOffset();		// Automatically adjust ADC zero offset during quiet sections
 		delay.CheckSwitches();		// Check values of switches and detect link button press
 		filter.Update();			// Check if filter coefficients need to be updated
 		usb.cdc.ProcessCommand();	// Check for incoming USB serial commands
+		config.SaveConfig();		// Save any scheduled changes
 
 #if (USB_DEBUG)
 		if ((GPIOB->IDR & GPIO_IDR_ID4) == 0 && USBDebug) {

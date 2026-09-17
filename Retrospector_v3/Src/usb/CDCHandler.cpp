@@ -1,8 +1,9 @@
 #include "USB.h"
 #include "CDCHandler.h"
-#include "config.h"
+#include "configManager.h"
 #include "DigitalDelay.h"
 #include "sdram.h"
+#include "calib.h"
 #include <stdio.h>
 #include <charconv>
 
@@ -34,7 +35,7 @@ void CDCHandler::ProcessCommand()
 
 	} else if (state == serialState::calibConfirm) {
 		if (cmd.compare("y") == 0 || cmd.compare("Y") == 0) {
-			config.Calibrate();
+			calib.Calibrate();
 			resumeI2S();
 		} else {
 			usb->SendString("Calibration cancelled\r\n");
@@ -48,30 +49,36 @@ void CDCHandler::ProcessCommand()
 
 	} else if (cmd.compare("info") == 0) {		// Print diagnostic information
 
-		usb->SendString("Mountjoy Retrospector v2.0 - Current Settings:\r\n\r\n" +
-				std::string(delay.modulatedDelay ? "Modulated delay: Max: " + std::to_string(static_cast<uint32_t>(delay.modOffsetMax)) + " Inc: " + std::to_string(delay.modOffsetInc) + "\r\n" : "") +
-				std::string(delay.stereoWide ? "Stereo wide on\r\n" : ""));
-
-		if (filter.activateFilter) {
-			if (filter.filterType == IIR) {
-				usb->SendString(std::to_string(filter.iirLPFilter[0].numPoles) + " Pole IIR " + std::string(filter.filterControl == LP ? "Low" : "High") + " Pass Filter: ");
-			} else {
-				usb->SendString(std::string((filter.passType == LowPass) ? "Low Pass " : "High Pass ") + std::to_string(filter.firTaps) + " Tap FIR Filter: ");
-			}
-
-			sprintf(buf, "%0.10f", filter.currentCutoff);		// 10dp
-			usb->SendString("Cutoff: " + std::string(buf).append("\r\n"));
-		} else {
-			usb->SendString("Filter: Off\r\n");
-		}
-
-		usb->SendString("Delay Times L: " + std::to_string(delay.calcDelay[left] / 48) + " ms, R: " + std::to_string(delay.calcDelay[right] / 48) + " ms\r\n" +
-				std::string((delay.clockValid ? "Clock On": "Clock Off")) + ": interval: " + std::to_string(delay.clockInterval / 96) + " ms, " +
-				std::to_string(delay.clockInterval) + " samples; Mult L: " + std::to_string(delay.delayMult[left]) + " R: " + std::to_string(delay.delayMult[right]) +"\r\n" +
-				"ADC Zero offset L: " + std::to_string(adcZeroOffset[left]) + " R: " + std::to_string(adcZeroOffset[right]) + "\r\n" +
-				"LEDs Filter R:" + std::to_string(led.colour[6]) + " G: " + std::to_string(led.colour[7]) + " B: " + std::to_string(led.colour[8]) + "\r\n" +
-				"Gate threshold: " + std::to_string(delay.gateThreshold) + " Activation time: " + std::to_string(delay.gateHoldCount)+ "\r\n" +
-				"\r\n");
+		printf("Mountjoy Retrospector v3.0 - Current Settings:\r\n\r\n"
+				"Build Date: %s %s\r\n"
+				"Modulated delay: %s Max: %.5f Inc: %.5f\r\n"
+				"Stereo wide: %s\r\n"
+				"Filter: %s; %d %s %s Pass; Cutoff: %0.10f\r\n"
+				"Delay Times L: %ld ms, R: %ld ms\r\n"
+				"Clock %s: interval: %ld ms, %ld samples; Mult L: %.2f R: %.2f\r\n"
+				"ADC Zero offset L: %ld R: %ld\r\n"
+				"LEDs Filter R: %d G: %d B: %d\r\n"
+				"Gate threshold: %d Activation time: %ld\r\n"
+				"Config sector: %lu; address: %p\r\n"
+				"\r\n",
+				__DATE__, __TIME__,
+				delay.modulatedDelay ? "On" : "Off", delay.modOffsetMax, delay.modOffsetInc,
+				delay.stereoWide ? "On" : "Off",
+				filter.activateFilter ? "On" : "Off",
+				(filter.filterType == IIR) ? filter.iirLPFilter[0].numPoles : filter.cfg.firTaps,
+				(filter.filterType == IIR) ? "Pole IIR" : "Tap FIR",
+				filter.filterControl == LP ? "Low" : "High",
+				filter.currentCutoff,
+				delay.calcDelay[left] / 48, delay.calcDelay[right] / 48,
+				(delay.clockValid ? "On": "Off"),
+				delay.clockInterval / 96,
+				delay.clockInterval,
+				delay.delayMult[left], delay.delayMult[right],
+				calib.cfg.adcZeroOffset[left], calib.cfg.adcZeroOffset[right],
+				led.colour[6], led.colour[7], led.colour[8],
+				delay.gateThreshold, delay.gateHoldCount,
+				config.currentSector,
+				config.flashConfigAddr + config.currentSettingsOffset / 4);
 
 	} else if (cmd.compare("help") == 0) {
 
@@ -82,7 +89,8 @@ void CDCHandler::ProcessCommand()
 				"resume      -  Resume I2S after debugging\r\n"
 				"dfu         -  USB firmware upgrade\r\n"
 				"calib       -  Calibrate device\r\n"
-				"save        -  Save calibration\r\n"
+				"save        -  Save config\r\n"
+				"erase       -  Erase config\r\n"
 				"\r\nDynamics config:\r\n"
 				"threshold:x -  Configure gate threshold to x (default 200, 0 to deactivate)\r\n"
 				"gateact:x   -  Configure gate activate time to x samples (default 30000)\r\n"
@@ -163,9 +171,9 @@ void CDCHandler::ProcessCommand()
 		uint16_t taps = ParseInt(cmd, ':', 4, 92);
 		if (taps > 0) {
 			taps = (taps / 4) * 4;								// taps must be a multiple of four
-			filter.firTaps = taps;
+			filter.cfg.firTaps = taps;
 			filter.Init();										// forces recalculation of coefficients and window
-			usb->SendString("FIR taps set to: " + std::to_string(filter.firTaps) + "\r\n");
+			usb->SendString("FIR taps set to: " + std::to_string(filter.cfg.firTaps) + "\r\n");
 			config.SaveConfig();
 		}
 
@@ -210,8 +218,11 @@ void CDCHandler::ProcessCommand()
 		usb->SendString("Remove cables from audio inputs and set filter knob to centre position. Proceed (y/n)?\r\n");
 		state = serialState::calibConfirm;
 
-	} else if (cmd.compare("save") == 0) {					// Save calibration information
-		config.SaveConfig();
+	} else if (cmd.compare("save") == 0) {					// Save config
+		config.SaveConfig(true);
+
+	} else if (cmd.compare("erase") == 0) {					// Erase config
+		config.EraseConfig();
 
 	} else if (cmd.compare("resume") == 0) {				// Resume I2S after debugging
 		resumeI2S();
@@ -304,9 +315,9 @@ void CDCHandler::ProcessCommand()
 
 		// NB to_string not working. Use sprintf with following: The float formatting support is not enabled, check your MCU Settings from "Project Properties > C/C++ Build > Settings > Tool Settings",
 		// or add manually "-u _printf_float" in linker flags
-		for (int f = 0; f < filter.firTaps; ++f) {
-			if (f > filter.firTaps / 2) {						// Using a folded FIR structure so second half of coefficients is a reflection of the first
-				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][filter.firTaps - f]);		// 10dp
+		for (int f = 0; f < filter.cfg.firTaps; ++f) {
+			if (f > filter.cfg.firTaps / 2) {						// Using a folded FIR structure so second half of coefficients is a reflection of the first
+				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][filter.cfg.firTaps - f]);		// 10dp
 			} else {
 				sprintf(buf, "%0.10f", filter.firCoeff[filter.activeFilter][f]);
 			}
@@ -316,7 +327,7 @@ void CDCHandler::ProcessCommand()
 
 	} else if (cmd.compare("wd") == 0) {					// Dump filter window
 		suspendI2S();
-		for (int f = 0; f < filter.firTaps; ++f) {
+		for (int f = 0; f < filter.cfg.firTaps; ++f) {
 			sprintf(buf, "%0.10f", filter.winCoeff[f]);			// 10dp
 			usb->SendString(std::string(buf) + "\r\n");
 		}
@@ -325,9 +336,9 @@ void CDCHandler::ProcessCommand()
 	} else if (cmd.compare("fdl") == 0) {					// Dump left filter buffer
 		suspendI2S();
 		uint16_t pos = filter.filterBuffPos[0];
-		for (int f = 0; f < filter.firTaps; ++f) {
+		for (int f = 0; f < filter.cfg.firTaps; ++f) {
 			usb->SendString(std::to_string(filter.filterBuffer[0][pos]) + "\r\n");
-			if (++pos == filter.firTaps)
+			if (++pos == filter.cfg.firTaps)
 				pos = 0;
 		}
 		resumeI2S();

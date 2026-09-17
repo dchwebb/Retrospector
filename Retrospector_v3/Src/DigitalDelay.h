@@ -2,6 +2,7 @@
 
 #include "initialisation.h"
 #include "Filter.h"
+#include "configManager.h"
 
 extern int32_t samples[SAMPLE_BUFFER_LENGTH];
 
@@ -20,10 +21,21 @@ public:
 	void Init();							// Initialise caches, buffers etc
 	void CheckSwitches();
 
+	struct {
+		bool linkLR = true;					// Makes tempo of right delay a multiple of left delay
+	} cfg;
+
+	ConfigSaver configSaver = {
+		.settingsAddress = &cfg,
+		.settingsSize = sizeof(cfg),
+		.validateSettings = nullptr
+	};
+
 	bool stereoWide = false;				// Feedback from one side of the stereo spectrum to the other
 	bool modulatedDelay = false;			// Modulated delay activated
-	bool linkLR = true;						// Makes tempo of right delay a multiple of left delay
+
 	channel LR = right;						// Alternates between left and right channel each time sample is calculated
+
 
 private:
 	enum delay_mode {modeLong = 0, modeShort = 1, modeReverse = 2} delayMode;					// Long/short/reverse
@@ -76,7 +88,7 @@ private:
 	delay_mode Mode();
 	int32_t OutputMix(float wetSample);
 	float FastTanh(float x);
-	void RunTest(int32_t s);
+	void RunTest();
 	int32_t DelayCV(channel c);
 	inline int32_t WrapSamplePos(int pos);
 

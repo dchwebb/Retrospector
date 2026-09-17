@@ -1,6 +1,7 @@
 #include "DigitalDelay.h"
+#include "Calib.h"
 
-DigitalDelay delay;
+
 
 void DigitalDelay::CalcSample()
 {
@@ -12,6 +13,12 @@ void DigitalDelay::CalcSample()
 	static int16_t leftWriteSample;									// Holds the left sample in a temp so both writes can be done at once
 	delay_mode delayMode = Mode();									// Long, short or reverse
 	int32_t recordSample[2] = {GateSample(left), GateSample(right)};// Capture recording sample
+
+	// Test modes
+	if (testMode != TestMode::none) {
+		RunTest();
+		return;
+	}
 
 	for (auto LR: {left, right}) {
 
@@ -32,13 +39,6 @@ void DigitalDelay::CalcSample()
 		} else {
 			readSamples = {samples[readPos[LR]]};
 		}
-
-		// Test modes
-		if (testMode != TestMode::none) {
-			RunTest(recordSample[LR]);
-			return;
-		}
-
 
 		// Cross fade if moving playback position
 		if (delayCrossfade[LR] > 0) {
@@ -120,7 +120,7 @@ void DigitalDelay::CalcSample()
 		int32_t delayClkCV = DelayCV(LR);												// Pot and CV combined
 		float hysteresisDivider = (delayMode != modeShort) ? 8 : 1;						// Hysteresis on delay time changes must be scaled to avoid firing continually on long delays
 		if (clockValid) {
-			if (!linkLR && LR == right) {
+			if (!cfg.linkLR && LR == right) {
 				if (delayMode != modeShort) {
 					delayClkCV *= longDelMult;
 				}
@@ -138,7 +138,7 @@ void DigitalDelay::CalcSample()
 
 		} else {
 			// If link tempo button active, right delay is multiple of left delay
-			if (linkLR && LR == right) {
+			if (cfg.linkLR && LR == right) {
 				//delayMult[left] = tempoMult[tempoMult.size() * ADC_array[ADC_Delay_Pot_L] / 65536];		// Get the equivalent multiplier for Left delay
 				delayMult[left] = tempoMult[tempoMult.size() * DelayCV(left) / 65536];		// Get the equivalent multiplier for Left delay
 				int32_t leftDelScaled = currentDelay[left] / delayMult[left];			// Normalise the left delay
@@ -220,7 +220,7 @@ int32_t DigitalDelay::OutputMix(float wetSample)
 
 int32_t DigitalDelay::GateSample(channel lr)
 {
-	int32_t recordSample = static_cast<int32_t>(ADC_array[lr]) - adcZeroOffset[lr];
+	int32_t recordSample = static_cast<int32_t>(ADC_array[lr]) - calib.cfg.adcZeroOffset[lr];
 	if (gateThreshold == 0) {
 		return recordSample;
 	}
@@ -285,7 +285,7 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 	} else {
 		// Turns on LED delay time indicator, locking as accurately as possible to external tempo clock
 		++ledCounter[c];
-		if (clockValid && (linkLR || LR == left)) {
+		if (clockValid && (cfg.linkLR || LR == left)) {
 			// If using external clock try to sync LEDs to tempo, allowing for drift in both directions
 			if (delayMult[c] < 1.0f) {
 				if (delayCounter - lastClock < 500) {				// Always trigger on the clock, unless LED already on
@@ -325,13 +325,13 @@ void DigitalDelay::UpdateLED(channel c, bool reverse, int32_t remainingDelay)
 
 		float lengthScale = std::min(1.0f, static_cast<float>(calcDelay[c]) / 65536.0f);
 		if (clockValid) {
-			if (c == right && !linkLR) {
+			if (c == right && !cfg.linkLR) {
 				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
 			} else {
 				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourClock1, ledColourClock2, lengthScale, brightness);
 			}
 		} else {
-			if (c == right && !linkLR) {
+			if (c == right && !cfg.linkLR) {
 				led.LEDColour(ledDelR, ledColourRight1, ledColourRight2, lengthScale, brightness);
 			} else {
 				led.LEDColour(c == left ? ledDelL : ledDelR, ledColourLeft1, ledColourLeft2, lengthScale, brightness);
@@ -395,7 +395,8 @@ void DigitalDelay::CheckSwitches()
 	}
 
 	if (linkBtn.Pressed()) {
-		linkLR = !linkLR;
+		cfg.linkLR = !cfg.linkLR;
+		config.ScheduleSave();
 	}
 }
 
@@ -422,27 +423,26 @@ inline int32_t DigitalDelay::DelayCV(channel c) {
 
 
 // Runs audio tests (audio loopback and 1kHz saw wave)
-void DigitalDelay::RunTest(int32_t sample)
+void DigitalDelay::RunTest()
 {
-
 	switch (testMode) {
 	case TestMode::none:
 		break;
 	case TestMode::loop: {
 		// Capture the samples to the buffer
 		StereoSample writeSample;
-		writeSample.sample[left] = static_cast<int32_t>(ADC_array[left]) - adcZeroOffset[left];
-		writeSample.sample[right] = static_cast<int32_t>(ADC_array[right]) - adcZeroOffset[right];
+		writeSample.sample[left] = static_cast<int32_t>(ADC_array[left]) - calib.cfg.adcZeroOffset[left];
+		writeSample.sample[right] = static_cast<int32_t>(ADC_array[right]) - calib.cfg.adcZeroOffset[right];
 		samples[writePos] = writeSample.bothSamples;
 		if (++writePos == SAMPLE_BUFFER_LENGTH) 		writePos = 0;
 
-		outputSamples[LR] = OutputMix(sample);
+		outputSamples[left] = OutputMix(writeSample.sample[left]);
+		outputSamples[right] = OutputMix(writeSample.sample[right]);
 		break;
 	}
 	case TestMode::saw:
 		static int16_t testSample;
 		testSample += 682;		// 65536/96000 * 1kHz
-		//SPI2->TXDR = OutputMix(testSample);
 		outputSamples[left] = OutputMix(testSample);
 		outputSamples[right] = -outputSamples[left];
 		break;

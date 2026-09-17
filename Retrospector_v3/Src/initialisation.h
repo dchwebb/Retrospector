@@ -19,7 +19,7 @@ extern volatile uint32_t SysTickVal;
 #endif
 #define SAMPLE_RATE 48000
 #define SYSTICK 1000						// Set in uS so 1000uS = 1ms
-#define ADC_OFFSET_DEFAULT 33800
+
 
 extern GpioPin debugPinA;
 extern GpioPin debugPinB;
